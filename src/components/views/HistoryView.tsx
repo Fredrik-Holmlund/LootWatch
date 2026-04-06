@@ -45,7 +45,7 @@ export function HistoryView({ role }: HistoryViewProps) {
 
       {/* CSV Import */}
       {showImport && role === 'council' && (
-        <CSVImport onImport={importEntries} />
+        <CSVImport existingEntries={entries} onImport={importEntries} />
       )}
 
       {/* Sub-tabs */}
