@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import type { User } from '@supabase/supabase-js';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import type { Profile, UserRole } from '../types';
 
@@ -17,7 +17,6 @@ function getCachedProfile(userId: string): Profile | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Profile;
-    // Only use cache if it belongs to the same user
     return parsed.id === userId ? parsed : null;
   } catch {
     return null;
@@ -72,6 +71,29 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
   }
 }
 
+async function applySession(
+  session: Session | null,
+  setState: React.Dispatch<React.SetStateAction<AuthState>>,
+  cancelled: { current: boolean }
+) {
+  if (cancelled.current) return;
+
+  if (session?.user) {
+    // Show cached profile immediately so nav renders right away
+    const cached = getCachedProfile(session.user.id);
+    setState({ user: session.user, profile: cached, role: cached?.role ?? null, loading: false });
+
+    // Refresh from DB in background
+    const fresh = await fetchOrCreateProfile(session.user);
+    if (!cancelled.current && fresh) {
+      setState((prev) => ({ ...prev, profile: fresh, role: fresh.role }));
+    }
+  } else {
+    setCachedProfile(null);
+    setState({ user: null, profile: null, role: null, loading: false });
+  }
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -79,37 +101,28 @@ export function useAuth() {
     role: null,
     loading: true,
   });
+  const cancelled = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          // Show cached profile immediately so the UI is never stuck or blank
-          const cached = getCachedProfile(session.user.id);
-          setState({
-            user: session.user,
-            profile: cached,
-            role: cached?.role ?? null,
-            loading: false,
-          });
+    cancelled.current = false;
 
-          // Refresh profile from DB in the background
-          const fresh = await fetchOrCreateProfile(session.user);
-          if (fresh) {
-            setState((prev) => ({
-              ...prev,
-              profile: fresh,
-              role: fresh.role,
-            }));
-          }
-        } else {
-          setCachedProfile(null);
-          setState({ user: null, profile: null, role: null, loading: false });
-        }
-      }
-    );
+    // getSession() waits for any in-progress token refresh to complete,
+    // so child component queries won't fire until the client is fully ready.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session, setState, cancelled);
+    });
 
-    return () => subscription.unsubscribe();
+    // Watch for subsequent sign-in / sign-out events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Skip INITIAL_SESSION — already handled by getSession() above
+      if (_event === 'INITIAL_SESSION') return;
+      applySession(session, setState, cancelled);
+    });
+
+    return () => {
+      cancelled.current = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
