@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useLootCandidates } from '../../hooks/useLootCandidates';
 import { usePlayers } from '../../hooks/usePlayers';
-import { TBC_PHASES, getPhaseForInstance } from '../../data/tbcPhases';
+import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 import type { RaidLoot, LootCandidate, Player } from '../../types';
@@ -65,8 +65,8 @@ export function LootPlanner() {
                 {instance}
               </h3>
               <div className="space-y-4">
-                {Object.entries(bosses).map(([boss, items]) => (
-                  <BossSection key={boss} boss={boss} items={items} players={players} />
+                {sortBosses(instance, Object.keys(bosses)).map((boss) => (
+                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} />
                 ))}
               </div>
             </div>
