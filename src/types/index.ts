@@ -54,6 +54,25 @@ export interface Profile {
   created_at: string;
 }
 
+export interface RaidLoot {
+  id: string;
+  instance_name: string;
+  boss_name: string;
+  item_id: number | null;
+  item_name: string;
+  item_slug: string | null;
+  wowhead_url: string | null;
+}
+
+export interface LootCandidate {
+  id: string;
+  raid_loot_id: string;
+  player_name: string;
+  priority: number;
+  note: string | null;
+  created_at: string;
+}
+
 export interface CSVRow {
   date: string;
   player: string;

@@ -3,13 +3,14 @@ import { useLootHistory } from '../../hooks/useLootHistory';
 import { useCouncilNotes } from '../../hooks/useCouncilNotes';
 import { WishlistPanel } from '../council/WishlistPanel';
 import { NotesPanel } from '../council/NotesPanel';
+import { LootPlanner } from '../council/LootPlanner';
 
-type SubTab = 'distribution' | 'notes';
+type SubTab = 'planner' | 'distribution' | 'notes';
 
 export function CouncilView() {
   const { entries } = useLootHistory();
-  const { notes, loading, addNote, updateNote, deleteNote } = useCouncilNotes();
-  const [subTab, setSubTab] = useState<SubTab>('distribution');
+  const { notes, loading: notesLoading, addNote, updateNote, deleteNote } = useCouncilNotes();
+  const [subTab, setSubTab] = useState<SubTab>('planner');
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
@@ -27,6 +28,7 @@ export function CouncilView() {
       {/* Sub-tabs */}
       <div className="flex gap-1 border-b border-gray-800">
         {([
+          ['planner', '🗺️ Loot Planner'],
           ['distribution', '📊 Distribution'],
           ['notes', '📝 Priority Notes'],
         ] as [SubTab, string][]).map(([id, label]) => (
@@ -45,9 +47,10 @@ export function CouncilView() {
       </div>
 
       {/* Content */}
+      {subTab === 'planner' && <LootPlanner />}
       {subTab === 'distribution' && <WishlistPanel entries={entries} />}
       {subTab === 'notes' && (
-        loading ? (
+        notesLoading ? (
           <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>
         ) : (
           <NotesPanel
