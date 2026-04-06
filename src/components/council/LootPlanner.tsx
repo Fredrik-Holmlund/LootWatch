@@ -258,7 +258,7 @@ function CandidatePill({
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-medium group"
-      style={{ backgroundColor: classColor + '33', border: `1px solid ${classColor}66`, color: '#fff' }}
+      style={{ backgroundColor: classColor, border: `1px solid ${classColor}`, color: '#101828' }}
     >
       <span className="opacity-60 text-[10px] mr-0.5">{idx + 1}.</span>
       {candidate.player_name}
