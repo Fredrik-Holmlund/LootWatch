@@ -58,34 +58,29 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    // Safety net: if auth doesn't resolve within 8s, unblock the UI
-    const timeout = setTimeout(() => {
-      setState((prev) => prev.loading ? { ...prev, loading: false } : prev);
-      console.warn('[useAuth] auth resolution timed out');
-    }, 8000);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log('[useAuth] onAuthStateChange event:', _event, !!session);
-        clearTimeout(timeout);
         if (session?.user) {
-          const profile = await fetchOrCreateProfile(session.user);
-          setState({
+          // Unblock the UI immediately — profile loads in background
+          setState((prev) => ({
+            ...prev,
             user: session.user,
+            loading: false,
+          }));
+
+          const profile = await fetchOrCreateProfile(session.user);
+          setState((prev) => ({
+            ...prev,
             profile,
             role: profile?.role ?? null,
-            loading: false,
-          });
+          }));
         } else {
           setState({ user: null, profile: null, role: null, loading: false });
         }
       }
     );
 
-    return () => {
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {

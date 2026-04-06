@@ -27,14 +27,8 @@ function App() {
     return <AuthForm onSignIn={signIn} onSignUp={signUp} />;
   }
 
-  // If profile hasn't loaded yet (rare edge case), show spinner
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <p className="text-gray-600 text-sm">Setting up your account…</p>
-      </div>
-    );
-  }
+  // profile may still be loading in background — render the app shell anyway
+  // role will be null until profile resolves, which limits council/admin access temporarily
 
   // Council-only tab guard: redirect raiders away from restricted tabs
   const effectiveTab: NavTab =
@@ -51,7 +45,7 @@ function App() {
         activeTab={effectiveTab}
         onTabChange={handleTabChange}
         role={role}
-        username={profile.username}
+        username={profile?.username ?? user.email?.split('@')[0] ?? ''}
         onSignOut={signOut}
       />
 
