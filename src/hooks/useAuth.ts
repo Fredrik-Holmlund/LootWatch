@@ -10,6 +10,35 @@ interface AuthState {
   loading: boolean;
 }
 
+async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
+  // Try to fetch existing profile
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (data) return data as Profile;
+
+  // Profile missing (trigger didn't fire, or first-login race) — create it now
+  if (error?.code === 'PGRST116') {
+    const username =
+      (user.user_metadata?.username as string | undefined) ??
+      user.email?.split('@')[0] ??
+      'unknown';
+
+    const { data: inserted } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, username, role: 'raider' }, { onConflict: 'id' })
+      .select()
+      .single();
+
+    return inserted as Profile | null;
+  }
+
+  return null;
+}
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -18,19 +47,10 @@ export function useAuth() {
     loading: true,
   });
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    return data as Profile | null;
-  }, []);
-
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await fetchOrCreateProfile(session.user);
         setState({ user: session.user, profile, role: profile?.role ?? null, loading: false });
       } else {
         setState({ user: null, profile: null, role: null, loading: false });
@@ -39,7 +59,7 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
+        const profile = await fetchOrCreateProfile(session.user);
         setState({ user: session.user, profile, role: profile?.role ?? null, loading: false });
       } else {
         setState({ user: null, profile: null, role: null, loading: false });
@@ -47,7 +67,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchProfile]);
+  }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -55,17 +75,13 @@ export function useAuth() {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, username: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error || !data.user) return error;
-
-    // Create profile with default 'raider' role
-    await supabase.from('profiles').insert({
-      id: data.user.id,
-      username,
-      role: 'raider',
+    // Pass username in auth metadata so the DB trigger picks it up immediately
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username } },
     });
-
-    return null;
+    return error ?? null;
   }, []);
 
   const signOut = useCallback(async () => {
