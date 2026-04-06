@@ -20,22 +20,32 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
 
   if (data) return data as Profile;
 
-  // Profile missing (trigger didn't fire, or first-login race) — create it now
+  // Profile missing (trigger didn't fire, or first-login race) — insert only,
+  // never overwrite an existing row (so a manually-set council role is preserved)
   if (error?.code === 'PGRST116') {
     const username =
       (user.user_metadata?.username as string | undefined) ??
       user.email?.split('@')[0] ??
       'unknown';
 
-    const { data: inserted } = await supabase
+    await supabase
       .from('profiles')
-      .upsert({ id: user.id, username, role: 'raider' }, { onConflict: 'id' })
+      .insert({ id: user.id, username, role: 'raider' })
       .select()
+      .maybeSingle(); // ignore conflict if row was created by the DB trigger
+
+    // Re-fetch whatever is now in the DB (may have been inserted by trigger)
+    const { data: refetched } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
       .single();
 
-    return inserted as Profile | null;
+    return refetched as Profile | null;
   }
 
+  // Surface other errors in the console for debugging
+  if (error) console.error('[useAuth] profile fetch error:', error);
   return null;
 }
 
