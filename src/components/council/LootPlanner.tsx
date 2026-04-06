@@ -253,30 +253,33 @@ function CandidatePill({
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
 }) {
   const player = players.find((p) => stripRealm(p.name).toLowerCase() === candidate.player_name.toLowerCase());
-  const nameColor = getClassColor(player?.player_class ?? null);
+  const classColor = getClassColor(player?.player_class ?? null);
 
   return (
-    <span className="inline-flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full pl-2 pr-1 py-0.5 text-xs group">
-      <span className="text-gray-500 text-[10px] mr-0.5">{idx + 1}.</span>
-      <span style={{ color: nameColor }}>{candidate.player_name}</span>
+    <span
+      className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-medium group"
+      style={{ backgroundColor: classColor + '33', border: `1px solid ${classColor}66`, color: '#fff' }}
+    >
+      <span className="opacity-60 text-[10px] mr-0.5">{idx + 1}.</span>
+      {candidate.player_name}
       <span className="hidden group-hover:inline-flex items-center gap-0.5 ml-0.5">
         <button
           onClick={() => onMove(candidate.id, 'up')}
           disabled={idx === 0}
-          className="text-gray-500 hover:text-gray-200 disabled:opacity-20 leading-none"
+          className="opacity-60 hover:opacity-100 disabled:opacity-20 leading-none"
         >
           ◂
         </button>
         <button
           onClick={() => onMove(candidate.id, 'down')}
           disabled={idx === total - 1}
-          className="text-gray-500 hover:text-gray-200 disabled:opacity-20 leading-none"
+          className="opacity-60 hover:opacity-100 disabled:opacity-20 leading-none"
         >
           ▸
         </button>
         <button
           onClick={() => onRemove(candidate.id)}
-          className="text-gray-600 hover:text-red-400 leading-none ml-0.5"
+          className="opacity-40 hover:opacity-100 hover:text-red-400 leading-none ml-0.5"
         >
           ✕
         </button>
