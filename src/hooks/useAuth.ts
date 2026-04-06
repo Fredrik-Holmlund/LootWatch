@@ -10,6 +10,25 @@ interface AuthState {
   loading: boolean;
 }
 
+const CACHE_KEY = 'lootwatch_profile';
+
+function getCachedProfile(userId: string): Profile | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Profile;
+    // Only use cache if it belongs to the same user
+    return parsed.id === userId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedProfile(profile: Profile | null) {
+  if (profile) localStorage.setItem(CACHE_KEY, JSON.stringify(profile));
+  else localStorage.removeItem(CACHE_KEY);
+}
+
 async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
   try {
     const { data, error } = await supabase
@@ -18,7 +37,10 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
       .eq('id', user.id)
       .single();
 
-    if (data) return data as Profile;
+    if (data) {
+      setCachedProfile(data as Profile);
+      return data as Profile;
+    }
 
     if (error?.code === 'PGRST116') {
       const username =
@@ -38,6 +60,7 @@ async function fetchOrCreateProfile(user: User): Promise<Profile | null> {
         .eq('id', user.id)
         .single();
 
+      setCachedProfile(refetched as Profile | null);
       return refetched as Profile | null;
     }
 
@@ -61,20 +84,26 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (session?.user) {
-          // Unblock the UI immediately — profile loads in background
-          setState((prev) => ({
-            ...prev,
+          // Show cached profile immediately so the UI is never stuck or blank
+          const cached = getCachedProfile(session.user.id);
+          setState({
             user: session.user,
+            profile: cached,
+            role: cached?.role ?? null,
             loading: false,
-          }));
+          });
 
-          const profile = await fetchOrCreateProfile(session.user);
-          setState((prev) => ({
-            ...prev,
-            profile,
-            role: profile?.role ?? null,
-          }));
+          // Refresh profile from DB in the background
+          const fresh = await fetchOrCreateProfile(session.user);
+          if (fresh) {
+            setState((prev) => ({
+              ...prev,
+              profile: fresh,
+              role: fresh.role,
+            }));
+          }
         } else {
+          setCachedProfile(null);
           setState({ user: null, profile: null, role: null, loading: false });
         }
       }
@@ -98,6 +127,7 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async () => {
+    setCachedProfile(null);
     await supabase.auth.signOut();
   }, []);
 
