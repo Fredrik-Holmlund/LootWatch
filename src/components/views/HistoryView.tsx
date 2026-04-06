@@ -4,12 +4,13 @@ import { useLootHistory } from '../../hooks/useLootHistory';
 import { CSVImport } from '../history/CSVImport';
 import { LootTable } from '../history/LootTable';
 import { PlayerSummary } from '../history/PlayerSummary';
+import { WarningsPanel } from '../history/WarningsPanel';
 
 interface HistoryViewProps {
   role: UserRole | null;
 }
 
-type SubTab = 'table' | 'players';
+type SubTab = 'table' | 'players' | 'warnings';
 
 export function HistoryView({ role }: HistoryViewProps) {
   const { entries, loading, error, importEntries, deleteEntry, updateNote } = useLootHistory();
@@ -52,6 +53,7 @@ export function HistoryView({ role }: HistoryViewProps) {
         {([
           ['table', 'Loot Table'],
           ['players', 'Player Summary'],
+          ['warnings', '⚠️ Warnings'],
         ] as [SubTab, string][]).map(([id, label]) => (
           <button
             key={id}
@@ -91,9 +93,8 @@ export function HistoryView({ role }: HistoryViewProps) {
               onUpdateNote={updateNote}
             />
           )}
-          {subTab === 'players' && (
-            <PlayerSummary entries={entries} />
-          )}
+          {subTab === 'players' && <PlayerSummary entries={entries} />}
+          {subTab === 'warnings' && <WarningsPanel entries={entries} />}
         </>
       )}
     </div>

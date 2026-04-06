@@ -50,7 +50,7 @@ export function CouncilView() {
 
       {/* Content */}
       {subTab === 'planner' && <LootPlanner />}
-      {subTab === 'roster' && <RosterPanel />}
+      {subTab === 'roster' && <RosterPanel historyEntries={entries} />}
       {subTab === 'distribution' && <WishlistPanel entries={entries} />}
       {subTab === 'notes' && (
         notesLoading ? (

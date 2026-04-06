@@ -10,30 +10,54 @@ interface PlayerStats {
   name: string;
   playerClass: string | null;
   total: number;
-  byRaid: Record<string, number>;
+  byResponse: Record<string, number>;
   recentItems: string[];
+}
+
+// Colour-code common RCLC responses
+const RESPONSE_COLORS: Record<string, string> = {
+  bis:            '#f59e0b',  // amber
+  'best in slot': '#f59e0b',
+  upgrade:        '#22c55e',  // green
+  'minor upgrade':'#86efac',  // light green
+  offspec:        '#a78bfa',  // purple
+  'off-spec':     '#a78bfa',
+  pvp:            '#f87171',  // red
+  transmog:       '#67e8f9',  // cyan
+  greed:          '#94a3b8',  // slate
+  pass:           '#4b5563',  // dark gray
+};
+
+function responseColor(response: string): string {
+  return RESPONSE_COLORS[response.toLowerCase()] ?? '#6b7280';
+}
+
+function shortResponse(response: string): string {
+  if (!response) return '?';
+  // Abbreviate long responses
+  if (response.length <= 10) return response;
+  return response.slice(0, 9) + '…';
 }
 
 export function PlayerSummary({ entries }: PlayerSummaryProps) {
   const stats = useMemo<PlayerStats[]>(() => {
     const map = new Map<string, PlayerStats>();
-
     for (const e of entries) {
       if (!map.has(e.player_name)) {
         map.set(e.player_name, {
           name: e.player_name,
           playerClass: e.player_class,
           total: 0,
-          byRaid: {},
+          byResponse: {},
           recentItems: [],
         });
       }
       const s = map.get(e.player_name)!;
       s.total++;
-      s.byRaid[e.raid] = (s.byRaid[e.raid] ?? 0) + 1;
+      const r = e.response || 'Unknown';
+      s.byResponse[r] = (s.byResponse[r] ?? 0) + 1;
       if (s.recentItems.length < 3) s.recentItems.push(e.item_name);
     }
-
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [entries]);
 
@@ -54,10 +78,7 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
         >
           <div className="flex items-start justify-between mb-3">
             <div>
-              <p
-                className="font-semibold"
-                style={{ color: getClassColor(s.playerClass) }}
-              >
+              <p className="font-semibold" style={{ color: getClassColor(s.playerClass) }}>
                 {s.name}
               </p>
               <p className="text-xs text-gray-600">{s.playerClass ?? 'Unknown class'}</p>
@@ -68,21 +89,28 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
             </div>
           </div>
 
-          {/* Per-raid breakdown */}
+          {/* Per-response breakdown */}
           <div className="space-y-1 mb-3">
-            {Object.entries(s.byRaid)
+            {Object.entries(s.byResponse)
               .sort((a, b) => b[1] - a[1])
-              .slice(0, 4)
-              .map(([raid, count]) => (
-                <div key={raid} className="flex items-center gap-2">
+              .map(([response, count]) => (
+                <div key={response} className="flex items-center gap-2">
                   <div className="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="h-full bg-yellow-500/70 rounded-full"
-                      style={{ width: `${Math.min(100, (count / s.total) * 100)}%` }}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, (count / s.total) * 100)}%`,
+                        backgroundColor: responseColor(response),
+                        opacity: 0.8,
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500 w-16 truncate text-right" title={raid}>
-                    {raid.split("'")[0].trim()}
+                  <span
+                    className="text-xs w-20 truncate text-right"
+                    style={{ color: responseColor(response) }}
+                    title={response}
+                  >
+                    {shortResponse(response)}
                   </span>
                   <span className="text-xs text-gray-400 w-4 text-right">{count}</span>
                 </div>
@@ -94,9 +122,7 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
             <div className="border-t border-gray-800 pt-2">
               <p className="text-xs text-gray-600 mb-1">Recent loot</p>
               {s.recentItems.map((item, i) => (
-                <p key={i} className="text-xs text-gray-500 truncate" title={item}>
-                  • {item}
-                </p>
+                <p key={i} className="text-xs text-gray-500 truncate" title={item}>• {item}</p>
               ))}
             </div>
           )}
