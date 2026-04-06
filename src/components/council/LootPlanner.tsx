@@ -184,7 +184,7 @@ function CandidatePanel({ item }: { item: RaidLoot }) {
   const [newPlayer, setNewPlayer] = useState('');
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [editingNoteText, setEditingNoteText] = useState('');
 
   async function handleAdd(e: React.FormEvent) {

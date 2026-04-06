@@ -55,7 +55,7 @@ export interface Profile {
 }
 
 export interface RaidLoot {
-  id: string;
+  id: number;
   instance_name: string;
   boss_name: string;
   item_id: number | null;
@@ -65,8 +65,8 @@ export interface RaidLoot {
 }
 
 export interface LootCandidate {
-  id: string;
-  raid_loot_id: string;
+  id: number;
+  raid_loot_id: number;
   player_name: string;
   priority: number;
   note: string | null;

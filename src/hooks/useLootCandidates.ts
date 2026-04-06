@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 import type { LootCandidate } from '../types';
 
-export function useLootCandidates(raidLootId: string | null) {
+export function useLootCandidates(raidLootId: number | null) {
   const [candidates, setCandidates] = useState<LootCandidate[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetch = useCallback(async (id: string) => {
+  const fetch = useCallback(async (id: number) => {
     setLoading(true);
     const { data } = await supabase
       .from('loot_candidates')
@@ -45,7 +45,7 @@ export function useLootCandidates(raidLootId: string | null) {
   );
 
   const removeCandidate = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       const { error } = await supabase.from('loot_candidates').delete().eq('id', id);
       if (error) return error.message;
       setCandidates((prev) => prev.filter((c) => c.id !== id));
@@ -55,7 +55,7 @@ export function useLootCandidates(raidLootId: string | null) {
   );
 
   const moveCandidate = useCallback(
-    async (id: string, direction: 'up' | 'down') => {
+    async (id: number, direction: 'up' | 'down') => {
       if (!raidLootId) return;
       const idx = candidates.findIndex((c) => c.id === id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
@@ -64,7 +64,6 @@ export function useLootCandidates(raidLootId: string | null) {
       const a = candidates[idx];
       const b = candidates[swapIdx];
 
-      // Swap priorities
       await supabase.from('loot_candidates').update({ priority: b.priority }).eq('id', a.id);
       await supabase.from('loot_candidates').update({ priority: a.priority }).eq('id', b.id);
       await fetch(raidLootId);
@@ -73,7 +72,7 @@ export function useLootCandidates(raidLootId: string | null) {
   );
 
   const updateNote = useCallback(
-    async (id: string, note: string) => {
+    async (id: number, note: string) => {
       const { error } = await supabase
         .from('loot_candidates')
         .update({ note })
