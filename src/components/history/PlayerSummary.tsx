@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { LootEntry } from '../../types';
 import { getClassColor } from '../../utils/classColors';
 
@@ -14,19 +14,37 @@ interface PlayerStats {
   recentItems: string[];
 }
 
+type SortKey = 'total' | 'bis' | 'upgrade' | 'offspec';
+
+const SORT_OPTIONS: { key: SortKey; label: string; color: string }[] = [
+  { key: 'total',   label: 'Total',   color: '#e5e7eb' },
+  { key: 'bis',     label: 'BIS',     color: '#f59e0b' },
+  { key: 'upgrade', label: 'Upgrade', color: '#22c55e' },
+  { key: 'offspec', label: 'Offspec', color: '#a78bfa' },
+];
+
 // Colour-code common RCLC responses
 const RESPONSE_COLORS: Record<string, string> = {
-  bis:            '#f59e0b',  // amber
+  bis:            '#f59e0b',
   'best in slot': '#f59e0b',
-  upgrade:        '#22c55e',  // green
-  'minor upgrade':'#86efac',  // light green
-  offspec:        '#a78bfa',  // purple
+  upgrade:        '#22c55e',
+  'minor upgrade':'#86efac',
+  offspec:        '#a78bfa',
   'off-spec':     '#a78bfa',
-  pvp:            '#f87171',  // red
-  transmog:       '#67e8f9',  // cyan
-  greed:          '#94a3b8',  // slate
-  pass:           '#4b5563',  // dark gray
+  pvp:            '#f87171',
+  transmog:       '#67e8f9',
+  greed:          '#94a3b8',
+  pass:           '#4b5563',
 };
+
+// Which response strings map to each sort key
+function responseMatchesKey(response: string, key: SortKey): boolean {
+  const r = response.toLowerCase();
+  if (key === 'bis')     return r === 'bis' || r === 'best in slot';
+  if (key === 'upgrade') return r === 'upgrade' || r === 'minor upgrade';
+  if (key === 'offspec') return r === 'offspec' || r === 'off-spec';
+  return false;
+}
 
 function responseColor(response: string): string {
   return RESPONSE_COLORS[response.toLowerCase()] ?? '#6b7280';
@@ -40,6 +58,8 @@ function shortResponse(response: string): string {
 }
 
 export function PlayerSummary({ entries }: PlayerSummaryProps) {
+  const [sortKey, setSortKey] = useState<SortKey>('total');
+
   const stats = useMemo<PlayerStats[]>(() => {
     const map = new Map<string, PlayerStats>();
     for (const e of entries) {
@@ -58,8 +78,21 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
       s.byResponse[r] = (s.byResponse[r] ?? 0) + 1;
       if (s.recentItems.length < 3) s.recentItems.push(e.item_name);
     }
-    return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [entries]);
+
+    const all = Array.from(map.values());
+
+    if (sortKey === 'total') {
+      return all.sort((a, b) => b.total - a.total);
+    }
+
+    return all.sort((a, b) => {
+      const countFor = (s: PlayerStats) =>
+        Object.entries(s.byResponse)
+          .filter(([r]) => responseMatchesKey(r, sortKey))
+          .reduce((sum, [, n]) => sum + n, 0);
+      return countFor(b) - countFor(a);
+    });
+  }, [entries, sortKey]);
 
   if (stats.length === 0) {
     return (
@@ -70,6 +103,24 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
   }
 
   return (
+    <div className="space-y-4">
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-gray-500">Sort by</span>
+      {SORT_OPTIONS.map((opt) => (
+        <button
+          key={opt.key}
+          onClick={() => setSortKey(opt.key)}
+          className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+            sortKey === opt.key
+              ? 'bg-gray-700 border-gray-600 text-white'
+              : 'bg-gray-900 border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700'
+          }`}
+          style={sortKey === opt.key ? { color: opt.color } : {}}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
       {stats.map((s) => (
         <div
@@ -128,6 +179,7 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
           )}
         </div>
       ))}
+    </div>
     </div>
   );
 }
