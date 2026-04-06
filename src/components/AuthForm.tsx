@@ -48,7 +48,7 @@ export function AuthForm({ onSignIn, onSignUp }: AuthFormProps) {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
             <span className="text-3xl">⚔️</span>
-            <h1 className="text-3xl font-bold text-yellow-400 tracking-tight">LootLedger</h1>
+            <h1 className="text-3xl font-bold text-yellow-400 tracking-tight">LootWatch</h1>
           </div>
           <p className="text-gray-500 text-sm">WoW TBC Guild Loot Tracker</p>
         </div>

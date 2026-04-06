@@ -16,7 +16,7 @@ function App() {
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center space-y-3">
           <div className="text-4xl animate-pulse">⚔️</div>
-          <p className="text-gray-600 text-sm">Loading LootLedger…</p>
+          <p className="text-gray-600 text-sm">Loading LootWatch…</p>
         </div>
       </div>
     );

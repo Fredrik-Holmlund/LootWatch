@@ -26,7 +26,7 @@ export function Navigation({ activeTab, onTabChange, role, username, onSignOut }
           {/* Brand */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-xl">⚔️</span>
-            <span className="font-bold text-yellow-400 tracking-tight">LootLedger</span>
+            <span className="font-bold text-yellow-400 tracking-tight">LootWatch</span>
           </div>
 
           {/* Tabs */}
