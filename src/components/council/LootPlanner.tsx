@@ -107,19 +107,26 @@ function ItemRow({ item }: { item: RaidLoot }) {
 
   return (
     <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-      {/* Item name */}
-      <div className="min-w-[200px] flex items-center gap-2">
+      {/* Item name + icon */}
+      <div className="min-w-[220px] flex items-center gap-2">
+        {item.icon_url && (
+          <img
+            src={item.icon_url}
+            alt=""
+            className="w-7 h-7 rounded flex-shrink-0 border border-gray-700"
+          />
+        )}
         {item.wowhead_url ? (
           <a
             href={item.wowhead_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-yellow-300/90 hover:text-yellow-200 hover:underline"
+            className="text-sm text-yellow-300/90 hover:text-yellow-200 hover:underline leading-tight"
           >
             {item.item_name}
           </a>
         ) : (
-          <span className="text-sm text-yellow-300/90">{item.item_name}</span>
+          <span className="text-sm text-yellow-300/90 leading-tight">{item.item_name}</span>
         )}
       </div>
 

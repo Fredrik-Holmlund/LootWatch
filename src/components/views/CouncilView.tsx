@@ -4,8 +4,9 @@ import { useCouncilNotes } from '../../hooks/useCouncilNotes';
 import { WishlistPanel } from '../council/WishlistPanel';
 import { NotesPanel } from '../council/NotesPanel';
 import { LootPlanner } from '../council/LootPlanner';
+import { RosterPanel } from '../council/RosterPanel';
 
-type SubTab = 'planner' | 'distribution' | 'notes';
+type SubTab = 'planner' | 'roster' | 'distribution' | 'notes';
 
 export function CouncilView() {
   const { entries } = useLootHistory();
@@ -29,6 +30,7 @@ export function CouncilView() {
       <div className="flex gap-1 border-b border-gray-800">
         {([
           ['planner', '🗺️ Loot Planner'],
+          ['roster', '👥 Roster'],
           ['distribution', '📊 Distribution'],
           ['notes', '📝 Priority Notes'],
         ] as [SubTab, string][]).map(([id, label]) => (
@@ -48,6 +50,7 @@ export function CouncilView() {
 
       {/* Content */}
       {subTab === 'planner' && <LootPlanner />}
+      {subTab === 'roster' && <RosterPanel />}
       {subTab === 'distribution' && <WishlistPanel entries={entries} />}
       {subTab === 'notes' && (
         notesLoading ? (
