@@ -58,10 +58,16 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    // onAuthStateChange fires with INITIAL_SESSION on page load,
-    // so we don't need a separate getSession() call.
+    // Safety net: if auth doesn't resolve within 8s, unblock the UI
+    const timeout = setTimeout(() => {
+      setState((prev) => prev.loading ? { ...prev, loading: false } : prev);
+      console.warn('[useAuth] auth resolution timed out');
+    }, 8000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('[useAuth] onAuthStateChange event:', _event, !!session);
+        clearTimeout(timeout);
         if (session?.user) {
           const profile = await fetchOrCreateProfile(session.user);
           setState({
@@ -76,7 +82,10 @@ export function useAuth() {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
