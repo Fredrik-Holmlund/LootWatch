@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { LootEntry } from '../../types';
 import { getClassColor } from '../../utils/classColors';
 import { usePlayers } from '../../hooks/usePlayers';
+import { stripRealm } from '../../utils/formatName';
 
 interface WarningsPanelProps {
   entries: LootEntry[];
@@ -13,8 +14,8 @@ export function WarningsPanel({ entries }: WarningsPanelProps) {
   const { noLootPlayers, lowLootPlayers, avg } = useMemo(() => {
     const countMap = new Map<string, { count: number; playerClass: string | null; displayName: string }>();
     for (const e of entries) {
-      const key = e.player_name.toLowerCase();
-      if (!countMap.has(key)) countMap.set(key, { count: 0, playerClass: e.player_class, displayName: e.player_name });
+      const key = stripRealm(e.player_name).toLowerCase();
+      if (!countMap.has(key)) countMap.set(key, { count: 0, playerClass: e.player_class, displayName: stripRealm(e.player_name) });
       countMap.get(key)!.count++;
     }
 
@@ -23,7 +24,7 @@ export function WarningsPanel({ entries }: WarningsPanelProps) {
     const lowThreshold = Math.max(1, avg * 0.5);
 
     const noLootPlayers = players
-      .filter((p) => !countMap.has(p.name.toLowerCase()))
+      .filter((p) => !countMap.has(stripRealm(p.name).toLowerCase()))
       .map((p) => ({ name: p.name, playerClass: p.player_class }));
 
     const lowLootPlayers = Array.from(countMap.values())

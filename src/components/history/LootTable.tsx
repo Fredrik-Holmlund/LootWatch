@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import type { LootEntry, UserRole } from '../../types';
 import { getClassColor } from '../../utils/classColors';
+import { stripRealm } from '../../utils/formatName';
 
 interface LootTableProps {
   entries: LootEntry[];
   role: UserRole | null;
   onDelete?: (id: string) => void;
   onUpdateNote?: (id: string, notes: string) => void;
+  onUpdateRaid?: (id: string, raid: string) => void;
 }
 
 type SortKey = 'timestamp' | 'player_name' | 'item_name' | 'raid' | 'boss' | 'response';
 
-export function LootTable({ entries, role, onDelete, onUpdateNote }: LootTableProps) {
+export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid }: LootTableProps) {
   const [search, setSearch] = useState('');
   const [filterRaid, setFilterRaid] = useState('');
   const [filterClass, setFilterClass] = useState('');
@@ -19,6 +21,8 @@ export function LootTable({ entries, role, onDelete, onUpdateNote }: LootTablePr
   const [sortAsc, setSortAsc] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteValue, setNoteValue] = useState('');
+  const [editingRaid, setEditingRaid] = useState<string | null>(null);
+  const [raidValue, setRaidValue] = useState('');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
 
@@ -72,6 +76,16 @@ export function LootTable({ entries, role, onDelete, onUpdateNote }: LootTablePr
   async function saveNote(id: string) {
     onUpdateNote?.(id, noteValue);
     setEditingNote(null);
+  }
+
+  function startEditRaid(e: LootEntry) {
+    setEditingRaid(e.id);
+    setRaidValue(e.raid);
+  }
+
+  async function saveRaid(id: string) {
+    onUpdateRaid?.(id, raidValue.trim());
+    setEditingRaid(null);
   }
 
   return (
@@ -149,11 +163,8 @@ export function LootTable({ entries, role, onDelete, onUpdateNote }: LootTablePr
                       {formatDate(entry.timestamp)}
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <span
-                        className="font-medium"
-                        style={{ color: getClassColor(entry.player_class) }}
-                      >
-                        {entry.player_name}
+                      <span className="font-medium" style={{ color: getClassColor(entry.player_class) }}>
+                        {stripRealm(entry.player_name)}
                       </span>
                       {entry.player_class && (
                         <span className="text-xs text-gray-600 ml-1.5">({entry.player_class})</span>
@@ -173,7 +184,29 @@ export function LootTable({ entries, role, onDelete, onUpdateNote }: LootTablePr
                         <span className="text-gray-200">{entry.item_name}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">{entry.raid}</td>
+                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">
+                      {editingRaid === entry.id ? (
+                        <div className="flex gap-1">
+                          <input
+                            autoFocus
+                            value={raidValue}
+                            onChange={(e) => setRaidValue(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') saveRaid(entry.id); if (e.key === 'Escape') setEditingRaid(null); }}
+                            className="w-40 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                          />
+                          <button onClick={() => saveRaid(entry.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
+                          <button onClick={() => setEditingRaid(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                        </div>
+                      ) : (
+                        <span
+                          className={role === 'council' ? 'cursor-pointer hover:text-gray-200' : ''}
+                          onClick={() => role === 'council' && startEditRaid(entry)}
+                          title={role === 'council' ? 'Click to edit raid' : undefined}
+                        >
+                          {entry.raid || '—'}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">{entry.boss}</td>
                     <td className="px-4 py-2.5">
                       <ResponseBadge response={entry.response} />

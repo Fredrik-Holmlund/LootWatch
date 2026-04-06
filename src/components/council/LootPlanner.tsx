@@ -1,11 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useLootCandidates } from '../../hooks/useLootCandidates';
+import { usePlayers } from '../../hooks/usePlayers';
 import { TBC_PHASES, getPhaseForInstance } from '../../data/tbcPhases';
-import type { RaidLoot, LootCandidate } from '../../types';
+import { getClassColor } from '../../utils/classColors';
+import { stripRealm } from '../../utils/formatName';
+import type { RaidLoot, LootCandidate, Player } from '../../types';
 
 export function LootPlanner() {
   const { loot, loading, error } = useRaidLoot();
+  const { players } = usePlayers();
   const [selectedPhase, setSelectedPhase] = useState(1);
 
   const grouped = useMemo(() => {
@@ -62,7 +66,7 @@ export function LootPlanner() {
               </h3>
               <div className="space-y-4">
                 {Object.entries(bosses).map(([boss, items]) => (
-                  <BossSection key={boss} boss={boss} items={items} />
+                  <BossSection key={boss} boss={boss} items={items} players={players} />
                 ))}
               </div>
             </div>
@@ -73,7 +77,7 @@ export function LootPlanner() {
   );
 }
 
-function BossSection({ boss, items }: { boss: string; items: RaidLoot[] }) {
+function BossSection({ boss, items, players }: { boss: string; items: RaidLoot[]; players: Player[] }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
       <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800">
@@ -81,28 +85,58 @@ function BossSection({ boss, items }: { boss: string; items: RaidLoot[] }) {
       </div>
       <div className="divide-y divide-gray-800/60">
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} />
+          <ItemRow key={item.id} item={item} players={players} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemRow({ item }: { item: RaidLoot }) {
+function ItemRow({ item, players }: { item: RaidLoot; players: Player[] }) {
   const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
     useLootCandidates(item.id);
   const [adding, setAdding] = useState(false);
   const [newPlayer, setNewPlayer] = useState('');
   const [showInput, setShowInput] = useState(false);
+  const [suggestions, setSuggestions] = useState<Player[]>([]);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleInputChange(val: string) {
+    setNewPlayer(val);
+    setHighlightIdx(-1);
+    if (!val.trim()) { setSuggestions([]); return; }
+    const existing = new Set(candidates.map((c) => c.player_name.toLowerCase()));
+    setSuggestions(
+      players.filter(
+        (p) =>
+          stripRealm(p.name).toLowerCase().includes(val.toLowerCase()) &&
+          !existing.has(stripRealm(p.name).toLowerCase())
+      ).slice(0, 8)
+    );
+  }
+
+  async function commitAdd(name: string) {
+    if (!name.trim()) return;
+    setAdding(true);
+    await addCandidate(name.trim());
+    setNewPlayer('');
+    setSuggestions([]);
+    setHighlightIdx(-1);
+    setShowInput(false);
+    setAdding(false);
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!newPlayer.trim()) return;
-    setAdding(true);
-    await addCandidate(newPlayer.trim());
-    setNewPlayer('');
-    setShowInput(false);
-    setAdding(false);
+    const chosen = highlightIdx >= 0 ? stripRealm(suggestions[highlightIdx].name) : newPlayer;
+    await commitAdd(chosen);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightIdx((i) => Math.min(i + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightIdx((i) => Math.max(i - 1, -1)); }
+    else if (e.key === 'Escape') { setShowInput(false); setNewPlayer(''); setSuggestions([]); }
   }
 
   return (
@@ -142,6 +176,7 @@ function ItemRow({ item }: { item: RaidLoot }) {
                 candidate={c}
                 idx={idx}
                 total={candidates.length}
+                players={players}
                 onRemove={removeCandidate}
                 onMove={moveCandidate}
               />
@@ -149,29 +184,43 @@ function ItemRow({ item }: { item: RaidLoot }) {
           </>
         )}
 
-        {/* Inline add */}
+        {/* Inline add with autocomplete */}
         {showInput ? (
-          <form onSubmit={handleAdd} className="flex items-center gap-1">
-            <input
-              type="text"
-              value={newPlayer}
-              onChange={(e) => setNewPlayer(e.target.value)}
-              placeholder="Player name"
-              autoFocus
-              className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 w-32"
-            />
-            <button
-              type="submit"
-              disabled={adding || !newPlayer.trim()}
-              className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-40 px-1"
-            >
+          <form onSubmit={handleAdd} className="relative flex items-center gap-1">
+            <div className="relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={newPlayer}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type to search roster…"
+                autoFocus
+                className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 w-44"
+              />
+              {suggestions.length > 0 && (
+                <ul className="absolute left-0 top-full mt-1 w-52 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20 overflow-hidden">
+                  {suggestions.map((p, i) => (
+                    <li
+                      key={p.id}
+                      onMouseDown={() => commitAdd(stripRealm(p.name))}
+                      className={`px-3 py-1.5 text-xs cursor-pointer flex items-center gap-2 ${i === highlightIdx ? 'bg-gray-700' : 'hover:bg-gray-700/60'}`}
+                    >
+                      <span className="font-medium" style={{ color: getClassColor(p.player_class) }}>
+                        {stripRealm(p.name)}
+                      </span>
+                      {p.player_class && (
+                        <span className="text-gray-600">{p.player_class}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button type="submit" disabled={adding || !newPlayer.trim()} className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-40 px-1">
               {adding ? '…' : 'Add'}
             </button>
-            <button
-              type="button"
-              onClick={() => { setShowInput(false); setNewPlayer(''); }}
-              className="text-xs text-gray-600 hover:text-gray-400 px-1"
-            >
+            <button type="button" onClick={() => { setShowInput(false); setNewPlayer(''); setSuggestions([]); }} className="text-xs text-gray-600 hover:text-gray-400 px-1">
               ✕
             </button>
           </form>
@@ -192,19 +241,24 @@ function CandidatePill({
   candidate,
   idx,
   total,
+  players,
   onRemove,
   onMove,
 }: {
   candidate: LootCandidate;
   idx: number;
   total: number;
+  players: Player[];
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
 }) {
+  const player = players.find((p) => stripRealm(p.name).toLowerCase() === candidate.player_name.toLowerCase());
+  const nameColor = getClassColor(player?.player_class ?? null);
+
   return (
-    <span className="inline-flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full pl-2 pr-1 py-0.5 text-xs text-gray-200 group">
+    <span className="inline-flex items-center gap-1 bg-gray-800 border border-gray-700 rounded-full pl-2 pr-1 py-0.5 text-xs group">
       <span className="text-gray-500 text-[10px] mr-0.5">{idx + 1}.</span>
-      {candidate.player_name}
+      <span style={{ color: nameColor }}>{candidate.player_name}</span>
       <span className="hidden group-hover:inline-flex items-center gap-0.5 ml-0.5">
         <button
           onClick={() => onMove(candidate.id, 'up')}

@@ -62,5 +62,18 @@ export function useLootHistory() {
     []
   );
 
-  return { entries, loading, error, importEntries, deleteEntry, updateNote, refetch: fetchEntries };
+  const updateRaid = useCallback(
+    async (id: string, raid: string) => {
+      const { error } = await supabase
+        .from('loot_entries')
+        .update({ raid })
+        .eq('id', id);
+      if (error) return error.message;
+      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, raid } : e)));
+      return null;
+    },
+    []
+  );
+
+  return { entries, loading, error, importEntries, deleteEntry, updateNote, updateRaid, refetch: fetchEntries };
 }

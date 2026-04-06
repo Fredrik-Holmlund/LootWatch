@@ -13,7 +13,7 @@ interface HistoryViewProps {
 type SubTab = 'table' | 'players' | 'warnings';
 
 export function HistoryView({ role }: HistoryViewProps) {
-  const { entries, loading, error, importEntries, deleteEntry, updateNote } = useLootHistory();
+  const { entries, loading, error, importEntries, deleteEntry, updateNote, updateRaid } = useLootHistory();
   const [subTab, setSubTab] = useState<SubTab>('table');
   const [showImport, setShowImport] = useState(false);
 
@@ -91,6 +91,7 @@ export function HistoryView({ role }: HistoryViewProps) {
               role={role}
               onDelete={deleteEntry}
               onUpdateNote={updateNote}
+              onUpdateRaid={updateRaid}
             />
           )}
           {subTab === 'players' && <PlayerSummary entries={entries} />}

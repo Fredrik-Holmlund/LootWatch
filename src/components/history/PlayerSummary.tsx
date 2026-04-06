@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { LootEntry } from '../../types';
 import { getClassColor } from '../../utils/classColors';
+import { stripRealm } from '../../utils/formatName';
 
 interface PlayerSummaryProps {
   entries: LootEntry[];
@@ -63,16 +64,17 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
   const stats = useMemo<PlayerStats[]>(() => {
     const map = new Map<string, PlayerStats>();
     for (const e of entries) {
-      if (!map.has(e.player_name)) {
-        map.set(e.player_name, {
-          name: e.player_name,
+      const playerKey = stripRealm(e.player_name);
+      if (!map.has(playerKey)) {
+        map.set(playerKey, {
+          name: playerKey,
           playerClass: e.player_class,
           total: 0,
           byResponse: {},
           recentItems: [],
         });
       }
-      const s = map.get(e.player_name)!;
+      const s = map.get(playerKey)!;
       s.total++;
       const r = e.response || 'Unknown';
       s.byResponse[r] = (s.byResponse[r] ?? 0) + 1;
