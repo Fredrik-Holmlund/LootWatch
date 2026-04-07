@@ -114,8 +114,8 @@ function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries 
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-      <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800">
+    <div className="bg-gray-900 border border-gray-800 rounded-lg">
+      <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800 rounded-t-lg">
         <p className="text-sm font-semibold text-gray-300">{boss}</p>
       </div>
       <div className="divide-y divide-gray-800/60">
@@ -205,7 +205,7 @@ function ItemRow({ item, players, awardedCount, awardedEntries }: { item: RaidLo
           <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default">
             ×{awardedCount} awarded
           </span>
-          <div className="absolute left-0 top-full mt-1.5 z-30 hidden group-hover/awarded:block min-w-[160px]">
+          <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/awarded:block min-w-[160px]">
             <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
               {awardedEntries.map((e, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 text-xs">
