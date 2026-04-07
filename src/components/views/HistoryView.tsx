@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { UserRole } from '../../types';
+import { canEdit } from '../../types';
 import { useLootHistory } from '../../hooks/useLootHistory';
 import { CSVImport } from '../history/CSVImport';
 import { AddLootEntry } from '../history/AddLootEntry';
@@ -31,7 +32,7 @@ export function HistoryView({ role }: HistoryViewProps) {
           <h2 className="text-xl font-bold text-white">Loot History</h2>
           <p className="text-sm text-gray-500 mt-0.5">{entries.length} entries recorded</p>
         </div>
-        {role === 'council' && (
+        {canEdit(role) && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => togglePanel('add')}
@@ -57,14 +58,14 @@ export function HistoryView({ role }: HistoryViewProps) {
         )}
       </div>
 
-      {panel === 'add' && role === 'council' && (
+      {panel === 'add' && canEdit(role) && (
         <AddLootEntry
           onAdd={importEntries}
           onClose={() => setPanel('none')}
         />
       )}
 
-      {panel === 'import' && role === 'council' && (
+      {panel === 'import' && canEdit(role) && (
         <CSVImport existingEntries={entries} onImport={importEntries} />
       )}
 

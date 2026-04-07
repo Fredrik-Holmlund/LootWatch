@@ -1,46 +1,73 @@
+import { useState } from 'react';
 import { UserManagement } from '../admin/UserManagement';
+import { RaidLootManager } from '../admin/RaidLootManager';
+import type { Profile } from '../../types';
 
-export function AdminView() {
+interface AdminViewProps {
+  profile: Profile | null;
+}
+
+type SubTab = 'users' | 'raidloot';
+
+export function AdminView({ profile }: AdminViewProps) {
+  const [subTab, setSubTab] = useState<SubTab>('users');
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold text-white">Admin</h2>
           <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 px-2 py-0.5 rounded-full">
-            Council Only
+            Admin Only
           </span>
         </div>
-        <p className="text-sm text-gray-500 mt-0.5">Manage guild member roles and permissions</p>
+        <p className="text-sm text-gray-500 mt-0.5">Manage users, roles, and raid loot data</p>
       </div>
 
-      {/* Info box */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Role Overview</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-800 rounded-lg p-3">
-            <p className="text-sm font-medium text-yellow-400 mb-1">⚔️ Council</p>
-            <ul className="text-xs text-gray-500 space-y-0.5">
-              <li>• Import CSV loot history</li>
-              <li>• Award and delete entries</li>
-              <li>• Edit notes on loot records</li>
-              <li>• Manage priority notes</li>
-              <li>• Promote / demote members</li>
-            </ul>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-3">
-            <p className="text-sm font-medium text-gray-300 mb-1">🛡️ Raider</p>
-            <ul className="text-xs text-gray-500 space-y-0.5">
-              <li>• View loot history</li>
-              <li>• View player summaries</li>
-              <li>• Read-only access</li>
-            </ul>
-          </div>
-        </div>
+      {/* Sub-tabs */}
+      <div className="flex gap-1 border-b border-gray-800">
+        {([
+          ['users',    '👥 Users'],
+          ['raidloot', '⚔️ Raid Loot'],
+        ] as [SubTab, string][]).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setSubTab(id)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              subTab === id
+                ? 'border-red-500 text-red-400'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* User management table */}
-      <UserManagement />
+      {subTab === 'users' && (
+        <>
+          {/* Role overview */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: '👑 Admin', color: 'text-red-400 border-red-400/20 bg-red-400/5', perks: ['All council permissions', 'Manage user roles', 'Add/edit/delete raid loot', 'Full database access via UI'] },
+              { label: '⚔️ Council', color: 'text-yellow-400 border-yellow-400/20 bg-yellow-400/5', perks: ['Import CSV loot history', 'Award and delete entries', 'Edit notes and raids', 'Manage priority notes'] },
+              { label: '🛡️ Raider', color: 'text-gray-400 border-gray-700 bg-gray-800/40', perks: ['View loot history', 'View player summaries', 'Browse & add to wishlist', 'Read-only access'] },
+            ].map(({ label, color, perks }) => (
+              <div key={label} className={`rounded-xl border p-3 ${color}`}>
+                <p className="text-sm font-semibold mb-2">{label}</p>
+                <ul className="text-xs text-gray-500 space-y-0.5">
+                  {perks.map((p) => <li key={p}>• {p}</li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <UserManagement currentUserId={profile?.id ?? ''} />
+        </>
+      )}
+
+      {subTab === 'raidloot' && <RaidLootManager />}
     </div>
   );
 }

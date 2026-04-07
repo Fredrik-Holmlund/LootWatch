@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { LootEntry, UserRole } from '../../types';
+import { canEdit } from '../../types';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
@@ -184,7 +185,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
         >
           Export CSV
         </button>
-        {role === 'council' && selected.size > 0 && (
+        {canEdit(role) && selected.size > 0 && (
           <button
             onClick={handleBulkDelete}
             disabled={bulkDeleting}
@@ -201,7 +202,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/80">
-                {role === 'council' && (
+                {canEdit(role) && (
                   <th className="px-4 py-3 w-8">
                     <input
                       type="checkbox"
@@ -229,7 +230,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                 ))}
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Votes</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</th>
-                {role === 'council' && (
+                {canEdit(role) && (
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
                 )}
               </tr>
@@ -244,7 +245,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
               ) : (
                 paged.map((entry) => (
                   <tr key={entry.id} className={`hover:bg-gray-800/30 transition-colors group ${selected.has(entry.id) ? 'bg-yellow-500/5' : ''}`}>
-                    {role === 'council' && (
+                    {canEdit(role) && (
                       <td className="px-4 py-2.5 w-8">
                         <input
                           type="checkbox"
@@ -294,9 +295,9 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </div>
                       ) : (
                         <span
-                          className={role === 'council' ? 'cursor-pointer hover:text-gray-200' : ''}
-                          onClick={() => role === 'council' && startEditRaid(entry)}
-                          title={role === 'council' ? 'Click to edit raid' : undefined}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-200' : ''}
+                          onClick={() => canEdit(role) && startEditRaid(entry)}
+                          title={canEdit(role) ? 'Click to edit raid' : undefined}
                         >
                           {entry.raid || '—'}
                         </span>
@@ -322,15 +323,15 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </div>
                       ) : (
                         <span
-                          className={role === 'council' ? 'cursor-pointer hover:text-gray-300' : ''}
-                          onClick={() => role === 'council' && startEditNote(entry)}
-                          title={role === 'council' ? 'Click to edit note' : undefined}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-300' : ''}
+                          onClick={() => canEdit(role) && startEditNote(entry)}
+                          title={canEdit(role) ? 'Click to edit note' : undefined}
                         >
-                          {entry.notes || (role === 'council' ? <span className="text-gray-700 italic">add note…</span> : '—')}
+                          {entry.notes || (canEdit(role) ? <span className="text-gray-700 italic">add note…</span> : '—')}
                         </span>
                       )}
                     </td>
-                    {role === 'council' && (
+                    {canEdit(role) && (
                       <td className="px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onDelete?.(entry.id)}

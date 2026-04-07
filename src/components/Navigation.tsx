@@ -1,3 +1,4 @@
+import { canEdit } from '../types';
 import type { UserRole } from '../types';
 
 export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'council' | 'admin';
@@ -11,14 +12,12 @@ interface NavigationProps {
 }
 
 export function Navigation({ activeTab, onTabChange, role, username, onSignOut }: NavigationProps) {
-  const isCouncil = role === 'council';
-
-  const tabs: { id: NavTab; label: string; councilOnly?: boolean }[] = [
+  const tabs: { id: NavTab; label: string; requireCouncil?: boolean; requireAdmin?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'History' },
     { id: 'wishlist', label: 'Wishlist' },
-    { id: 'council', label: 'Council', councilOnly: true },
-    { id: 'admin', label: 'Admin', councilOnly: true },
+    { id: 'council', label: 'Council', requireCouncil: true },
+    { id: 'admin', label: 'Admin', requireAdmin: true },
   ];
 
   return (
@@ -34,7 +33,8 @@ export function Navigation({ activeTab, onTabChange, role, username, onSignOut }
           {/* Tabs */}
           <div className="flex items-center gap-1 flex-1">
             {tabs.map((tab) => {
-              if (tab.councilOnly && !isCouncil) return null;
+              if (tab.requireAdmin && role !== 'admin') return null;
+              if (tab.requireCouncil && !canEdit(role)) return null;
               return (
                 <button
                   key={tab.id}
@@ -55,7 +55,9 @@ export function Navigation({ activeTab, onTabChange, role, username, onSignOut }
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-medium text-gray-300">{username}</p>
-              <p className="text-xs text-gray-600 capitalize">{role}</p>
+              <p className={`text-xs capitalize font-medium ${
+                role === 'admin' ? 'text-red-400' : role === 'council' ? 'text-yellow-500' : 'text-gray-600'
+              }`}>{role}</p>
             </div>
             <button
               onClick={onSignOut}

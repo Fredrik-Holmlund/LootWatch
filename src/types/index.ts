@@ -45,7 +45,12 @@ export interface CouncilNote {
   created_at: string;
 }
 
-export type UserRole = 'council' | 'raider';
+export type UserRole = 'council' | 'raider' | 'admin';
+
+/** True for roles that can perform council-level actions */
+export function canEdit(role: UserRole | null): boolean {
+  return role === 'council' || role === 'admin';
+}
 
 export interface Profile {
   id: string;

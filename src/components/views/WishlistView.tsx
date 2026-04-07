@@ -6,6 +6,7 @@ import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhase
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 import type { Profile, RaidLoot, SoftReserve, UserRole } from '../../types';
+import { canEdit } from '../../types';
 
 interface WishlistViewProps {
   profile: Profile | null;
@@ -263,7 +264,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Boss</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
-                    {role === 'council' && <th className="px-4 py-3"></th>}
+                    {canEdit(role) && <th className="px-4 py-3"></th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
@@ -280,7 +281,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                       <td className="px-4 py-2.5 text-yellow-300/80 text-sm">{w.item_name}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{w.boss_name ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{w.instance_name ?? '—'}</td>
-                      {role === 'council' && (
+                      {canEdit(role) && (
                         <td className="px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => deleteWish(w.id)}

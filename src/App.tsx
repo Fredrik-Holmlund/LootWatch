@@ -7,12 +7,12 @@ import { HistoryView } from './components/views/HistoryView';
 import { WishlistView } from './components/views/WishlistView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
+import { canEdit } from './types';
 
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
-  // Loading splash
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -24,19 +24,18 @@ function App() {
     );
   }
 
-  // Auth gate
   if (!user) {
     return <AuthForm onSignIn={signIn} onSignUp={signUp} />;
   }
 
-  // Council-only tab guard: redirect non-council away from restricted tabs
   const effectiveTab: NavTab =
-    (activeTab === 'council' || activeTab === 'admin') && role !== 'council'
-      ? 'dashboard'
-      : activeTab;
+    activeTab === 'admin' && role !== 'admin' ? 'dashboard'
+    : activeTab === 'council' && !canEdit(role) ? 'dashboard'
+    : activeTab;
 
   function handleTabChange(tab: NavTab) {
-    if ((tab === 'council' || tab === 'admin') && role !== 'council') return;
+    if (tab === 'admin' && role !== 'admin') return;
+    if (tab === 'council' && !canEdit(role)) return;
     setActiveTab(tab);
   }
 
@@ -54,8 +53,8 @@ function App() {
         {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
-        {effectiveTab === 'council' && role === 'council' && <CouncilView />}
-        {effectiveTab === 'admin' && role === 'council' && <AdminView />}
+        {effectiveTab === 'council' && canEdit(role) && <CouncilView />}
+        {effectiveTab === 'admin' && role === 'admin' && <AdminView profile={profile} />}
       </main>
     </div>
   );
