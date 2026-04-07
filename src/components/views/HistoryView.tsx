@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { UserRole } from '../../types';
 import { useLootHistory } from '../../hooks/useLootHistory';
 import { CSVImport } from '../history/CSVImport';
+import { AddLootEntry } from '../history/AddLootEntry';
 import { LootTable } from '../history/LootTable';
 import { PlayerSummary } from '../history/PlayerSummary';
 import { WarningsPanel } from '../history/WarningsPanel';
@@ -11,11 +12,16 @@ interface HistoryViewProps {
 }
 
 type SubTab = 'table' | 'players' | 'warnings';
+type Panel = 'none' | 'import' | 'add';
 
 export function HistoryView({ role }: HistoryViewProps) {
   const { entries, loading, error, importEntries, deleteEntry, updateNote, updateRaid } = useLootHistory();
   const [subTab, setSubTab] = useState<SubTab>('table');
-  const [showImport, setShowImport] = useState(false);
+  const [panel, setPanel] = useState<Panel>('none');
+
+  function togglePanel(p: Panel) {
+    setPanel((cur) => (cur === p ? 'none' : p));
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
@@ -23,28 +29,42 @@ export function HistoryView({ role }: HistoryViewProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Loot History</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {entries.length} entries recorded
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">{entries.length} entries recorded</p>
         </div>
-        <div className="flex items-center gap-2">
-          {role === 'council' && (
+        {role === 'council' && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowImport((s) => !s)}
+              onClick={() => togglePanel('add')}
               className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-                showImport
+                panel === 'add'
                   ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10'
                   : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
               }`}
             >
-              {showImport ? 'Hide Import' : '+ Import CSV'}
+              {panel === 'add' ? 'Cancel' : '+ Add Entry'}
             </button>
-          )}
-        </div>
+            <button
+              onClick={() => togglePanel('import')}
+              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                panel === 'import'
+                  ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10'
+                  : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+              }`}
+            >
+              {panel === 'import' ? 'Hide Import' : '+ Import CSV'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* CSV Import */}
-      {showImport && role === 'council' && (
+      {panel === 'add' && role === 'council' && (
+        <AddLootEntry
+          onAdd={importEntries}
+          onClose={() => setPanel('none')}
+        />
+      )}
+
+      {panel === 'import' && role === 'council' && (
         <CSVImport existingEntries={entries} onImport={importEntries} />
       )}
 
@@ -69,7 +89,6 @@ export function HistoryView({ role }: HistoryViewProps) {
         ))}
       </div>
 
-      {/* Content */}
       {error && (
         <div className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
           Error: {error}
