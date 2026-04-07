@@ -75,5 +75,15 @@ export function useLootHistory() {
     []
   );
 
-  return { entries, loading, error, importEntries, deleteEntry, updateNote, updateRaid, refetch: fetchEntries };
+  const bulkDeleteEntries = useCallback(
+    async (ids: string[]) => {
+      const { error } = await supabase.from('loot_entries').delete().in('id', ids);
+      if (error) return error.message;
+      setEntries((prev) => prev.filter((e) => !ids.includes(e.id)));
+      return null;
+    },
+    []
+  );
+
+  return { entries, loading, error, importEntries, deleteEntry, bulkDeleteEntries, updateNote, updateRaid, refetch: fetchEntries };
 }
