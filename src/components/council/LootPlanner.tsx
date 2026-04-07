@@ -2,14 +2,37 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useLootCandidates } from '../../hooks/useLootCandidates';
 import { usePlayers } from '../../hooks/usePlayers';
+import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
-import type { RaidLoot, LootCandidate, Player } from '../../types';
+import type { RaidLoot, LootCandidate, Player, LootEntry } from '../../types';
 
-export function LootPlanner() {
+interface LootPlannerProps {
+  historyEntries: LootEntry[];
+}
+
+export function LootPlanner({ historyEntries }: LootPlannerProps) {
   const { loot, loading, error } = useRaidLoot();
   const { players } = usePlayers();
+
+  // Count how many times each item has been awarded (by item_id, fallback item_name)
+  const awardedCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of historyEntries) {
+      const key = e.item_id ? `id:${e.item_id}` : `name:${e.item_name.toLowerCase()}`;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [historyEntries]);
+
+  function getAwardedCount(item: RaidLoot): number {
+    if (item.item_id) {
+      const byId = awardedCounts.get(`id:${item.item_id}`);
+      if (byId !== undefined) return byId;
+    }
+    return awardedCounts.get(`name:${item.item_name.toLowerCase()}`) ?? 0;
+  }
   const [selectedPhase, setSelectedPhase] = useState(1);
 
   const grouped = useMemo(() => {
@@ -31,6 +54,8 @@ export function LootPlanner() {
   if (error) return <div className="text-red-400 text-sm p-4">{error}</div>;
 
   const hasLoot = Object.keys(grouped).length > 0;
+
+  useWowheadTooltips([grouped, selectedPhase]);
 
   return (
     <div className="space-y-4">
@@ -66,7 +91,7 @@ export function LootPlanner() {
               </h3>
               <div className="space-y-4">
                 {sortBosses(instance, Object.keys(bosses)).map((boss) => (
-                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} />
+                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} />
                 ))}
               </div>
             </div>
@@ -77,7 +102,7 @@ export function LootPlanner() {
   );
 }
 
-function BossSection({ boss, items, players }: { boss: string; items: RaidLoot[]; players: Player[] }) {
+function BossSection({ boss, items, players, getAwardedCount }: { boss: string; items: RaidLoot[]; players: Player[]; getAwardedCount: (item: RaidLoot) => number }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
       <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800">
@@ -85,14 +110,14 @@ function BossSection({ boss, items, players }: { boss: string; items: RaidLoot[]
       </div>
       <div className="divide-y divide-gray-800/60">
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} players={players} />
+          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemRow({ item, players }: { item: RaidLoot; players: Player[] }) {
+function ItemRow({ item, players, awardedCount }: { item: RaidLoot; players: Player[]; awardedCount: number }) {
   const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
     useLootCandidates(item.id);
   const [adding, setAdding] = useState(false);
@@ -163,6 +188,13 @@ function ItemRow({ item, players }: { item: RaidLoot; players: Player[] }) {
           <span className="text-sm text-yellow-300/90 leading-tight">{item.item_name}</span>
         )}
       </div>
+
+      {/* Awarded count badge */}
+      {awardedCount > 0 && (
+        <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5 whitespace-nowrap">
+          ×{awardedCount} awarded
+        </span>
+      )}
 
       {/* Candidates */}
       <div className="flex flex-wrap items-center gap-1.5 flex-1">

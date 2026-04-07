@@ -15,7 +15,7 @@ type SubTab = 'table' | 'players' | 'warnings';
 type Panel = 'none' | 'import' | 'add';
 
 export function HistoryView({ role }: HistoryViewProps) {
-  const { entries, loading, error, importEntries, deleteEntry, updateNote, updateRaid } = useLootHistory();
+  const { entries, loading, error, importEntries, deleteEntry, bulkDeleteEntries, updateNote, updateRaid } = useLootHistory();
   const [subTab, setSubTab] = useState<SubTab>('table');
   const [panel, setPanel] = useState<Panel>('none');
 
@@ -109,6 +109,7 @@ export function HistoryView({ role }: HistoryViewProps) {
               entries={entries}
               role={role}
               onDelete={deleteEntry}
+              onBulkDelete={bulkDeleteEntries}
               onUpdateNote={updateNote}
               onUpdateRaid={updateRaid}
             />

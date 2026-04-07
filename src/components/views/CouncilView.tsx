@@ -49,7 +49,7 @@ export function CouncilView() {
       </div>
 
       {/* Content */}
-      {subTab === 'planner' && <LootPlanner />}
+      {subTab === 'planner' && <LootPlanner historyEntries={entries} />}
       {subTab === 'roster' && <RosterPanel historyEntries={entries} />}
       {subTab === 'distribution' && <WishlistPanel entries={entries} />}
       {subTab === 'notes' && (

@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { LootEntry, UserRole } from '../../types';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
+import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
 
 interface LootTableProps {
   entries: LootEntry[];
   role: UserRole | null;
   onDelete?: (id: string) => void;
+  onBulkDelete?: (ids: string[]) => Promise<string | null>;
   onUpdateNote?: (id: string, notes: string) => void;
   onUpdateRaid?: (id: string, raid: string) => void;
 }
 
 type SortKey = 'timestamp' | 'player_name' | 'item_name' | 'raid' | 'boss' | 'response';
 
-export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid }: LootTableProps) {
+export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote, onUpdateRaid }: LootTableProps) {
   const [search, setSearch] = useState('');
   const [filterRaid, setFilterRaid] = useState('');
   const [filterClass, setFilterClass] = useState('');
@@ -24,6 +26,8 @@ export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid 
   const [editingRaid, setEditingRaid] = useState<string | null>(null);
   const [raidValue, setRaidValue] = useState('');
   const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const PAGE_SIZE = 50;
 
   const raids = Array.from(new Set(entries.map((e) => e.raid).filter(Boolean))).sort();
@@ -50,6 +54,62 @@ export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid 
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Wowhead tooltips after filter/page changes
+  useWowheadTooltips([paged]);
+
+  // Select helpers
+  const allPageIds = useMemo(() => paged.map((e) => e.id), [paged]);
+  const allPageSelected = allPageIds.length > 0 && allPageIds.every((id) => selected.has(id));
+
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) allPageIds.forEach((id) => next.delete(id));
+      else allPageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (!selected.size) return;
+    if (!confirm(`Delete ${selected.size} selected entries?`)) return;
+    setBulkDeleting(true);
+    await onBulkDelete?.([...selected]);
+    setSelected(new Set());
+    setBulkDeleting(false);
+  }
+
+  function exportCSV() {
+    const cols = ['Date', 'Player', 'Class', 'Item', 'Raid', 'Boss', 'Response', 'Votes', 'Notes'];
+    const rows = filtered.map((e) => [
+      new Date(e.timestamp).toISOString().slice(0, 10),
+      stripRealm(e.player_name),
+      e.player_class ?? '',
+      e.item_name,
+      e.raid ?? '',
+      e.boss ?? '',
+      e.response ?? '',
+      String(e.votes ?? ''),
+      (e.notes ?? '').replace(/"/g, '""'),
+    ].map((v) => `"${v}"`).join(','));
+    const csv = [cols.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'loot-history.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function handleSort(key: SortKey) {
     if (sortKey === key) setSortAsc((a) => !a);
@@ -118,6 +178,21 @@ export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid 
         <span className="text-xs text-gray-600 self-center ml-1">
           {filtered.length} entries
         </span>
+        <button
+          onClick={exportCSV}
+          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 transition-colors"
+        >
+          Export CSV
+        </button>
+        {role === 'council' && selected.size > 0 && (
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className="text-xs px-3 py-1.5 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+          >
+            {bulkDeleting ? 'Deleting…' : `Delete ${selected.size} selected`}
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -126,6 +201,16 @@ export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid 
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/80">
+                {role === 'council' && (
+                  <th className="px-4 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      onChange={toggleSelectAll}
+                      className="accent-yellow-500 cursor-pointer"
+                    />
+                  </th>
+                )}
                 {([
                   ['timestamp', 'Date'],
                   ['player_name', 'Player'],
@@ -158,7 +243,17 @@ export function LootTable({ entries, role, onDelete, onUpdateNote, onUpdateRaid 
                 </tr>
               ) : (
                 paged.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-800/30 transition-colors group">
+                  <tr key={entry.id} className={`hover:bg-gray-800/30 transition-colors group ${selected.has(entry.id) ? 'bg-yellow-500/5' : ''}`}>
+                    {role === 'council' && (
+                      <td className="px-4 py-2.5 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(entry.id)}
+                          onChange={() => toggleSelect(entry.id)}
+                          className="accent-yellow-500 cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap text-xs">
                       {formatDate(entry.timestamp)}
                     </td>
