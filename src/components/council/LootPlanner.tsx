@@ -33,6 +33,12 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
     }
     return awardedCounts.get(`name:${item.item_name.toLowerCase()}`) ?? 0;
   }
+
+  function getAwardedEntries(item: RaidLoot): LootEntry[] {
+    return historyEntries.filter((e) =>
+      item.item_id ? e.item_id === item.item_id : e.item_name.toLowerCase() === item.item_name.toLowerCase()
+    );
+  }
   const [selectedPhase, setSelectedPhase] = useState(1);
 
   const grouped = useMemo(() => {
@@ -91,7 +97,7 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
               </h3>
               <div className="space-y-4">
                 {sortBosses(instance, Object.keys(bosses)).map((boss) => (
-                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} />
+                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} getAwardedEntries={getAwardedEntries} />
                 ))}
               </div>
             </div>
@@ -102,7 +108,11 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
   );
 }
 
-function BossSection({ boss, items, players, getAwardedCount }: { boss: string; items: RaidLoot[]; players: Player[]; getAwardedCount: (item: RaidLoot) => number }) {
+function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries }: {
+  boss: string; items: RaidLoot[]; players: Player[];
+  getAwardedCount: (item: RaidLoot) => number;
+  getAwardedEntries: (item: RaidLoot) => LootEntry[];
+}) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
       <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800">
@@ -110,14 +120,14 @@ function BossSection({ boss, items, players, getAwardedCount }: { boss: string; 
       </div>
       <div className="divide-y divide-gray-800/60">
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} />
+          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} awardedEntries={getAwardedEntries(item)} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemRow({ item, players, awardedCount }: { item: RaidLoot; players: Player[]; awardedCount: number }) {
+function ItemRow({ item, players, awardedCount, awardedEntries }: { item: RaidLoot; players: Player[]; awardedCount: number; awardedEntries: LootEntry[] }) {
   const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
     useLootCandidates(item.id);
   const [adding, setAdding] = useState(false);
@@ -189,10 +199,26 @@ function ItemRow({ item, players, awardedCount }: { item: RaidLoot; players: Pla
         )}
       </div>
 
-      {/* Awarded count badge */}
+      {/* Awarded count badge with hover tooltip */}
       {awardedCount > 0 && (
-        <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5 whitespace-nowrap">
-          ×{awardedCount} awarded
+        <span className="relative group/awarded">
+          <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default">
+            ×{awardedCount} awarded
+          </span>
+          <div className="absolute left-0 top-full mt-1.5 z-30 hidden group-hover/awarded:block min-w-[160px]">
+            <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
+              {awardedEntries.map((e, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 text-xs">
+                  <span style={{ color: getClassColor(e.player_class) }} className="font-medium">
+                    {stripRealm(e.player_name)}
+                  </span>
+                  <span className="text-gray-500 whitespace-nowrap">
+                    {new Date(e.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </span>
       )}
 
