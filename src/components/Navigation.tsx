@@ -1,6 +1,6 @@
 import type { UserRole } from '../types';
 
-export type NavTab = 'history' | 'council' | 'admin';
+export type NavTab = 'dashboard' | 'history' | 'council' | 'admin';
 
 interface NavigationProps {
   activeTab: NavTab;
@@ -14,6 +14,7 @@ export function Navigation({ activeTab, onTabChange, role, username, onSignOut }
   const isCouncil = role === 'council';
 
   const tabs: { id: NavTab; label: string; councilOnly?: boolean }[] = [
+    { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'History' },
     { id: 'council', label: 'Council', councilOnly: true },
     { id: 'admin', label: 'Admin', councilOnly: true },

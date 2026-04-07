@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthForm } from './components/AuthForm';
 import { Navigation, type NavTab } from './components/Navigation';
+import { DashboardView } from './components/views/DashboardView';
 import { HistoryView } from './components/views/HistoryView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>('history');
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
   // Loading splash
   if (loading) {
@@ -27,12 +28,11 @@ function App() {
     return <AuthForm onSignIn={signIn} onSignUp={signUp} />;
   }
 
-  // profile may still be loading in background — render the app shell anyway
-  // role will be null until profile resolves, which limits council/admin access temporarily
-
-  // Council-only tab guard: redirect raiders away from restricted tabs
+  // Council-only tab guard: redirect non-council away from restricted tabs
   const effectiveTab: NavTab =
-    activeTab !== 'history' && role !== 'council' ? 'history' : activeTab;
+    (activeTab === 'council' || activeTab === 'admin') && role !== 'council'
+      ? 'dashboard'
+      : activeTab;
 
   function handleTabChange(tab: NavTab) {
     if ((tab === 'council' || tab === 'admin') && role !== 'council') return;
@@ -50,6 +50,7 @@ function App() {
       />
 
       <main>
+        {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'council' && role === 'council' && <CouncilView />}
         {effectiveTab === 'admin' && role === 'council' && <AdminView />}
