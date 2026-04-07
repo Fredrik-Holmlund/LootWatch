@@ -25,6 +25,8 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [editingUsername, setEditingUsername] = useState<string | null>(null);
+  const [usernameValue, setUsernameValue] = useState('');
 
   async function fetchProfiles() {
     setLoading(true);
@@ -36,6 +38,18 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   }
 
   useEffect(() => { fetchProfiles(); }, []);
+
+  async function saveUsername(id: string) {
+    const trimmed = usernameValue.trim();
+    if (!trimmed) return;
+    setUpdating(id);
+    setError(null);
+    const { error } = await supabase.from('profiles').update({ username: trimmed }).eq('id', id);
+    if (error) setError(error.message);
+    else setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, username: trimmed } : p)));
+    setUpdating(null);
+    setEditingUsername(null);
+  }
 
   async function changeRole(profile: Profile, newRole: UserRole) {
     if (profile.id === currentUserId) return; // can't change own role
@@ -84,7 +98,27 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
                 return (
                   <tr key={profile.id} className="hover:bg-gray-800/20 transition-colors">
                     <td className="px-4 py-3 font-medium text-white">
-                      {profile.username}
+                      {editingUsername === profile.id ? (
+                        <div className="flex gap-1 items-center">
+                          <input
+                            autoFocus
+                            value={usernameValue}
+                            onChange={(e) => setUsernameValue(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') saveUsername(profile.id); if (e.key === 'Escape') setEditingUsername(null); }}
+                            className="bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none w-32"
+                          />
+                          <button onClick={() => saveUsername(profile.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
+                          <button onClick={() => setEditingUsername(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                        </div>
+                      ) : (
+                        <span
+                          className="cursor-pointer hover:text-yellow-300 transition-colors"
+                          onClick={() => { setEditingUsername(profile.id); setUsernameValue(profile.username); }}
+                          title="Click to edit username"
+                        >
+                          {profile.username}
+                        </span>
+                      )}
                       {isSelf && <span className="ml-2 text-xs text-gray-600">(you)</span>}
                     </td>
                     <td className="px-4 py-3">

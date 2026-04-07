@@ -85,5 +85,23 @@ export function useLootHistory() {
     []
   );
 
-  return { entries, loading, error, importEntries, deleteEntry, bulkDeleteEntries, updateNote, updateRaid, refetch: fetchEntries };
+  const updateBoss = useCallback(
+    async (id: string, boss: string) => {
+      const { error } = await supabase.from('loot_entries').update({ boss }).eq('id', id);
+      if (error) return error.message;
+      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, boss } : e)));
+      return null;
+    }, []
+  );
+
+  const updateResponse = useCallback(
+    async (id: string, response: string) => {
+      const { error } = await supabase.from('loot_entries').update({ response }).eq('id', id);
+      if (error) return error.message;
+      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, response } : e)));
+      return null;
+    }, []
+  );
+
+  return { entries, loading, error, importEntries, deleteEntry, bulkDeleteEntries, updateNote, updateRaid, updateBoss, updateResponse, refetch: fetchEntries };
 }
