@@ -6,7 +6,7 @@ export interface AppSettings {
   show_history: boolean;
 }
 
-const DEFAULTS: AppSettings = { show_dashboard: true, show_history: true };
+const DEFAULTS: AppSettings = { show_dashboard: false, show_history: false };
 
 export function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULTS);
