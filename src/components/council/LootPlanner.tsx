@@ -235,6 +235,9 @@ function ItemRow({ item, players, awardedCount, awardedEntries }: { item: RaidLo
                 idx={idx}
                 total={candidates.length}
                 players={players}
+                hasReceived={awardedEntries.some(
+                  (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
+                )}
                 onRemove={removeCandidate}
                 onMove={moveCandidate}
               />
@@ -300,6 +303,7 @@ function CandidatePill({
   idx,
   total,
   players,
+  hasReceived,
   onRemove,
   onMove,
 }: {
@@ -307,6 +311,7 @@ function CandidatePill({
   idx: number;
   total: number;
   players: Player[];
+  hasReceived: boolean;
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
 }) {
@@ -320,6 +325,9 @@ function CandidatePill({
     >
       <span className="opacity-60 text-[10px] mr-0.5">{idx + 1}.</span>
       {candidate.player_name}
+      {hasReceived && (
+        <span className="text-[10px] font-bold opacity-70 ml-0.5" title="Already received this item">✓</span>
+      )}
       <span className="hidden group-hover:inline-flex items-center gap-0.5 ml-0.5">
         <button
           onClick={() => onMove(candidate.id, 'up')}
