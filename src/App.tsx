@@ -4,6 +4,7 @@ import { AuthForm } from './components/AuthForm';
 import { Navigation, type NavTab } from './components/Navigation';
 import { DashboardView } from './components/views/DashboardView';
 import { HistoryView } from './components/views/HistoryView';
+import { WishlistView } from './components/views/WishlistView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 
@@ -52,6 +53,7 @@ function App() {
       <main>
         {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
+        {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
         {effectiveTab === 'council' && role === 'council' && <CouncilView />}
         {effectiveTab === 'admin' && role === 'council' && <AdminView />}
       </main>

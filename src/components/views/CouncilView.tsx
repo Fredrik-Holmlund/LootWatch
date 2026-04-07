@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLootHistory } from '../../hooks/useLootHistory';
 import { useCouncilNotes } from '../../hooks/useCouncilNotes';
+import { useWishlist } from '../../hooks/useWishlist';
 import { WishlistPanel } from '../council/WishlistPanel';
 import { NotesPanel } from '../council/NotesPanel';
 import { LootPlanner } from '../council/LootPlanner';
@@ -10,6 +11,7 @@ type SubTab = 'planner' | 'roster' | 'distribution' | 'notes';
 
 export function CouncilView() {
   const { entries } = useLootHistory();
+  const { wishes } = useWishlist(null);
   const { notes, loading: notesLoading, addNote, updateNote, deleteNote } = useCouncilNotes();
   const [subTab, setSubTab] = useState<SubTab>('planner');
 
@@ -49,7 +51,7 @@ export function CouncilView() {
       </div>
 
       {/* Content */}
-      {subTab === 'planner' && <LootPlanner historyEntries={entries} />}
+      {subTab === 'planner' && <LootPlanner historyEntries={entries} wishes={wishes} />}
       {subTab === 'roster' && <RosterPanel historyEntries={entries} />}
       {subTab === 'distribution' && <WishlistPanel entries={entries} />}
       {subTab === 'notes' && (

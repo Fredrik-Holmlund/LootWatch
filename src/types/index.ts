@@ -75,6 +75,18 @@ export interface LootCandidate {
   created_at: string;
 }
 
+export interface SoftReserve {
+  id: string;
+  player_name: string;
+  player_class: string | null;
+  raid_loot_id: number | null;
+  item_name: string;
+  instance_name: string | null;
+  boss_name: string | null;
+  note: string | null;
+  created_at: string;
+}
+
 export interface CSVRow {
   date: string;
   player: string;

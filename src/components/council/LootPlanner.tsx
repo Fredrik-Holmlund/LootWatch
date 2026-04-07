@@ -6,13 +6,14 @@ import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
-import type { RaidLoot, LootCandidate, Player, LootEntry } from '../../types';
+import type { RaidLoot, LootCandidate, Player, LootEntry, SoftReserve } from '../../types';
 
 interface LootPlannerProps {
   historyEntries: LootEntry[];
+  wishes: SoftReserve[];
 }
 
-export function LootPlanner({ historyEntries }: LootPlannerProps) {
+export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   const { loot, loading, error } = useRaidLoot();
   const { players } = usePlayers();
 
@@ -32,6 +33,10 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
       if (byId !== undefined) return byId;
     }
     return awardedCounts.get(`name:${item.item_name.toLowerCase()}`) ?? 0;
+  }
+
+  function getWishers(item: RaidLoot): SoftReserve[] {
+    return wishes.filter((w) => w.raid_loot_id === item.id);
   }
 
   function getAwardedEntries(item: RaidLoot): LootEntry[] {
@@ -97,7 +102,7 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
               </h3>
               <div className="space-y-4">
                 {sortBosses(instance, Object.keys(bosses)).map((boss) => (
-                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} getAwardedEntries={getAwardedEntries} />
+                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} getAwardedEntries={getAwardedEntries} getWishers={getWishers} />
                 ))}
               </div>
             </div>
@@ -108,10 +113,11 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
   );
 }
 
-function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries }: {
+function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries, getWishers }: {
   boss: string; items: RaidLoot[]; players: Player[];
   getAwardedCount: (item: RaidLoot) => number;
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
+  getWishers: (item: RaidLoot) => SoftReserve[];
 }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg">
@@ -120,14 +126,14 @@ function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries 
       </div>
       <div className="divide-y divide-gray-800/60">
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} awardedEntries={getAwardedEntries(item)} />
+          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} awardedEntries={getAwardedEntries(item)} wishers={getWishers(item)} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemRow({ item, players, awardedCount, awardedEntries }: { item: RaidLoot; players: Player[]; awardedCount: number; awardedEntries: LootEntry[] }) {
+function ItemRow({ item, players, awardedCount, awardedEntries, wishers }: { item: RaidLoot; players: Player[]; awardedCount: number; awardedEntries: LootEntry[]; wishers: SoftReserve[] }) {
   const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
     useLootCandidates(item.id);
   const [adding, setAdding] = useState(false);
@@ -214,6 +220,26 @@ function ItemRow({ item, players, awardedCount, awardedEntries }: { item: RaidLo
                   </span>
                   <span className="text-gray-500 whitespace-nowrap">
                     {new Date(e.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </span>
+      )}
+
+      {/* Wish count badge */}
+      {wishers.length > 0 && (
+        <span className="relative group/wishers">
+          <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default">
+            ♥ {wishers.length}
+          </span>
+          <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[140px]">
+            <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
+              {wishers.map((w, i) => (
+                <div key={i} className="text-xs">
+                  <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
+                    {stripRealm(w.player_name)}
                   </span>
                 </div>
               ))}
