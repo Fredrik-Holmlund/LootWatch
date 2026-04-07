@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
+import { useAppSettings } from './hooks/useAppSettings';
 import { AuthForm } from './components/AuthForm';
 import { Navigation, type NavTab } from './components/Navigation';
 import { DashboardView } from './components/views/DashboardView';
@@ -11,7 +12,8 @@ import { canEdit } from './types';
 
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const { settings } = useAppSettings();
+  const [activeTab, setActiveTab] = useState<NavTab>('wishlist');
 
   if (loading) {
     return (
@@ -28,14 +30,25 @@ function App() {
     return <AuthForm onSignIn={signIn} onSignUp={signUp} />;
   }
 
+  // Raiders can only access tabs that are enabled in app settings
+  const raiderCanSee = (tab: NavTab) => {
+    if (canEdit(role) || role === 'admin') return true;
+    if (tab === 'dashboard') return settings.show_dashboard;
+    if (tab === 'history') return settings.show_history;
+    if (tab === 'wishlist') return true;
+    return false;
+  };
+
   const effectiveTab: NavTab =
-    activeTab === 'admin' && role !== 'admin' ? 'dashboard'
-    : activeTab === 'council' && !canEdit(role) ? 'dashboard'
+    activeTab === 'admin' && role !== 'admin' ? 'wishlist'
+    : activeTab === 'council' && !canEdit(role) ? 'wishlist'
+    : !raiderCanSee(activeTab) ? 'wishlist'
     : activeTab;
 
   function handleTabChange(tab: NavTab) {
     if (tab === 'admin' && role !== 'admin') return;
     if (tab === 'council' && !canEdit(role)) return;
+    if (!raiderCanSee(tab)) return;
     setActiveTab(tab);
   }
 
@@ -45,6 +58,7 @@ function App() {
         activeTab={effectiveTab}
         onTabChange={handleTabChange}
         role={role}
+        settings={settings}
         username={profile?.username ?? user.email?.split('@')[0] ?? ''}
         onSignOut={signOut}
       />

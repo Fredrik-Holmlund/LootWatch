@@ -1,5 +1,6 @@
 import { canEdit } from '../types';
 import type { UserRole } from '../types';
+import type { AppSettings } from '../hooks/useAppSettings';
 
 export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'council' | 'admin';
 
@@ -7,11 +8,14 @@ interface NavigationProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   role: UserRole | null;
+  settings: AppSettings;
   username: string | null;
   onSignOut: () => void;
 }
 
-export function Navigation({ activeTab, onTabChange, role, username, onSignOut }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut }: NavigationProps) {
+  const isPrivileged = canEdit(role) || role === 'admin';
+
   const tabs: { id: NavTab; label: string; requireCouncil?: boolean; requireAdmin?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'History' },
@@ -35,6 +39,9 @@ export function Navigation({ activeTab, onTabChange, role, username, onSignOut }
             {tabs.map((tab) => {
               if (tab.requireAdmin && role !== 'admin') return null;
               if (tab.requireCouncil && !canEdit(role)) return null;
+              // Hide dashboard/history from raiders if disabled
+              if (!isPrivileged && tab.id === 'dashboard' && !settings.show_dashboard) return null;
+              if (!isPrivileged && tab.id === 'history' && !settings.show_history) return null;
               return (
                 <button
                   key={tab.id}

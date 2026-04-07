@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { UserManagement } from '../admin/UserManagement';
 import { RaidLootManager } from '../admin/RaidLootManager';
+import { useAppSettings } from '../../hooks/useAppSettings';
 import type { Profile } from '../../types';
 
 interface AdminViewProps {
   profile: Profile | null;
 }
 
-type SubTab = 'users' | 'raidloot';
+type SubTab = 'users' | 'raidloot' | 'settings';
 
 export function AdminView({ profile }: AdminViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('users');
+  const { settings, loading: settingsLoading, toggleSetting } = useAppSettings();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
@@ -22,7 +24,7 @@ export function AdminView({ profile }: AdminViewProps) {
             Admin Only
           </span>
         </div>
-        <p className="text-sm text-gray-500 mt-0.5">Manage users, roles, and raid loot data</p>
+        <p className="text-sm text-gray-500 mt-0.5">Manage users, roles, raid loot, and site settings</p>
       </div>
 
       {/* Sub-tabs */}
@@ -30,6 +32,7 @@ export function AdminView({ profile }: AdminViewProps) {
         {([
           ['users',    '👥 Users'],
           ['raidloot', '⚔️ Raid Loot'],
+          ['settings', '⚙️ Settings'],
         ] as [SubTab, string][]).map(([id, label]) => (
           <button
             key={id}
@@ -47,12 +50,11 @@ export function AdminView({ profile }: AdminViewProps) {
 
       {subTab === 'users' && (
         <>
-          {/* Role overview */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: '👑 Admin', color: 'text-red-400 border-red-400/20 bg-red-400/5', perks: ['All council permissions', 'Manage user roles', 'Add/edit/delete raid loot', 'Full database access via UI'] },
               { label: '⚔️ Council', color: 'text-yellow-400 border-yellow-400/20 bg-yellow-400/5', perks: ['Import CSV loot history', 'Award and delete entries', 'Edit notes and raids', 'Manage priority notes'] },
-              { label: '🛡️ Raider', color: 'text-gray-400 border-gray-700 bg-gray-800/40', perks: ['View loot history', 'View player summaries', 'Browse & add to wishlist', 'Read-only access'] },
+              { label: '🛡️ Raider', color: 'text-gray-400 border-gray-700 bg-gray-800/40', perks: ['View loot history (if enabled)', 'View player summaries (if enabled)', 'Browse & add to wishlist', 'Read-only access'] },
             ].map(({ label, color, perks }) => (
               <div key={label} className={`rounded-xl border p-3 ${color}`}>
                 <p className="text-sm font-semibold mb-2">{label}</p>
@@ -62,12 +64,58 @@ export function AdminView({ profile }: AdminViewProps) {
               </div>
             ))}
           </div>
-
           <UserManagement currentUserId={profile?.id ?? ''} />
         </>
       )}
 
       {subTab === 'raidloot' && <RaidLootManager />}
+
+      {subTab === 'settings' && (
+        <div className="space-y-4 max-w-lg">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-300 mb-1">Raider Visibility</h3>
+            <p className="text-xs text-gray-600 mb-4">
+              Control which tabs raiders can see. Council and Admin always see all tabs. Wishlist is always visible.
+            </p>
+          </div>
+
+          {settingsLoading ? (
+            <div className="text-sm text-gray-600">Loading…</div>
+          ) : (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
+              {([
+                { key: 'show_dashboard' as const, label: 'Dashboard', desc: 'Overview stats, top recipients, weekly activity' },
+                { key: 'show_history' as const,   label: 'History',   desc: 'Loot table, player summaries, warnings' },
+              ]).map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between px-4 py-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-200 font-medium">{label}</p>
+                    <p className="text-xs text-gray-600">{desc}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleSetting(key)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                      settings[key] ? 'bg-yellow-500' : 'bg-gray-700'
+                    }`}
+                    role="switch"
+                    aria-checked={settings[key]}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                        settings[key] ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-700">
+            Changes take effect immediately for all users on next page load.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
