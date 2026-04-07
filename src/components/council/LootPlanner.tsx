@@ -50,12 +50,12 @@ export function LootPlanner({ historyEntries }: LootPlannerProps) {
     return byInstance;
   }, [loot, selectedPhase]);
 
+  useWowheadTooltips([grouped, selectedPhase]);
+
   if (loading) return <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>;
   if (error) return <div className="text-red-400 text-sm p-4">{error}</div>;
 
   const hasLoot = Object.keys(grouped).length > 0;
-
-  useWowheadTooltips([grouped, selectedPhase]);
 
   return (
     <div className="space-y-4">
