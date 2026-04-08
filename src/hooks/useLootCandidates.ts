@@ -84,5 +84,19 @@ export function useLootCandidates(raidLootId: number | null) {
     []
   );
 
-  return { candidates, loading, addCandidate, removeCandidate, moveCandidate, updateNote };
+  const reorderCandidates = useCallback(
+    async (newOrder: LootCandidate[]) => {
+      // Optimistic update
+      setCandidates(newOrder);
+      // Persist new priorities (use index + 1 as clean priority values)
+      await Promise.all(
+        newOrder.map((c, i) =>
+          supabase.from('loot_candidates').update({ priority: i + 1 }).eq('id', c.id)
+        )
+      );
+    },
+    []
+  );
+
+  return { candidates, loading, addCandidate, removeCandidate, moveCandidate, reorderCandidates, updateNote };
 }

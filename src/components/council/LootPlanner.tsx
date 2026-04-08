@@ -1,4 +1,19 @@
 import React, { useState, useMemo, useRef } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useLootCandidates } from '../../hooks/useLootCandidates';
 import { usePlayers } from '../../hooks/usePlayers';
@@ -142,8 +157,19 @@ function BossSection({ boss, items, players, priorityMap, getAwardedCount, getAw
 }
 
 function ItemRow({ item, players, priorityMap, awardedCount, awardedEntries, wishers }: { item: RaidLoot; players: Player[]; priorityMap: Record<string, number>; awardedCount: number; awardedEntries: LootEntry[]; wishers: SoftReserve[] }) {
-  const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
+  const { candidates, loading, addCandidate, removeCandidate, moveCandidate, reorderCandidates } =
     useLootCandidates(item.id);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = candidates.findIndex((c) => c.id === active.id);
+    const newIdx = candidates.findIndex((c) => c.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    reorderCandidates(arrayMove(candidates, oldIdx, newIdx));
+  }
   const [adding, setAdding] = useState(false);
   const [newPlayer, setNewPlayer] = useState('');
   const [showInput, setShowInput] = useState(false);
@@ -261,23 +287,25 @@ function ItemRow({ item, players, priorityMap, awardedCount, awardedEntries, wis
         {loading ? (
           <span className="text-xs text-gray-700">…</span>
         ) : (
-          <>
-            {candidates.map((c, idx) => (
-              <CandidatePill
-                key={c.id}
-                candidate={c}
-                idx={idx}
-                total={candidates.length}
-                players={players}
-                priorityScore={priorityMap[c.player_name.toLowerCase()]}
-                hasReceived={awardedEntries.some(
-                  (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
-                )}
-                onRemove={removeCandidate}
-                onMove={moveCandidate}
-              />
-            ))}
-          </>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={candidates.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
+              {candidates.map((c, idx) => (
+                <CandidatePill
+                  key={c.id}
+                  candidate={c}
+                  idx={idx}
+                  total={candidates.length}
+                  players={players}
+                  priorityScore={priorityMap[c.player_name.toLowerCase()]}
+                  hasReceived={awardedEntries.some(
+                    (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
+                  )}
+                  onRemove={removeCandidate}
+                  onMove={moveCandidate}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Inline add with autocomplete */}
@@ -359,13 +387,25 @@ function CandidatePill({
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: candidate.id });
   const player = players.find((p) => stripRealm(p.name).toLowerCase() === candidate.player_name.toLowerCase());
   const classColor = getClassColor(player?.player_class ?? null);
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-medium group"
-      style={{ backgroundColor: classColor, border: `1px solid ${classColor}`, color: '#101828' }}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-0.5 text-xs font-medium group cursor-grab active:cursor-grabbing select-none"
+      style={{
+        backgroundColor: classColor,
+        border: `1px solid ${classColor}`,
+        color: '#101828',
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : undefined,
+      }}
     >
       <span className="opacity-60 text-[10px] mr-0.5">{idx + 1}.</span>
       {candidate.player_name}
@@ -383,6 +423,7 @@ function CandidatePill({
       )}
       <span className="hidden group-hover:inline-flex items-center gap-0.5 ml-0.5">
         <button
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onMove(candidate.id, 'up')}
           disabled={idx === 0}
           className="opacity-60 hover:opacity-100 disabled:opacity-20 leading-none"
@@ -390,6 +431,7 @@ function CandidatePill({
           ◂
         </button>
         <button
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onMove(candidate.id, 'down')}
           disabled={idx === total - 1}
           className="opacity-60 hover:opacity-100 disabled:opacity-20 leading-none"
@@ -397,6 +439,7 @@ function CandidatePill({
           ▸
         </button>
         <button
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onRemove(candidate.id)}
           className="opacity-40 hover:opacity-100 hover:text-red-400 leading-none ml-0.5"
         >
