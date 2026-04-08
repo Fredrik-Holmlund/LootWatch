@@ -49,8 +49,11 @@ Deno.serve(async (req) => {
       throw new Error('Guild not configured. Set guild name, realm and region in Admin → Settings.');
     }
 
-    const isClassic = cfg.wcl_game === 'classic';
-    const wclBase = isClassic ? 'classic.warcraftlogs.com' : 'www.warcraftlogs.com';
+    const wclBase = cfg.wcl_game === 'classic'
+      ? 'classic.warcraftlogs.com'
+      : cfg.wcl_game === 'fresh'
+      ? 'fresh.warcraftlogs.com'
+      : 'www.warcraftlogs.com';
 
     // Get WarcraftLogs credentials from secrets
     const clientId = Deno.env.get('WARCRAFTLOGS_CLIENT_ID');

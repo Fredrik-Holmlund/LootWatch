@@ -18,7 +18,7 @@ export function AdminView({ profile }: AdminViewProps) {
   // WarcraftLogs guild config
   const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region', 'wcl_game'] as const;
   type WclKey = typeof WCL_KEYS[number];
-  const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU', wcl_game: 'classic' });
+  const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU', wcl_game: 'fresh' });
   const [wclSaving, setWclSaving] = useState(false);
   const [wclSaved, setWclSaved] = useState(false);
 
@@ -170,8 +170,9 @@ export function AdminView({ profile }: AdminViewProps) {
                   onChange={(e) => setWclConfig((c) => ({ ...c, wcl_game: e.target.value }))}
                   className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-yellow-500/50"
                 >
-                  <option value="classic">Classic / TBC / Wrath</option>
                   <option value="retail">Retail</option>
+                  <option value="classic">Classic / TBC / Wrath</option>
+                  <option value="fresh">Fresh / Season of Discovery</option>
                 </select>
               </div>
               <button
