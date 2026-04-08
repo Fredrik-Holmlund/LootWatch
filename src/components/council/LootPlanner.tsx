@@ -3,6 +3,7 @@ import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useLootCandidates } from '../../hooks/useLootCandidates';
 import { usePlayers } from '../../hooks/usePlayers';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
+import { usePriorityScore } from '../../hooks/usePriorityScore';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
@@ -16,6 +17,12 @@ interface LootPlannerProps {
 export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   const { loot, loading, error } = useRaidLoot();
   const { players } = usePlayers();
+  const { priorities } = usePriorityScore();
+  const priorityMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of priorities) m[p.name.toLowerCase()] = p.score;
+    return m;
+  }, [priorities]);
 
   // Count how many times each item has been awarded (by item_id, fallback item_name)
   const awardedCounts = useMemo(() => {
@@ -102,7 +109,7 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
               </h3>
               <div className="space-y-4">
                 {sortBosses(instance, Object.keys(bosses)).map((boss) => (
-                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} getAwardedCount={getAwardedCount} getAwardedEntries={getAwardedEntries} getWishers={getWishers} />
+                  <BossSection key={boss} boss={boss} items={bosses[boss]} players={players} priorityMap={priorityMap} getAwardedCount={getAwardedCount} getAwardedEntries={getAwardedEntries} getWishers={getWishers} />
                 ))}
               </div>
             </div>
@@ -113,8 +120,9 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   );
 }
 
-function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries, getWishers }: {
+function BossSection({ boss, items, players, priorityMap, getAwardedCount, getAwardedEntries, getWishers }: {
   boss: string; items: RaidLoot[]; players: Player[];
+  priorityMap: Record<string, number>;
   getAwardedCount: (item: RaidLoot) => number;
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
   getWishers: (item: RaidLoot) => SoftReserve[];
@@ -126,14 +134,14 @@ function BossSection({ boss, items, players, getAwardedCount, getAwardedEntries,
       </div>
       <div className="divide-y divide-gray-800/60">
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} players={players} awardedCount={getAwardedCount(item)} awardedEntries={getAwardedEntries(item)} wishers={getWishers(item)} />
+          <ItemRow key={item.id} item={item} players={players} priorityMap={priorityMap} awardedCount={getAwardedCount(item)} awardedEntries={getAwardedEntries(item)} wishers={getWishers(item)} />
         ))}
       </div>
     </div>
   );
 }
 
-function ItemRow({ item, players, awardedCount, awardedEntries, wishers }: { item: RaidLoot; players: Player[]; awardedCount: number; awardedEntries: LootEntry[]; wishers: SoftReserve[] }) {
+function ItemRow({ item, players, priorityMap, awardedCount, awardedEntries, wishers }: { item: RaidLoot; players: Player[]; priorityMap: Record<string, number>; awardedCount: number; awardedEntries: LootEntry[]; wishers: SoftReserve[] }) {
   const { candidates, loading, addCandidate, removeCandidate, moveCandidate } =
     useLootCandidates(item.id);
   const [adding, setAdding] = useState(false);
@@ -261,6 +269,7 @@ function ItemRow({ item, players, awardedCount, awardedEntries, wishers }: { ite
                 idx={idx}
                 total={candidates.length}
                 players={players}
+                priorityScore={priorityMap[c.player_name.toLowerCase()]}
                 hasReceived={awardedEntries.some(
                   (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
                 )}
@@ -324,11 +333,19 @@ function ItemRow({ item, players, awardedCount, awardedEntries, wishers }: { ite
   );
 }
 
+function scoreColor(score: number): string {
+  if (score >= 75) return '#4ade80';
+  if (score >= 50) return '#facc15';
+  if (score >= 25) return '#fb923c';
+  return '#f87171';
+}
+
 function CandidatePill({
   candidate,
   idx,
   total,
   players,
+  priorityScore,
   hasReceived,
   onRemove,
   onMove,
@@ -337,6 +354,7 @@ function CandidatePill({
   idx: number;
   total: number;
   players: Player[];
+  priorityScore?: number;
   hasReceived: boolean;
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
@@ -353,6 +371,15 @@ function CandidatePill({
       {candidate.player_name}
       {hasReceived && (
         <span className="text-[10px] font-bold opacity-70 ml-0.5" title="Already received this item">✓</span>
+      )}
+      {priorityScore !== undefined && (
+        <span
+          className="text-[10px] font-bold rounded px-1 ml-0.5"
+          style={{ backgroundColor: '#00000040', color: scoreColor(priorityScore) }}
+          title={`Priority score: ${priorityScore}`}
+        >
+          {priorityScore}
+        </span>
       )}
       <span className="hidden group-hover:inline-flex items-center gap-0.5 ml-0.5">
         <button
