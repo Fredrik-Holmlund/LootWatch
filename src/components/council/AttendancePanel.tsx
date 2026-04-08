@@ -4,7 +4,6 @@ import { useAttendance } from '../../hooks/useAttendance';
 type SubTab = 'import' | 'edit';
 
 function abbrev(instance: string) {
-  // Short label for column header: first 3 chars of each word, max 2 words
   const words = instance.trim().split(/\s+/);
   if (words.length === 1) return words[0].slice(0, 4);
   return words.slice(0, 2).map((w) => w.slice(0, 3)).join('');
@@ -15,41 +14,64 @@ function shortDate(d: string) {
   return `${dt.getDate()}/${dt.getMonth() + 1}`;
 }
 
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 export function AttendancePanel() {
   const {
     sessions, attendance, loading,
     syncing, syncError, wclReports,
-    syncFromWCL, importSession, deleteSession, toggleAttendance,
+    syncFromWCL, importSession, deleteSession,
+    deletePlayer, createSession, toggleAttendance,
   } = useAttendance();
 
   const [subTab, setSubTab] = useState<SubTab>('import');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [minPlayers, setMinPlayers] = useState(15);
 
+  // Manual session creation
+  const [newInstance, setNewInstance] = useState('');
+  const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [creating, setCreating] = useState(false);
+
+  // Add player to grid
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [addingToSession, setAddingToSession] = useState<string | null>(null);
+
   const importedCodes = new Set(sessions.map((s) => s.report_code).filter(Boolean));
   const filteredReports = wclReports.filter((r) => r.players.length >= minPlayers);
 
-  function formatDate(d: string) {
-    return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
-
-  // All unique players across all sessions, sorted
   const allPlayers = [...new Set(Object.values(attendance).flat())].sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' })
   );
 
-  // Sessions sorted newest first (already are from DB)
   const sortedSessions = [...sessions].sort(
     (a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
   );
 
-  // Att% per player
   const total = sessions.length;
   const attPct = (name: string) => {
     if (total === 0) return 0;
     const count = Object.values(attendance).filter((players) => players.includes(name)).length;
     return Math.round((count / total) * 100);
   };
+
+  async function handleCreateSession() {
+    if (!newInstance.trim() || !newDate) return;
+    setCreating(true);
+    await createSession(newInstance.trim(), newDate);
+    setNewInstance('');
+    setCreating(false);
+  }
+
+  async function handleAddPlayer(sessionId: string) {
+    const name = newPlayerName.trim();
+    if (!name) return;
+    await toggleAttendance(sessionId, name);
+    setNewPlayerName('');
+    setAddingToSession(null);
+  }
 
   if (loading) {
     return <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>;
@@ -63,7 +85,7 @@ export function AttendancePanel() {
           <button
             key={id}
             onClick={() => setSubTab(id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px capitalize ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
               subTab === id
                 ? 'border-yellow-500 text-yellow-400'
                 : 'border-transparent text-gray-500 hover:text-gray-300'
@@ -74,9 +96,11 @@ export function AttendancePanel() {
         ))}
       </div>
 
-      {/* IMPORT TAB */}
+      {/* ── IMPORT TAB ── */}
       {subTab === 'import' && (
         <div className="space-y-5">
+
+          {/* WCL Sync */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-400">{sessions.length} raid sessions saved</p>
             <button
@@ -94,12 +118,37 @@ export function AttendancePanel() {
             </div>
           )}
 
+          {/* Manual session creation */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Add Raid Manually</h3>
+            <div className="flex gap-2">
+              <input
+                value={newInstance}
+                onChange={(e) => setNewInstance(e.target.value)}
+                placeholder="Instance name (e.g. Gruul's Lair)"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+              />
+              <input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+              />
+              <button
+                onClick={handleCreateSession}
+                disabled={creating || !newInstance.trim()}
+                className="px-4 py-1.5 bg-yellow-500 text-gray-950 text-sm font-semibold rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-40"
+              >
+                {creating ? '…' : 'Add'}
+              </button>
+            </div>
+          </div>
+
+          {/* WCL report list */}
           {wclReports.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  WarcraftLogs Reports
-                </h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">WarcraftLogs Reports</h3>
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-gray-600">Min. players</label>
                   <input
@@ -114,9 +163,7 @@ export function AttendancePanel() {
               </div>
               <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
                 {filteredReports.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-xs text-gray-600">
-                    No reports with {minPlayers}+ players found.
-                  </div>
+                  <div className="px-4 py-6 text-center text-xs text-gray-600">No reports with {minPlayers}+ players.</div>
                 ) : filteredReports.map((report) => {
                   const alreadyImported = importedCodes.has(report.code);
                   return (
@@ -142,10 +189,10 @@ export function AttendancePanel() {
             </div>
           )}
 
-          {/* Saved sessions list */}
+          {/* Saved sessions */}
           {sessions.length === 0 ? (
-            <div className="text-center py-12 text-gray-600 text-sm">
-              No sessions yet. Click "Sync from WarcraftLogs" to fetch your guild's recent raids.
+            <div className="text-center py-8 text-gray-600 text-sm">
+              No sessions yet. Add one manually or sync from WarcraftLogs.
             </div>
           ) : (
             <div className="space-y-2">
@@ -169,22 +216,44 @@ export function AttendancePanel() {
                         </span>
                         <span className="text-gray-700 text-xs">{isExpanded ? '▲' : '▼'}</span>
                         <button
-                          onClick={(e) => { e.stopPropagation(); if (confirm('Delete this session?')) deleteSession(session.id); }}
+                          onClick={(e) => { e.stopPropagation(); if (confirm('Delete this session and all its attendance?')) deleteSession(session.id); }}
                           className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           ✕
                         </button>
                       </div>
                     </div>
-                    {isExpanded && players.length > 0 && (
-                      <div className="px-4 pb-3 border-t border-gray-800/60">
-                        <div className="flex flex-wrap gap-1.5 pt-3">
+                    {isExpanded && (
+                      <div className="px-4 pb-4 border-t border-gray-800/60 space-y-3 pt-3">
+                        <div className="flex flex-wrap gap-1.5">
                           {[...players].sort().map((name) => (
                             <span key={name} className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
                               {name}
                             </span>
                           ))}
                         </div>
+                        {/* Add attendee inline */}
+                        {addingToSession === session.id ? (
+                          <div className="flex gap-2">
+                            <input
+                              autoFocus
+                              value={newPlayerName}
+                              onChange={(e) => setNewPlayerName(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleAddPlayer(session.id); if (e.key === 'Escape') { setAddingToSession(null); setNewPlayerName(''); } }}
+                              placeholder="Player name…"
+                              className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                            />
+                            <button onClick={() => handleAddPlayer(session.id)} className="text-xs px-3 py-1 bg-yellow-500 text-gray-950 font-semibold rounded hover:bg-yellow-400">Add</button>
+                            <button onClick={() => { setAddingToSession(null); setNewPlayerName(''); }} className="text-xs px-2 py-1 text-gray-500 hover:text-gray-300">Cancel</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setAddingToSession(session.id); }}
+                            className="text-xs text-yellow-500 hover:text-yellow-400"
+                          >
+                            + Add attendee
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -195,25 +264,19 @@ export function AttendancePanel() {
         </div>
       )}
 
-      {/* EDIT GRID TAB */}
+      {/* ── EDIT GRID TAB ── */}
       {subTab === 'edit' && (
         <div className="space-y-3">
           {sessions.length === 0 ? (
-            <div className="text-center py-12 text-gray-600 text-sm">
-              No sessions yet. Import some raids first.
-            </div>
-          ) : allPlayers.length === 0 ? (
-            <div className="text-center py-12 text-gray-600 text-sm">
-              No attendance data yet.
-            </div>
+            <div className="text-center py-12 text-gray-600 text-sm">No sessions yet. Add some in the Import tab.</div>
           ) : (
             <>
-              <p className="text-xs text-gray-600">Click a cell to toggle attendance.</p>
+              <p className="text-xs text-gray-600">Click a cell to toggle attendance. Hover a name to remove the player entirely.</p>
               <div className="overflow-x-auto rounded-xl border border-gray-800">
                 <table className="text-xs border-collapse min-w-full">
                   <thead>
                     <tr className="bg-gray-900">
-                      <th className="sticky left-0 z-10 bg-gray-900 text-left px-3 py-2 text-gray-500 font-semibold min-w-[130px] border-r border-gray-800">
+                      <th className="sticky left-0 z-10 bg-gray-900 text-left px-3 py-2 text-gray-500 font-semibold min-w-[140px] border-r border-gray-800">
                         Name
                       </th>
                       <th className="px-2 py-2 text-gray-500 font-semibold text-center min-w-[48px] border-r border-gray-800">
@@ -222,7 +285,7 @@ export function AttendancePanel() {
                       {sortedSessions.map((s) => (
                         <th
                           key={s.id}
-                          className="px-1 py-2 text-gray-500 font-semibold text-center min-w-[40px] border-r border-gray-800 last:border-0"
+                          className="px-1 py-2 text-gray-500 font-semibold text-center min-w-[44px] border-r border-gray-800 last:border-0"
                           title={`${s.instance_name} — ${formatDate(s.session_date)}`}
                         >
                           <div className="leading-tight">
@@ -238,10 +301,20 @@ export function AttendancePanel() {
                       const pct = attPct(name);
                       return (
                         <tr key={name} className="border-t border-gray-800/60 hover:bg-gray-800/10 group">
-                          <td className="sticky left-0 z-10 bg-gray-950 group-hover:bg-gray-900 px-3 py-1.5 text-gray-300 font-medium border-r border-gray-800 whitespace-nowrap">
-                            {name}
+                          <td className="sticky left-0 z-10 bg-gray-950 group-hover:bg-gray-900 px-3 py-1 border-r border-gray-800 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-gray-300 font-medium">{name}</span>
+                              <button
+                                onClick={() => { if (confirm(`Remove ${name} from all sessions?`)) deletePlayer(name); }}
+                                className="text-red-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+                                title="Remove player from all sessions"
+                              >
+                                ×
+                              </button>
+                            </div>
                           </td>
-                          <td className="px-2 py-1.5 text-center border-r border-gray-800 font-semibold"
+                          <td
+                            className="px-2 py-1 text-center border-r border-gray-800 font-semibold"
                             style={{ color: pct >= 75 ? '#4ade80' : pct >= 50 ? '#facc15' : pct >= 25 ? '#fb923c' : '#f87171' }}
                           >
                             {pct}%
@@ -270,6 +343,41 @@ export function AttendancePanel() {
                         </tr>
                       );
                     })}
+
+                    {/* Add new player row */}
+                    <tr className="border-t border-gray-800/60">
+                      <td colSpan={2 + sortedSessions.length} className="px-3 py-2 sticky left-0">
+                        {addingToSession === '__new__' ? (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              autoFocus
+                              value={newPlayerName}
+                              onChange={(e) => setNewPlayerName(e.target.value)}
+                              onKeyDown={async (e) => {
+                                if (e.key === 'Enter' && newPlayerName.trim()) {
+                                  // Add player to first session so they appear in grid
+                                  if (sortedSessions.length > 0) await toggleAttendance(sortedSessions[0].id, newPlayerName.trim());
+                                  setNewPlayerName('');
+                                  setAddingToSession(null);
+                                }
+                                if (e.key === 'Escape') { setAddingToSession(null); setNewPlayerName(''); }
+                              }}
+                              placeholder="Player name…"
+                              className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500/50 w-48"
+                            />
+                            <span className="text-xs text-gray-600">Will be marked as attended for the most recent session. Adjust in the grid.</span>
+                            <button onClick={() => { setAddingToSession(null); setNewPlayerName(''); }} className="text-xs text-gray-500 hover:text-gray-300 ml-auto">Cancel</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setAddingToSession('__new__')}
+                            className="text-xs text-yellow-500 hover:text-yellow-400"
+                          >
+                            + Add player
+                          </button>
+                        )}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

@@ -131,6 +131,27 @@ export function useAttendance() {
     return result;
   }, [sessions, attendance]);
 
+  const deletePlayer = useCallback(async (playerName: string) => {
+    await supabase.from('raid_attendance').delete().eq('player_name', playerName);
+    setAttendance((prev) => {
+      const next = { ...prev };
+      for (const id of Object.keys(next)) {
+        next[id] = next[id].filter((p) => p !== playerName);
+      }
+      return next;
+    });
+  }, []);
+
+  const createSession = useCallback(async (instanceName: string, date: string) => {
+    const { data, error } = await supabase
+      .from('raid_sessions')
+      .insert({ session_date: date, instance_name: instanceName, report_code: null })
+      .select()
+      .single();
+    if (error || !data) return;
+    await fetchSessions();
+  }, [fetchSessions]);
+
   const toggleAttendance = useCallback(async (sessionId: string, playerName: string) => {
     const current = attendance[sessionId] ?? [];
     const attended = current.includes(playerName);
@@ -154,5 +175,5 @@ export function useAttendance() {
     }
   }, [attendance]);
 
-  return { sessions, attendance, loading, syncing, syncError, wclReports, syncFromWCL, importSession, deleteSession, attendanceStats, toggleAttendance };
+  return { sessions, attendance, loading, syncing, syncError, wclReports, syncFromWCL, importSession, deleteSession, deletePlayer, createSession, attendanceStats, toggleAttendance };
 }
