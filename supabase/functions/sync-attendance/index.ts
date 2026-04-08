@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('app_settings')
       .select('key, value')
-      .in('key', ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region']);
+      .in('key', ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region', 'wcl_game']);
 
     const cfg: Record<string, string> = {};
     for (const row of settingsRows ?? []) {
@@ -49,6 +49,9 @@ Deno.serve(async (req) => {
       throw new Error('Guild not configured. Set guild name, realm and region in Admin → Settings.');
     }
 
+    const isClassic = cfg.wcl_game === 'classic';
+    const wclBase = isClassic ? 'classic.warcraftlogs.com' : 'www.warcraftlogs.com';
+
     // Get WarcraftLogs credentials from secrets
     const clientId = Deno.env.get('WARCRAFTLOGS_CLIENT_ID');
     const clientSecret = Deno.env.get('WARCRAFTLOGS_CLIENT_SECRET');
@@ -57,7 +60,7 @@ Deno.serve(async (req) => {
     }
 
     // OAuth2 client credentials
-    const tokenRes = await fetch('https://www.warcraftlogs.com/oauth/token', {
+    const tokenRes = await fetch(`https://${wclBase}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -94,7 +97,7 @@ Deno.serve(async (req) => {
       }
     }`;
 
-    const gqlRes = await fetch('https://www.warcraftlogs.com/api/v2/client', {
+    const gqlRes = await fetch(`https://${wclBase}/api/v2/client`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${access_token}`,

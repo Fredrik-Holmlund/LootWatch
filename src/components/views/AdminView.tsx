@@ -16,9 +16,9 @@ export function AdminView({ profile }: AdminViewProps) {
   const { settings, loading: settingsLoading, toggleSetting } = useAppSettings();
 
   // WarcraftLogs guild config
-  const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region'] as const;
+  const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region', 'wcl_game'] as const;
   type WclKey = typeof WCL_KEYS[number];
-  const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU' });
+  const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU', wcl_game: 'classic' });
   const [wclSaving, setWclSaving] = useState(false);
   const [wclSaved, setWclSaved] = useState(false);
 
@@ -163,6 +163,17 @@ export function AdminView({ profile }: AdminViewProps) {
                   />
                 </div>
               ))}
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-gray-500 w-24 flex-shrink-0">Game</label>
+                <select
+                  value={wclConfig.wcl_game}
+                  onChange={(e) => setWclConfig((c) => ({ ...c, wcl_game: e.target.value }))}
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                >
+                  <option value="classic">Classic / TBC / Wrath</option>
+                  <option value="retail">Retail</option>
+                </select>
+              </div>
               <button
                 onClick={saveWclConfig}
                 disabled={wclSaving}
