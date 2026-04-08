@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { LootEntry } from '../../types';
 import { getClassColor } from '../../utils/classColors';
+import { stripRealm } from '../../utils/formatName';
 
 interface WishlistPanelProps {
   entries: LootEntry[];
@@ -25,16 +26,17 @@ export function WishlistPanel({ entries }: WishlistPanelProps) {
     const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
     for (const e of sorted) {
-      if (!map.has(e.player_name)) {
-        map.set(e.player_name, {
-          name: e.player_name,
+      const name = stripRealm(e.player_name);
+      if (!map.has(name)) {
+        map.set(name, {
+          name,
           playerClass: e.player_class,
           total: 0,
           lastLoot: null,
           responses: {},
         });
       }
-      const s = map.get(e.player_name)!;
+      const s = map.get(name)!;
       s.total++;
       s.lastLoot = e.item_name;
       const resp = e.response || 'Other';
