@@ -375,7 +375,7 @@ function CandidatePill({
       {priorityScore !== undefined && (
         <span
           className="text-[10px] font-bold rounded px-1 ml-0.5"
-          style={{ backgroundColor: '#00000040', color: scoreColor(priorityScore) }}
+          style={{ backgroundColor: '#1f2937', color: scoreColor(priorityScore) }}
           title={`Priority score: ${priorityScore}`}
         >
           {priorityScore}
