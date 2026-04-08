@@ -1,0 +1,36 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Set WarcraftLogs secrets
+        run: |
+          supabase secrets set \
+            WARCRAFTLOGS_CLIENT_ID=${{ secrets.WARCRAFTLOGS_CLIENT_ID }} \
+            WARCRAFTLOGS_CLIENT_SECRET=${{ secrets.WARCRAFTLOGS_CLIENT_SECRET }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy sync-attendance function
+        run: supabase functions deploy sync-attendance --no-verify-jwt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
