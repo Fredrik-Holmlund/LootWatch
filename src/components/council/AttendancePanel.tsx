@@ -9,7 +9,9 @@ export function AttendancePanel() {
   } = useAttendance();
 
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [minPlayers, setMinPlayers] = useState(15);
   const importedCodes = new Set(sessions.map((s) => s.report_code).filter(Boolean));
+  const filteredReports = wclReports.filter((r) => r.players.length >= minPlayers);
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -46,11 +48,30 @@ export function AttendancePanel() {
       {/* WCL Reports (fetched, not yet saved) */}
       {wclReports.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            WarcraftLogs Reports — click to import
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              WarcraftLogs Reports — click to import
+            </h3>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-600">Min. players</label>
+              <input
+                type="number"
+                min={1}
+                value={minPlayers}
+                onChange={(e) => setMinPlayers(Number(e.target.value))}
+                className="w-14 bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-xs text-white focus:outline-none focus:border-yellow-500/50 text-center"
+              />
+              <span className="text-xs text-gray-600">
+                {filteredReports.length}/{wclReports.length} shown
+              </span>
+            </div>
+          </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            {wclReports.map((report) => {
+            {filteredReports.length === 0 ? (
+              <div className="px-4 py-6 text-center text-xs text-gray-600">
+                No reports with {minPlayers}+ players found.
+              </div>
+            ) : filteredReports.map((report) => {
               const alreadyImported = importedCodes.has(report.code);
               return (
                 <div
