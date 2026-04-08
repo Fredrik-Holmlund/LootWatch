@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserManagement } from '../admin/UserManagement';
 import { RaidLootManager } from '../admin/RaidLootManager';
 import { useAppSettings } from '../../hooks/useAppSettings';
+import { supabase } from '../../utils/supabase';
 import type { Profile } from '../../types';
 
 interface AdminViewProps {
@@ -13,6 +14,33 @@ type SubTab = 'users' | 'raidloot' | 'settings';
 export function AdminView({ profile }: AdminViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('users');
   const { settings, loading: settingsLoading, toggleSetting } = useAppSettings();
+
+  // WarcraftLogs guild config
+  const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region'] as const;
+  type WclKey = typeof WCL_KEYS[number];
+  const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU' });
+  const [wclSaving, setWclSaving] = useState(false);
+  const [wclSaved, setWclSaved] = useState(false);
+
+  useEffect(() => {
+    supabase.from('app_settings').select('key, value').in('key', [...WCL_KEYS]).then(({ data }) => {
+      if (!data) return;
+      const cfg = { ...wclConfig };
+      for (const row of data) cfg[row.key as WclKey] = row.value as string;
+      setWclConfig(cfg);
+    });
+  }, []);
+
+  async function saveWclConfig() {
+    setWclSaving(true);
+    for (const key of WCL_KEYS) {
+      await supabase.from('app_settings')
+        .upsert({ key, value: wclConfig[key], updated_at: new Date().toISOString() });
+    }
+    setWclSaving(false);
+    setWclSaved(true);
+    setTimeout(() => setWclSaved(false), 2000);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
@@ -114,6 +142,36 @@ export function AdminView({ profile }: AdminViewProps) {
           <p className="text-xs text-gray-700">
             Changes take effect immediately for all users on next page load.
           </p>
+
+          {/* WarcraftLogs guild config */}
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold text-gray-300 mb-1">WarcraftLogs Guild</h3>
+            <p className="text-xs text-gray-600 mb-3">Used to sync raid attendance automatically.</p>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              {([
+                { key: 'wcl_guild_name' as WclKey, label: 'Guild Name', placeholder: 'GLI TCH' },
+                { key: 'wcl_guild_realm' as WclKey, label: 'Realm Slug', placeholder: 'spineshatter' },
+                { key: 'wcl_guild_region' as WclKey, label: 'Region', placeholder: 'EU' },
+              ]).map(({ key, label, placeholder }) => (
+                <div key={key} className="flex items-center gap-3">
+                  <label className="text-xs text-gray-500 w-24 flex-shrink-0">{label}</label>
+                  <input
+                    value={wclConfig[key]}
+                    onChange={(e) => setWclConfig((c) => ({ ...c, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                  />
+                </div>
+              ))}
+              <button
+                onClick={saveWclConfig}
+                disabled={wclSaving}
+                className="text-xs px-3 py-1.5 bg-yellow-500 text-gray-950 font-semibold rounded-lg disabled:opacity-40"
+              >
+                {wclSaved ? '✓ Saved' : wclSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

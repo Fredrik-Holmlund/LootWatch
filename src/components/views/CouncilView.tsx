@@ -6,8 +6,9 @@ import { WishlistPanel } from '../council/WishlistPanel';
 import { NotesPanel } from '../council/NotesPanel';
 import { LootPlanner } from '../council/LootPlanner';
 import { RosterPanel } from '../council/RosterPanel';
+import { AttendancePanel } from '../council/AttendancePanel';
 
-type SubTab = 'planner' | 'roster' | 'distribution' | 'notes';
+type SubTab = 'planner' | 'roster' | 'distribution' | 'notes' | 'attendance';
 
 export function CouncilView() {
   const { entries } = useLootHistory();
@@ -35,6 +36,7 @@ export function CouncilView() {
           ['roster', '👥 Roster'],
           ['distribution', '📊 Distribution'],
           ['notes', '📝 Priority Notes'],
+          ['attendance', '📅 Attendance'],
         ] as [SubTab, string][]).map(([id, label]) => (
           <button
             key={id}
@@ -66,6 +68,7 @@ export function CouncilView() {
           />
         )
       )}
+      {subTab === 'attendance' && <AttendancePanel />}
     </div>
   );
 }
