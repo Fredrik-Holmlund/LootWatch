@@ -120,12 +120,13 @@ export function DashboardView() {
 
     const topAttendance = [...rows].sort((a, b) => b.pct - a.pct).slice(0, 10);
     const topAbsent = [...rows].sort((a, b) => b.absent - a.absent).slice(0, 10);
+    const topBenched = [...rows].filter(r => r.benched > 0).sort((a, b) => b.benched - a.benched).slice(0, 10);
 
     const avgPct = rows.length
       ? Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length)
       : 0;
 
-    return { topAttendance, topAbsent, avgPct, total };
+    return { topAttendance, topAbsent, topBenched, avgPct, total };
   }, [sessions, attendance]);
 
   // Wishlist stats
@@ -177,9 +178,9 @@ export function DashboardView() {
         {/* Most Benched */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-300">Most Benched</h3>
-          {attStats && attStats.topAttendance.filter(r => r.benched > 0).length > 0 ? (
+          {attStats && attStats.topBenched.length > 0 ? (
             <div className="space-y-1.5">
-              {[...attStats.topAttendance].sort((a, b) => b.benched - a.benched).filter(r => r.benched > 0).slice(0, 10).map(({ name, benched, benchPct }, i) => (
+              {attStats.topBenched.map(({ name, benched, benchPct }, i) => (
                 <div key={name} className="flex items-center gap-3">
                   <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
                   <div className="flex-1 space-y-0.5">
