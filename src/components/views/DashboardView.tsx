@@ -90,21 +90,42 @@ export function DashboardView() {
   const attStats = useMemo(() => {
     const total = sessions.length;
     if (total === 0) return null;
-    const counts: Record<string, number> = {};
+
+    const attended: Record<string, number> = {};
+    const benched: Record<string, number> = {};
+
     for (const m of Object.values(attendance)) {
       for (const [name, status] of Object.entries(m)) {
-        if (status === 'attended' || status === 'bench')
-          counts[name] = (counts[name] ?? 0) + 1;
+        if (status === 'attended') attended[name] = (attended[name] ?? 0) + 1;
+        else if (status === 'bench') benched[name] = (benched[name] ?? 0) + 1;
       }
     }
-    const rows = Object.entries(counts)
-      .map(([name, n]) => ({ name, pct: Math.round((n / total) * 100) }))
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 10);
+
+    const allNames = [...new Set([...Object.keys(attended), ...Object.keys(benched)])];
+
+    const rows = allNames.map((name) => {
+      const a = attended[name] ?? 0;
+      const b = benched[name] ?? 0;
+      const present = a + b;
+      const absent = total - present;
+      return {
+        name,
+        present,
+        benched: b,
+        absent,
+        pct: Math.round((present / total) * 100),
+        benchPct: Math.round((b / total) * 100),
+      };
+    });
+
+    const topAttendance = [...rows].sort((a, b) => b.pct - a.pct).slice(0, 10);
+    const topAbsent = [...rows].sort((a, b) => b.absent - a.absent).slice(0, 10);
+
     const avgPct = rows.length
       ? Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length)
       : 0;
-    return { rows, avgPct };
+
+    return { topAttendance, topAbsent, avgPct, total };
   }, [sessions, attendance]);
 
   // Wishlist stats
@@ -186,21 +207,34 @@ export function DashboardView() {
         {/* Top Attendance */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-300">Top Attendance</h3>
-          {attStats && attStats.rows.length > 0 ? (
-            <div className="space-y-1.5">
-              {attStats.rows.map(({ name, pct }, i) => {
-                const color = pct >= 75 ? '#4ade80' : pct >= 50 ? '#facc15' : pct >= 25 ? '#fb923c' : '#f87171';
+          {attStats && attStats.topAttendance.length > 0 ? (
+            <div className="space-y-2.5">
+              {attStats.topAttendance.map(({ name, pct, benchPct, benched, present }, i) => {
+                const attColor = pct >= 75 ? '#4ade80' : pct >= 50 ? '#facc15' : pct >= 25 ? '#fb923c' : '#f87171';
                 return (
                   <div key={name} className="flex items-center gap-3">
                     <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
-                    <div className="flex-1 space-y-0.5">
+                    <div className="flex-1 space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-300 font-medium">{name}</span>
-                        <span className="font-semibold" style={{ color }}>{pct}%</span>
+                        <span className="text-gray-500 tabular-nums">
+                          {present}/{attStats.total}
+                          {benched > 0 && <span className="text-orange-400 ml-1.5">({benched} benched)</span>}
+                        </span>
                       </div>
-                      <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.7 }} />
+                      {/* Attendance bar */}
+                      <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: attColor, opacity: 0.8 }} />
                       </div>
+                      {/* Bench rate bar */}
+                      {benched > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex-1 h-1 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-orange-500/60 transition-all" style={{ width: `${benchPct}%` }} />
+                          </div>
+                          <span className="text-[10px] text-orange-400/70">{benchPct}% benched</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -243,6 +277,37 @@ export function DashboardView() {
             </div>
           ) : (
             <p className="text-xs text-gray-600">No data</p>
+          )}
+        </div>
+
+        {/* Most Absent */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300">Most Absent</h3>
+          {attStats && attStats.topAbsent.filter(r => r.absent > 0).length > 0 ? (
+            <div className="space-y-1.5">
+              {attStats.topAbsent.filter(r => r.absent > 0).map(({ name, absent, pct }, i) => {
+                const absentPct = 100 - pct;
+                const color = absentPct >= 75 ? '#f87171' : absentPct >= 50 ? '#fb923c' : absentPct >= 25 ? '#facc15' : '#94a3b8';
+                return (
+                  <div key={name} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300 font-medium">{name}</span>
+                        <span className="tabular-nums" style={{ color }}>
+                          {absent}/{attStats.total} missed
+                        </span>
+                      </div>
+                      <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${absentPct}%`, backgroundColor: color, opacity: 0.7 }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-600">No absence data yet</p>
           )}
         </div>
 
