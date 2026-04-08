@@ -131,5 +131,28 @@ export function useAttendance() {
     return result;
   }, [sessions, attendance]);
 
-  return { sessions, attendance, loading, syncing, syncError, wclReports, syncFromWCL, importSession, deleteSession, attendanceStats };
+  const toggleAttendance = useCallback(async (sessionId: string, playerName: string) => {
+    const current = attendance[sessionId] ?? [];
+    const attended = current.includes(playerName);
+
+    // Optimistic update
+    setAttendance((prev) => ({
+      ...prev,
+      [sessionId]: attended
+        ? prev[sessionId].filter((p) => p !== playerName)
+        : [...(prev[sessionId] ?? []), playerName],
+    }));
+
+    if (attended) {
+      await supabase.from('raid_attendance')
+        .delete()
+        .eq('session_id', sessionId)
+        .eq('player_name', playerName);
+    } else {
+      await supabase.from('raid_attendance')
+        .insert({ session_id: sessionId, player_name: playerName });
+    }
+  }, [attendance]);
+
+  return { sessions, attendance, loading, syncing, syncError, wclReports, syncFromWCL, importSession, deleteSession, attendanceStats, toggleAttendance };
 }
