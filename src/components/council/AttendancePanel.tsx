@@ -74,7 +74,7 @@ export function AttendancePanel() {
   const attPct = (name: string) => {
     if (total === 0) return 0;
     return Math.round(
-      (Object.values(attendance).filter((m) => m[name] === 'attended').length / total) * 100
+      (Object.values(attendance).filter((m) => m[name] === 'attended' || m[name] === 'bench').length / total) * 100
     );
   };
 

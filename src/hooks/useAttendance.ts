@@ -180,7 +180,7 @@ export function useAttendance() {
         if (m[name] === 'attended') attended++;
         else if (m[name] === 'bench') benched++;
       }
-      result[name] = { attended, benched, total, pct: Math.round((attended / total) * 100) };
+      result[name] = { attended, benched, total, pct: Math.round(((attended + benched) / total) * 100) };
     }
     return result;
   }, [sessions, attendance]);
