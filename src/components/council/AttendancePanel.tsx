@@ -30,6 +30,7 @@ export function AttendancePanel() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [minPlayers, setMinPlayers] = useState(15);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
 
   function toggleSelect(id: string) {
     setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -40,6 +41,17 @@ export function AttendancePanel() {
     if (!confirm(`Delete ${selected.size} session(s) and all their attendance?`)) return;
     for (const id of selected) await deleteSession(id);
     setSelected(new Set());
+  }
+
+  function toggleSelectPlayer(name: string) {
+    setSelectedPlayers((prev) => { const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n; });
+  }
+  function selectAllPlayers() { setSelectedPlayers(new Set(allPlayers)); }
+  function clearSelectPlayers() { setSelectedPlayers(new Set()); }
+  async function deleteSelectedPlayers() {
+    if (!confirm(`Remove ${selectedPlayers.size} player(s) from all sessions?`)) return;
+    for (const name of selectedPlayers) await deletePlayer(name);
+    setSelectedPlayers(new Set());
   }
 
   // Manual session creation
@@ -307,11 +319,37 @@ export function AttendancePanel() {
             <div className="text-center py-12 text-gray-600 text-sm">No sessions yet. Add some in the Import tab.</div>
           ) : (
             <>
-              <p className="text-xs text-gray-600">Click a cell to toggle attendance. Hover a name to remove the player entirely.</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-600">Click a cell to toggle attendance.</p>
+                <div className="flex items-center gap-2">
+                  {selectedPlayers.size > 0 ? (
+                    <>
+                      <span className="text-xs text-gray-500">{selectedPlayers.size} selected</span>
+                      <button onClick={clearSelectPlayers} className="text-xs text-gray-500 hover:text-gray-300">Clear</button>
+                      <button
+                        onClick={deleteSelectedPlayers}
+                        className="text-xs px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                      >
+                        Delete selected
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={selectAllPlayers} className="text-xs text-gray-500 hover:text-gray-300">Select all</button>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto rounded-xl border border-gray-800">
                 <table className="text-xs border-collapse min-w-full">
                   <thead>
                     <tr className="bg-gray-900">
+                      <th className="sticky left-0 z-10 bg-gray-900 px-2 py-2 border-r border-gray-800 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selectedPlayers.size === allPlayers.length && allPlayers.length > 0}
+                          onChange={(e) => e.target.checked ? selectAllPlayers() : clearSelectPlayers()}
+                          className="accent-red-500 cursor-pointer"
+                        />
+                      </th>
                       <th className="sticky left-0 z-10 bg-gray-900 text-left px-3 py-2 text-gray-500 font-semibold min-w-[140px] border-r border-gray-800">
                         Name
                       </th>
@@ -335,19 +373,19 @@ export function AttendancePanel() {
                   <tbody>
                     {allPlayers.map((name) => {
                       const pct = attPct(name);
+                      const isPlayerSelected = selectedPlayers.has(name);
                       return (
-                        <tr key={name} className="border-t border-gray-800/60 hover:bg-gray-800/10 group">
-                          <td className="sticky left-0 z-10 bg-gray-950 group-hover:bg-gray-900 px-3 py-1 border-r border-gray-800 whitespace-nowrap">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-gray-300 font-medium">{name}</span>
-                              <button
-                                onClick={() => { if (confirm(`Remove ${name} from all sessions?`)) deletePlayer(name); }}
-                                className="text-red-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity leading-none"
-                                title="Remove player from all sessions"
-                              >
-                                ×
-                              </button>
-                            </div>
+                        <tr key={name} className={`border-t border-gray-800/60 group ${isPlayerSelected ? 'bg-red-950/20' : 'hover:bg-gray-800/10'}`}>
+                          <td className={`sticky left-0 z-10 px-2 py-1 border-r border-gray-800 ${isPlayerSelected ? 'bg-red-950/40' : 'bg-gray-950 group-hover:bg-gray-900'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isPlayerSelected}
+                              onChange={() => toggleSelectPlayer(name)}
+                              className="accent-red-500 cursor-pointer"
+                            />
+                          </td>
+                          <td className={`sticky left-0 z-10 px-3 py-1 border-r border-gray-800 whitespace-nowrap ${isPlayerSelected ? 'bg-red-950/40' : 'bg-gray-950 group-hover:bg-gray-900'}`}>
+                            <span className="text-gray-300 font-medium">{name}</span>
                           </td>
                           <td
                             className="px-2 py-1 text-center border-r border-gray-800 font-semibold"
@@ -382,7 +420,7 @@ export function AttendancePanel() {
 
                     {/* Add new player row */}
                     <tr className="border-t border-gray-800/60">
-                      <td colSpan={2 + sortedSessions.length} className="px-3 py-2 sticky left-0">
+                      <td colSpan={3 + sortedSessions.length} className="px-3 py-2 sticky left-0">
                         {addingToSession === '__new__' ? (
                           <div className="flex gap-2 items-center">
                             <input
