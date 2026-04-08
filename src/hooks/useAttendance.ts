@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../utils/supabase';
 
+export type AttendanceStatus = 'attended' | 'bench';
+
 export interface RaidSession {
   id: string;
   session_date: string;
@@ -18,9 +20,12 @@ export interface WCLReport {
   players: string[];
 }
 
+// attendance[sessionId][playerName] = 'attended' | 'bench'
+export type AttendanceMap = Record<string, Record<string, AttendanceStatus>>;
+
 export function useAttendance() {
   const [sessions, setSessions] = useState<RaidSession[]>([]);
-  const [attendance, setAttendance] = useState<Record<string, string[]>>({}); // session_id → player names
+  const [attendance, setAttendance] = useState<AttendanceMap>({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -38,13 +43,13 @@ export function useAttendance() {
     if (sessions.length > 0) {
       const { data: attData } = await supabase
         .from('raid_attendance')
-        .select('session_id, player_name')
+        .select('session_id, player_name, status')
         .in('session_id', sessions.map((s) => s.id));
 
-      const map: Record<string, string[]> = {};
+      const map: AttendanceMap = {};
       for (const row of attData ?? []) {
-        if (!map[row.session_id]) map[row.session_id] = [];
-        map[row.session_id].push(row.player_name);
+        if (!map[row.session_id]) map[row.session_id] = {};
+        map[row.session_id][row.player_name] = (row.status ?? 'attended') as AttendanceStatus;
       }
       setAttendance(map);
     }
@@ -83,17 +88,12 @@ export function useAttendance() {
   }, []);
 
   const importSession = useCallback(async (report: WCLReport) => {
-    // Check if already imported
     const exists = sessions.find((s) => s.report_code === report.code);
     if (exists) return;
 
     const { data: sessionRow, error } = await supabase
       .from('raid_sessions')
-      .insert({
-        session_date: report.date,
-        instance_name: report.instance,
-        report_code: report.code,
-      })
+      .insert({ session_date: report.date, instance_name: report.instance, report_code: report.code })
       .select()
       .single();
 
@@ -101,7 +101,7 @@ export function useAttendance() {
 
     if (report.players.length > 0) {
       await supabase.from('raid_attendance').insert(
-        report.players.map((name) => ({ session_id: sessionRow.id, player_name: name }))
+        report.players.map((name) => ({ session_id: sessionRow.id, player_name: name, status: 'attended' }))
       );
     }
 
@@ -114,66 +114,76 @@ export function useAttendance() {
     setAttendance((prev) => { const n = { ...prev }; delete n[id]; return n; });
   }, []);
 
-  // Attendance % per player across all sessions
-  const attendanceStats = useCallback((): Record<string, { attended: number; total: number; pct: number }> => {
-    const total = sessions.length;
-    if (total === 0) return {};
-    const counts: Record<string, number> = {};
-    for (const players of Object.values(attendance)) {
-      for (const p of players) {
-        counts[p] = (counts[p] ?? 0) + 1;
-      }
-    }
-    const result: Record<string, { attended: number; total: number; pct: number }> = {};
-    for (const [name, attended] of Object.entries(counts)) {
-      result[name] = { attended, total, pct: Math.round((attended / total) * 100) };
-    }
-    return result;
-  }, [sessions, attendance]);
-
   const deletePlayer = useCallback(async (playerName: string) => {
     await supabase.from('raid_attendance').delete().eq('player_name', playerName);
     setAttendance((prev) => {
       const next = { ...prev };
       for (const id of Object.keys(next)) {
-        next[id] = next[id].filter((p) => p !== playerName);
+        const m = { ...next[id] };
+        delete m[playerName];
+        next[id] = m;
       }
       return next;
     });
   }, []);
 
   const createSession = useCallback(async (instanceName: string, date: string) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('raid_sessions')
-      .insert({ session_date: date, instance_name: instanceName, report_code: null })
-      .select()
-      .single();
-    if (error || !data) return;
-    await fetchSessions();
+      .insert({ session_date: date, instance_name: instanceName, report_code: null });
+    if (!error) await fetchSessions();
   }, [fetchSessions]);
 
+  // Cycles: none → attended → bench → none
   const toggleAttendance = useCallback(async (sessionId: string, playerName: string) => {
-    const current = attendance[sessionId] ?? [];
-    const attended = current.includes(playerName);
+    const current = attendance[sessionId]?.[playerName];
+    const next: AttendanceStatus | null =
+      current === undefined ? 'attended' :
+      current === 'attended' ? 'bench' :
+      null;
 
     // Optimistic update
-    setAttendance((prev) => ({
-      ...prev,
-      [sessionId]: attended
-        ? prev[sessionId].filter((p) => p !== playerName)
-        : [...(prev[sessionId] ?? []), playerName],
-    }));
+    setAttendance((prev) => {
+      const session = { ...(prev[sessionId] ?? {}) };
+      if (next === null) {
+        delete session[playerName];
+      } else {
+        session[playerName] = next;
+      }
+      return { ...prev, [sessionId]: session };
+    });
 
-    if (attended) {
+    if (next === null) {
       await supabase.from('raid_attendance')
         .delete()
         .eq('session_id', sessionId)
         .eq('player_name', playerName);
+    } else if (current === undefined) {
+      await supabase.from('raid_attendance')
+        .insert({ session_id: sessionId, player_name: playerName, status: next });
     } else {
       await supabase.from('raid_attendance')
-        .insert({ session_id: sessionId, player_name: playerName });
+        .update({ status: next })
+        .eq('session_id', sessionId)
+        .eq('player_name', playerName);
     }
   }, [attendance]);
+
+  const attendanceStats = useCallback((): Record<string, { attended: number; benched: number; total: number; pct: number }> => {
+    const total = sessions.length;
+    if (total === 0) return {};
+    const allPlayers = [...new Set(Object.values(attendance).flatMap((m) => Object.keys(m)))];
+    const result: Record<string, { attended: number; benched: number; total: number; pct: number }> = {};
+    for (const name of allPlayers) {
+      let attended = 0, benched = 0;
+      for (const m of Object.values(attendance)) {
+        if (m[name] === 'attended') attended++;
+        else if (m[name] === 'bench') benched++;
+      }
+      result[name] = { attended, benched, total, pct: Math.round((attended / total) * 100) };
+    }
+    return result;
+  }, [sessions, attendance]);
 
   return { sessions, attendance, loading, syncing, syncError, wclReports, syncFromWCL, importSession, deleteSession, deletePlayer, createSession, attendanceStats, toggleAttendance };
 }

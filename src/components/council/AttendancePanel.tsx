@@ -46,7 +46,7 @@ export function AttendancePanel() {
   function toggleSelectPlayer(name: string) {
     setSelectedPlayers((prev) => { const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n; });
   }
-  function selectAllPlayers() { setSelectedPlayers(new Set(allPlayers)); }
+  function selectAllPlayers() { setSelectedPlayers(new Set(sortedPlayers)); }
   function clearSelectPlayers() { setSelectedPlayers(new Set()); }
   async function deleteSelectedPlayers() {
     if (!confirm(`Remove ${selectedPlayers.size} player(s) from all sessions?`)) return;
@@ -66,20 +66,27 @@ export function AttendancePanel() {
   const importedCodes = new Set(sessions.map((s) => s.report_code).filter(Boolean));
   const filteredReports = wclReports.filter((r) => r.players.length >= minPlayers);
 
-  const allPlayers = [...new Set(Object.values(attendance).flat())].sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' })
-  );
+  const allPlayers = [...new Set(Object.values(attendance).flatMap((m) => Object.keys(m)))];
+
+  const [sortBy, setSortBy] = useState<'name' | 'pct'>('name');
+
+  const total = sessions.length;
+  const attPct = (name: string) => {
+    if (total === 0) return 0;
+    return Math.round(
+      (Object.values(attendance).filter((m) => m[name] === 'attended').length / total) * 100
+    );
+  };
 
   const sortedSessions = [...sessions].sort(
     (a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
   );
 
-  const total = sessions.length;
-  const attPct = (name: string) => {
-    if (total === 0) return 0;
-    const count = Object.values(attendance).filter((players) => players.includes(name)).length;
-    return Math.round((count / total) * 100);
-  };
+  const sortedPlayers = [...allPlayers].sort((a, b) =>
+    sortBy === 'pct'
+      ? attPct(b) - attPct(a)
+      : a.localeCompare(b, undefined, { sensitivity: 'base' })
+  );
 
   async function handleCreateSession() {
     if (!newInstance.trim() || !newDate) return;
@@ -240,7 +247,9 @@ export function AttendancePanel() {
                 </div>
               </div>
               {sessions.map((session) => {
-                const players = attendance[session.id] ?? [];
+                const sessionMap = attendance[session.id] ?? {};
+                const players = Object.keys(sessionMap);
+                const attendedCount = Object.values(sessionMap).filter((s) => s === 'attended').length;
                 const isExpanded = expanded === session.id;
                 const isSelected = selected.has(session.id);
                 return (
@@ -265,7 +274,7 @@ export function AttendancePanel() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded px-1.5 py-0.5">
-                            {players.length} attended
+                            {attendedCount} attended
                           </span>
                           <span className="text-gray-700 text-xs">{isExpanded ? '▲' : '▼'}</span>
                         </div>
@@ -274,9 +283,9 @@ export function AttendancePanel() {
                     {isExpanded && (
                       <div className="px-4 pb-4 border-t border-gray-800/60 space-y-3 pt-3">
                         <div className="flex flex-wrap gap-1.5">
-                          {[...players].sort().map((name) => (
-                            <span key={name} className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
-                              {name}
+                          {Object.entries(sessionMap).sort(([a], [b]) => a.localeCompare(b)).map(([name, status]) => (
+                            <span key={name} className={`text-xs px-2 py-0.5 rounded-full ${status === 'bench' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-gray-800 text-gray-400'}`}>
+                              {name}{status === 'bench' ? ' (bench)' : ''}
                             </span>
                           ))}
                         </div>
@@ -319,9 +328,19 @@ export function AttendancePanel() {
             <div className="text-center py-12 text-gray-600 text-sm">No sessions yet. Add some in the Import tab.</div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-600">Click a cell to toggle attendance.</p>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-gray-600">Click once = <span className="text-green-500">attended</span>, twice = <span className="text-orange-400">bench</span>, three times = clear.</p>
+                </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">Sort:</span>
+                  {(['name', 'pct'] as const).map((s) => (
+                    <button key={s} onClick={() => setSortBy(s)}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${sortBy === s ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}>
+                      {s === 'name' ? 'Name' : 'Att.%'}
+                    </button>
+                  ))}
+                  <span className="text-gray-700">|</span>
                   {selectedPlayers.size > 0 ? (
                     <>
                       <span className="text-xs text-gray-500">{selectedPlayers.size} selected</span>
@@ -371,7 +390,7 @@ export function AttendancePanel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allPlayers.map((name) => {
+                    {sortedPlayers.map((name) => {
                       const pct = attPct(name);
                       const isPlayerSelected = selectedPlayers.has(name);
                       return (
@@ -394,22 +413,20 @@ export function AttendancePanel() {
                             {pct}%
                           </td>
                           {sortedSessions.map((s) => {
-                            const attended = (attendance[s.id] ?? []).includes(name);
+                            const status = attendance[s.id]?.[name];
+                            const bg = status === 'attended' ? '#16a34a' : status === 'bench' ? '#c2410c' : '#111';
+                            const border = status === 'attended' ? '#15803d' : status === 'bench' ? '#9a3412' : '#222';
+                            const titleText = status === 'attended' ? 'Click for bench' : status === 'bench' ? 'Click to clear' : 'Click for attended';
                             return (
                               <td
                                 key={s.id}
                                 onClick={() => toggleAttendance(s.id, name)}
                                 className="border-r border-gray-800/40 last:border-0 cursor-pointer"
-                                title={attended ? 'Click to remove' : 'Click to add'}
+                                title={titleText}
                               >
                                 <div
                                   className="mx-auto my-1 rounded-sm transition-colors"
-                                  style={{
-                                    width: 28,
-                                    height: 18,
-                                    backgroundColor: attended ? '#16a34a' : '#111',
-                                    border: attended ? '1px solid #15803d' : '1px solid #222',
-                                  }}
+                                  style={{ width: 28, height: 18, backgroundColor: bg, border: `1px solid ${border}` }}
                                 />
                               </td>
                             );
