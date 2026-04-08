@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useLootHistory } from '../../hooks/useLootHistory';
+import { useAttendance } from '../../hooks/useAttendance';
+import { useWishlist } from '../../hooks/useWishlist';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 
@@ -28,6 +30,8 @@ function categoriseResponse(r: string): string {
 
 export function DashboardView() {
   const { entries, loading } = useLootHistory();
+  const { sessions, attendance } = useAttendance();
+  const { wishes } = useWishlist(null);
 
   const stats = useMemo(() => {
     if (!entries.length) return null;
@@ -82,6 +86,38 @@ export function DashboardView() {
     return { uniquePlayers, uniqueItems, uniqueRaids, responseCounts, topPlayers, raidRows, weekData };
   }, [entries]);
 
+  // Attendance stats
+  const attStats = useMemo(() => {
+    const total = sessions.length;
+    if (total === 0) return null;
+    const counts: Record<string, number> = {};
+    for (const m of Object.values(attendance)) {
+      for (const [name, status] of Object.entries(m)) {
+        if (status === 'attended' || status === 'bench')
+          counts[name] = (counts[name] ?? 0) + 1;
+      }
+    }
+    const rows = Object.entries(counts)
+      .map(([name, n]) => ({ name, pct: Math.round((n / total) * 100) }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 10);
+    const avgPct = rows.length
+      ? Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length)
+      : 0;
+    return { rows, avgPct };
+  }, [sessions, attendance]);
+
+  // Wishlist stats
+  const wishStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const w of wishes) {
+      counts[w.item_name] = (counts[w.item_name] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [wishes]);
+
   const recent = entries.slice(0, 8);
 
   if (loading) {
@@ -100,15 +136,17 @@ export function DashboardView() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Items Distributed', value: entries.length },
-          { label: 'Unique Recipients', value: stats?.uniquePlayers ?? 0 },
-          { label: 'Unique Items', value: stats?.uniqueItems ?? 0 },
-          { label: 'Raids Tracked', value: stats?.uniqueRaids ?? 0 },
-        ].map(({ label, value }) => (
+          { label: 'Items Distributed', value: entries.length, color: 'text-yellow-400' },
+          { label: 'Unique Recipients', value: stats?.uniquePlayers ?? 0, color: 'text-yellow-400' },
+          { label: 'Unique Items', value: stats?.uniqueItems ?? 0, color: 'text-yellow-400' },
+          { label: 'Raids Tracked', value: stats?.uniqueRaids ?? 0, color: 'text-yellow-400' },
+          { label: 'Sessions Tracked', value: sessions.length, color: 'text-blue-400' },
+          { label: 'Avg Attendance', value: attStats ? `${attStats.avgPct}%` : '—', color: 'text-blue-400' },
+        ].map(({ label, value, color }) => (
           <div key={label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-2xl font-bold text-yellow-400">{value}</p>
+            <p className={`text-2xl font-bold ${color}`}>{value}</p>
             <p className="text-xs text-gray-500 mt-1">{label}</p>
           </div>
         ))}
@@ -145,32 +183,31 @@ export function DashboardView() {
           )}
         </div>
 
-        {/* Items by raid */}
+        {/* Top Attendance */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300">Items by Raid</h3>
-          {stats && stats.raidRows.length > 0 ? (
-            <div className="space-y-2">
-              {stats.raidRows.map(([raid, count]) => {
-                const max = stats.raidRows[0][1];
-                const pct = Math.round((count / max) * 100);
+          <h3 className="text-sm font-semibold text-gray-300">Top Attendance</h3>
+          {attStats && attStats.rows.length > 0 ? (
+            <div className="space-y-1.5">
+              {attStats.rows.map(({ name, pct }, i) => {
+                const color = pct >= 75 ? '#4ade80' : pct >= 50 ? '#facc15' : pct >= 25 ? '#fb923c' : '#f87171';
                 return (
-                  <div key={raid} className="space-y-0.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-300 truncate max-w-[200px]">{raid}</span>
-                      <span className="text-gray-500">{count}</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-yellow-500/60 transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
+                  <div key={name} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300 font-medium">{name}</span>
+                        <span className="font-semibold" style={{ color }}>{pct}%</span>
+                      </div>
+                      <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.7 }} />
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-600">No data</p>
+            <p className="text-xs text-gray-600">No attendance data yet</p>
           )}
         </div>
       </div>
@@ -206,6 +243,35 @@ export function DashboardView() {
             </div>
           ) : (
             <p className="text-xs text-gray-600">No data</p>
+          )}
+        </div>
+
+        {/* Most Wished Items */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300">Most Wished Items <span className="text-gray-600 font-normal">({wishes.length} total wishes)</span></h3>
+          {wishStats.length > 0 ? (
+            <div className="space-y-1.5">
+              {wishStats.map(([name, count], i) => {
+                const max = wishStats[0][1];
+                const pct = Math.round((count / max) * 100);
+                return (
+                  <div key={name} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-300 truncate max-w-[180px]">{name}</span>
+                        <span className="text-purple-400 font-semibold">♥ {count}</span>
+                      </div>
+                      <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-purple-500/60 transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-600">No wishes yet</p>
           )}
         </div>
 
