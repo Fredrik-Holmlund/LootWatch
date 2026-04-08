@@ -29,6 +29,18 @@ export function AttendancePanel() {
   const [subTab, setSubTab] = useState<SubTab>('import');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [minPlayers, setMinPlayers] = useState(15);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  }
+  function selectAll() { setSelected(new Set(sessions.map((s) => s.id))); }
+  function clearSelect() { setSelected(new Set()); }
+  async function deleteSelected() {
+    if (!confirm(`Delete ${selected.size} session(s) and all their attendance?`)) return;
+    for (const id of selected) await deleteSession(id);
+    setSelected(new Set());
+  }
 
   // Manual session creation
   const [newInstance, setNewInstance] = useState('');
@@ -196,31 +208,55 @@ export function AttendancePanel() {
             </div>
           ) : (
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saved Sessions</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saved Sessions</h3>
+                <div className="flex items-center gap-2">
+                  {selected.size > 0 ? (
+                    <>
+                      <span className="text-xs text-gray-500">{selected.size} selected</span>
+                      <button onClick={clearSelect} className="text-xs text-gray-500 hover:text-gray-300">Clear</button>
+                      <button
+                        onClick={deleteSelected}
+                        className="text-xs px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                      >
+                        Delete selected
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={selectAll} className="text-xs text-gray-500 hover:text-gray-300">Select all</button>
+                  )}
+                </div>
+              </div>
               {sessions.map((session) => {
                 const players = attendance[session.id] ?? [];
                 const isExpanded = expanded === session.id;
+                const isSelected = selected.has(session.id);
                 return (
-                  <div key={session.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div key={session.id} className={`bg-gray-900 border rounded-xl overflow-hidden transition-colors ${isSelected ? 'border-red-500/40' : 'border-gray-800'}`}>
                     <div
-                      className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-gray-800/30 group"
-                      onClick={() => setExpanded(isExpanded ? null : session.id)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/30 group"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-200">{session.instance_name}</p>
-                        <p className="text-xs text-gray-600">{formatDate(session.session_date)} · {players.length} players</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded px-1.5 py-0.5">
-                          {players.length} attended
-                        </span>
-                        <span className="text-gray-700 text-xs">{isExpanded ? '▲' : '▼'}</span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); if (confirm('Delete this session and all its attendance?')) deleteSession(session.id); }}
-                          className="text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          ✕
-                        </button>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(session.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="accent-red-500 cursor-pointer flex-shrink-0"
+                      />
+                      <div
+                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                        onClick={() => setExpanded(isExpanded ? null : session.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-200">{session.instance_name}</p>
+                          <p className="text-xs text-gray-600">{formatDate(session.session_date)} · {players.length} players</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded px-1.5 py-0.5">
+                            {players.length} attended
+                          </span>
+                          <span className="text-gray-700 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                        </div>
                       </div>
                     </div>
                     {isExpanded && (
