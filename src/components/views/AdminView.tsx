@@ -22,14 +22,40 @@ export function AdminView({ profile }: AdminViewProps) {
   const [wclSaving, setWclSaving] = useState(false);
   const [wclSaved, setWclSaved] = useState(false);
 
+  // Priority score weights
+  const [pWeights, setPWeights] = useState({ attendance: 30, drought: 50, loot: 20 });
+  const [pSaving, setPSaving] = useState(false);
+  const [pSaved, setPSaved] = useState(false);
+  const pSum = pWeights.attendance + pWeights.drought + pWeights.loot;
+
   useEffect(() => {
-    supabase.from('app_settings').select('key, value').in('key', [...WCL_KEYS]).then(({ data }) => {
-      if (!data) return;
-      const cfg = { ...wclConfig };
-      for (const row of data) cfg[row.key as WclKey] = row.value as string;
-      setWclConfig(cfg);
-    });
+    supabase.from('app_settings').select('key, value')
+      .in('key', [...WCL_KEYS, 'priority_weight_attendance', 'priority_weight_drought', 'priority_weight_loot'])
+      .then(({ data }) => {
+        if (!data) return;
+        const cfg = { ...wclConfig };
+        const pw = { ...pWeights };
+        for (const row of data) {
+          if (WCL_KEYS.includes(row.key as WclKey)) cfg[row.key as WclKey] = row.value as string;
+          if (row.key === 'priority_weight_attendance') pw.attendance = Number(row.value);
+          if (row.key === 'priority_weight_drought')    pw.drought    = Number(row.value);
+          if (row.key === 'priority_weight_loot')       pw.loot       = Number(row.value);
+        }
+        setWclConfig(cfg);
+        setPWeights(pw);
+      });
   }, []);
+
+  async function savePWeights() {
+    if (pSum !== 100) return;
+    setPSaving(true);
+    await supabase.from('app_settings').upsert({ key: 'priority_weight_attendance', value: String(pWeights.attendance), updated_at: new Date().toISOString() });
+    await supabase.from('app_settings').upsert({ key: 'priority_weight_drought',    value: String(pWeights.drought),    updated_at: new Date().toISOString() });
+    await supabase.from('app_settings').upsert({ key: 'priority_weight_loot',       value: String(pWeights.loot),       updated_at: new Date().toISOString() });
+    setPSaving(false);
+    setPSaved(true);
+    setTimeout(() => setPSaved(false), 2000);
+  }
 
   async function saveWclConfig() {
     setWclSaving(true);
@@ -142,6 +168,49 @@ export function AdminView({ profile }: AdminViewProps) {
           <p className="text-xs text-gray-700">
             Changes take effect immediately for all users on next page load.
           </p>
+
+          {/* Priority score weights */}
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold text-gray-300 mb-1">Priority Score Weights</h3>
+            <p className="text-xs text-gray-600 mb-3">Must sum to 100. Controls how each factor influences the priority ranking.</p>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              {([
+                { key: 'attendance' as const, label: 'Attendance', color: 'text-blue-400', desc: 'Show-up rate (bench counts)' },
+                { key: 'drought'    as const, label: 'Drought',    color: 'text-purple-400', desc: 'Days since last BIS/Upgrade (cap 30d)' },
+                { key: 'loot'       as const, label: 'Recent Loot', color: 'text-yellow-400', desc: 'Penalty for items in last 6 weeks' },
+              ]).map(({ key, label, color, desc }) => (
+                <div key={key} className="flex items-center gap-3">
+                  <div className="w-28 flex-shrink-0">
+                    <p className={`text-xs font-medium ${color}`}>{label}</p>
+                    <p className="text-xs text-gray-600">{desc}</p>
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={pWeights[key]}
+                    onChange={(e) => setPWeights((p) => ({ ...p, [key]: Number(e.target.value) }))}
+                    className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
+                  />
+                  <div className="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden">
+                    <div className="h-full rounded-full bg-yellow-500/60 transition-all" style={{ width: `${pWeights[key]}%` }} />
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-1">
+                <span className={`text-xs font-semibold ${pSum === 100 ? 'text-green-400' : 'text-red-400'}`}>
+                  Sum: {pSum}/100 {pSum !== 100 && '— must equal 100'}
+                </span>
+                <button
+                  onClick={savePWeights}
+                  disabled={pSaving || pSum !== 100}
+                  className="text-xs px-3 py-1.5 bg-yellow-500 text-gray-950 font-semibold rounded-lg disabled:opacity-40"
+                >
+                  {pSaved ? '✓ Saved' : pSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* WarcraftLogs guild config */}
           <div className="pt-2">
