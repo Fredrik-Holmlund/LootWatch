@@ -174,33 +174,28 @@ export function DashboardView() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Response breakdown */}
+        {/* Most Benched */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300">Response Breakdown</h3>
-          {stats && entries.length > 0 ? (
-            <div className="space-y-2">
-              {RESPONSE_CONFIG.map(({ key, label, color }) => {
-                const count = stats.responseCounts[key] ?? 0;
-                if (!count) return null;
-                const pct = Math.round((count / entries.length) * 100);
-                return (
-                  <div key={key} className="space-y-0.5">
+          <h3 className="text-sm font-semibold text-gray-300">Most Benched</h3>
+          {attStats && attStats.topAttendance.filter(r => r.benched > 0).length > 0 ? (
+            <div className="space-y-1.5">
+              {[...attStats.topAttendance].sort((a, b) => b.benched - a.benched).filter(r => r.benched > 0).slice(0, 10).map(({ name, benched, benchPct }, i) => (
+                <div key={name} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
+                  <div className="flex-1 space-y-0.5">
                     <div className="flex justify-between text-xs">
-                      <span style={{ color }} className="font-medium">{label}</span>
-                      <span className="text-gray-500">{count} <span className="text-gray-700">({pct}%)</span></span>
+                      <span className="text-gray-300 font-medium">{name}</span>
+                      <span className="text-orange-400 tabular-nums">{benched}/{attStats.total} sessions</span>
                     </div>
                     <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: color }}
-                      />
+                      <div className="h-full rounded-full bg-orange-500/70 transition-all" style={{ width: `${benchPct}%` }} />
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-600">No data</p>
+            <p className="text-xs text-gray-600">No bench data yet</p>
           )}
         </div>
 
@@ -208,33 +203,20 @@ export function DashboardView() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-300">Top Attendance</h3>
           {attStats && attStats.topAttendance.length > 0 ? (
-            <div className="space-y-2.5">
-              {attStats.topAttendance.map(({ name, pct, benchPct, benched, present }, i) => {
+            <div className="space-y-1.5">
+              {attStats.topAttendance.map(({ name, pct, present }, i) => {
                 const attColor = pct >= 75 ? '#4ade80' : pct >= 50 ? '#facc15' : pct >= 25 ? '#fb923c' : '#f87171';
                 return (
                   <div key={name} className="flex items-center gap-3">
                     <span className="text-xs text-gray-700 w-4 text-right">{i + 1}</span>
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-0.5">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-300 font-medium">{name}</span>
-                        <span className="text-gray-500 tabular-nums">
-                          {present}/{attStats.total}
-                          {benched > 0 && <span className="text-orange-400 ml-1.5">({benched} benched)</span>}
-                        </span>
+                        <span className="text-gray-500 tabular-nums">{present}/{attStats.total}</span>
                       </div>
-                      {/* Attendance bar */}
                       <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: attColor, opacity: 0.8 }} />
                       </div>
-                      {/* Bench rate bar */}
-                      {benched > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex-1 h-1 bg-gray-800 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-orange-500/60 transition-all" style={{ width: `${benchPct}%` }} />
-                          </div>
-                          <span className="text-[10px] text-orange-400/70">{benchPct}% benched</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
