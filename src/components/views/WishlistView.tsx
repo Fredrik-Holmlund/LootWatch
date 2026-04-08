@@ -187,12 +187,12 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="text-sm text-yellow-300/90 hover:text-yellow-200 hover:underline flex-1"
+                                    className="text-sm text-yellow-300/90 hover:text-yellow-200 hover:underline"
                                   >
                                     {item.item_name}
                                   </a>
                                 ) : (
-                                  <span className="text-sm text-yellow-300/90 flex-1">{item.item_name}</span>
+                                  <span className="text-sm text-yellow-300/90">{item.item_name}</span>
                                 )}
 
                                 {/* Wish count + wisher avatars */}
