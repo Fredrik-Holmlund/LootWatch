@@ -56,25 +56,30 @@ export function useAttendance() {
   const syncFromWCL = useCallback(async () => {
     setSyncing(true);
     setSyncError(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-attendance`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-attendance`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+        }
+      );
+      const json = await res.json();
+      if (json.error) {
+        setSyncError(json.error);
+      } else {
+        setWclReports(json.sessions ?? []);
       }
-    );
-    const json = await res.json();
-    if (json.error) {
-      setSyncError(json.error);
-    } else {
-      setWclReports(json.sessions ?? []);
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : 'Network error — could not reach sync function');
+    } finally {
+      setSyncing(false);
     }
-    setSyncing(false);
   }, []);
 
   const importSession = useCallback(async (report: WCLReport) => {
