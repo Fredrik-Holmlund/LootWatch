@@ -69,6 +69,7 @@ export interface RaidLoot {
   wowhead_url: string | null;
   icon_url: string | null;
   icon_name: string | null;
+  note: string | null;
 }
 
 export interface LootCandidate {
