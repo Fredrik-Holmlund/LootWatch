@@ -27,6 +27,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingUsername, setEditingUsername] = useState<string | null>(null);
   const [usernameValue, setUsernameValue] = useState('');
+  const [renameMsg, setRenameMsg] = useState<string | null>(null);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -42,13 +43,27 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   async function saveUsername(id: string) {
     const trimmed = usernameValue.trim();
     if (!trimmed) return;
+    const oldName = profiles.find((p) => p.id === id)?.username ?? '';
     setUpdating(id);
     setError(null);
+
     const { error } = await supabase.from('profiles').update({ username: trimmed }).eq('id', id);
-    if (error) setError(error.message);
-    else setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, username: trimmed } : p)));
+    if (error) { setError(error.message); setUpdating(null); return; }
+
+    // Cascade rename to wishlist and loot planner candidates (not history/attendance — those are historical)
+    const [wishResult, candidateResult] = await Promise.all([
+      supabase.from('soft_reserves').update({ player_name: trimmed }).eq('player_name', oldName),
+      supabase.from('loot_candidates').update({ player_name: trimmed }).eq('player_name', oldName),
+    ]);
+
+    const cascadeError = wishResult.error?.message ?? candidateResult.error?.message ?? null;
+    if (cascadeError) setError(`Profile renamed but cascade failed: ${cascadeError}`);
+
+    setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, username: trimmed } : p)));
     setUpdating(null);
     setEditingUsername(null);
+    setRenameMsg(`"${oldName}" → "${trimmed}" — wishlist and planner candidates updated`);
+    setTimeout(() => setRenameMsg(null), 5000);
   }
 
   async function changeRole(profile: Profile, newRole: UserRole) {
@@ -75,6 +90,9 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
 
       {error && (
         <div className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</div>
+      )}
+      {renameMsg && (
+        <div className="text-green-400 text-xs bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2">{renameMsg}</div>
       )}
 
       {loading ? (
