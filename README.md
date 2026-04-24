@@ -2,8 +2,6 @@
 
 A guild loot distribution tracker for **World of Warcraft: The Burning Crusade**. Built for raid councils to plan, record, and analyse loot across the full TBC progression.
 
-**Live:** [https://fredrik-holmlund.github.io/LootWatch/](https://fredrik-holmlund.github.io/LootWatch/)
-
 ---
 
 ## Tech Stack
@@ -105,50 +103,3 @@ Council-only panel for managing LootWatch user accounts.
 
 - Lists all registered users with username, role, and join date
 - **Promote to Council** / **Demote to Raider** toggle per user
-
----
-
-## Database Schema (Supabase)
-
-| Table | Purpose |
-|---|---|
-| `profiles` | One row per auth user — stores username and role (`council` / `raider`) |
-| `loot_entries` | Full loot history imported from RCLC |
-| `players` | Guild roster (independent of auth) |
-| `raid_loot` | Static TBC raid loot catalogue — `instance_name, boss_name, item_id, item_name, icon_url, wowhead_url` |
-| `loot_candidates` | Pre-raid candidate assignments — `raid_loot_id, player_name, priority, note` |
-| `council_notes` | Priority notes — `player_name, item_name, priority, notes` |
-
-Row Level Security is enabled on all tables. A `security definer` function (`requesting_user_is_council()`) is used for council-level policies to avoid recursive RLS evaluation.
-
----
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-```
-
-### Environment Variables
-
-Create a `.env.local` file:
-
-```
-VITE_SUPABASE_URL=https://<project>.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon-key>
-```
-
-These are baked into the build at CI time via GitHub Actions secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
-
----
-
-## Deployment
-
-Pushes to `main` trigger the GitHub Actions workflow (`.github/workflows/deploy.yml`), which builds the app and deploys it to GitHub Pages automatically.
