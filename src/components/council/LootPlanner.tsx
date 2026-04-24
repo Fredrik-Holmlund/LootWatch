@@ -332,13 +332,18 @@ function ItemRow({
             <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default">
               ♥ {wishers.length}
             </span>
-            <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[140px]">
+            <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
               <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
-                {wishers.map((w, i) => (
-                  <div key={i} className="text-xs">
+                {[...wishers].sort((a, b) => (b.star ?? 0) - (a.star ?? 0)).map((w, i) => (
+                  <div key={i} className="text-xs flex items-center justify-between gap-3">
                     <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
                       {stripRealm(w.player_name)}
                     </span>
+                    {w.star && (
+                      <span className={`font-bold ${w.star === 3 ? 'text-yellow-400' : w.star === 2 ? 'text-yellow-300' : 'text-gray-400'}`}>
+                        {'★'.repeat(w.star)}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

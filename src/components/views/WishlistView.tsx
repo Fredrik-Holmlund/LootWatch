@@ -14,13 +14,26 @@ interface WishlistViewProps {
 
 type SubTab = 'browse' | 'all';
 
+const STAR_LABELS: Record<number, string> = { 1: '★', 2: '★★', 3: '★★★' };
+
+function StarBadge({ star }: { star: 1 | 2 | 3 }) {
+  const colors: Record<number, string> = {
+    1: 'text-gray-400',
+    2: 'text-yellow-300',
+    3: 'text-yellow-400',
+  };
+  return <span className={`text-xs font-bold ${colors[star]}`}>{STAR_LABELS[star]}</span>;
+}
+
 export function WishlistView({ profile, role }: WishlistViewProps) {
   const { loot, loading: lootLoading } = useRaidLoot();
-  const { wishes, loading: wishLoading, myWishedIds, toggleWish, deleteWish } = useWishlist(profile);
+  const { wishes, loading: wishLoading, myWishedIds, myWishes, usedStarTiers, toggleWish, setItemStar, deleteWish } = useWishlist(profile);
   const [subTab, setSubTab] = useState<SubTab>('browse');
   const [selectedPhase, setSelectedPhase] = useState(1);
   const [filterClass, setFilterClass] = useState('');
   const [filterInstance, setFilterInstance] = useState('');
+
+  const isLocked = profile?.stars_locked ?? false;
 
   const grouped = useMemo(() => {
     const phaseLoot = loot.filter((item) => getPhaseForInstance(item.instance_name) === selectedPhase);
@@ -34,7 +47,6 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
     return byInstance;
   }, [loot, selectedPhase]);
 
-  // wish counts per raid_loot_id
   const wishCounts = useMemo(() => {
     const map = new Map<number, number>();
     for (const w of wishes) {
@@ -43,7 +55,6 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
     return map;
   }, [wishes]);
 
-  // players who wished per raid_loot_id
   const wishers = useMemo(() => {
     const map = new Map<number, SoftReserve[]>();
     for (const w of wishes) {
@@ -58,7 +69,6 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
 
   const loading = lootLoading || wishLoading;
 
-  // All Wishes tab
   const allWishes = useMemo(() => {
     return wishes
       .filter((w) => {
@@ -100,6 +110,11 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             )}
           </p>
         </div>
+        {isLocked && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-1.5">
+            🔒 Your stars are locked by council
+          </div>
+        )}
       </div>
 
       {/* Sub-tabs */}
@@ -144,6 +159,21 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             })}
           </div>
 
+          {/* Star legend */}
+          {profile && (
+            <div className="flex items-center gap-4 text-xs text-gray-600">
+              <span>Star your most wanted items:</span>
+              {([3, 2, 1] as const).map((tier) => (
+                <span key={tier} className="flex items-center gap-1">
+                  <StarBadge star={tier} />
+                  <span>= {tier === 3 ? 'Must have' : tier === 2 ? 'Big upgrade' : 'Nice to have'}</span>
+                  {usedStarTiers.has(tier) && <span className="text-gray-700">(used)</span>}
+                </span>
+              ))}
+              {isLocked && <span className="text-amber-500">🔒 locked</span>}
+            </div>
+          )}
+
           {Object.keys(grouped).length === 0 ? (
             <div className="text-center py-10 text-gray-600 text-sm">No loot data for this phase.</div>
           ) : (
@@ -160,15 +190,19 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                         <div className="divide-y divide-gray-800/60">
                           {bosses[boss].map((item) => {
                             const wished = myWishedIds.has(item.id);
+                            const myWish = myWishes.get(item.id) ?? null;
                             const count = wishCounts.get(item.id) ?? 0;
-                            const itemWishers = wishers.get(item.id) ?? [];
+                            const itemWishers = (wishers.get(item.id) ?? [])
+                              .slice()
+                              .sort((a, b) => (b.star ?? 0) - (a.star ?? 0));
+
                             return (
-                              <button
+                              <div
                                 key={item.id}
-                                onClick={() => toggleWish(item, profile?.username ? null : null)}
-                                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors group ${
+                                onClick={() => profile && toggleWish(item, null)}
+                                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors group cursor-pointer ${
                                   wished ? 'bg-yellow-500/5 hover:bg-yellow-500/10' : 'hover:bg-gray-800/40'
-                                }`}
+                                } ${!profile ? 'cursor-default' : ''}`}
                               >
                                 {/* Heart */}
                                 <span className={`text-base flex-shrink-0 transition-transform group-hover:scale-110 ${wished ? 'text-yellow-400' : 'text-gray-700'}`}>
@@ -195,26 +229,60 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   <span className="text-sm text-yellow-300/90">{item.item_name}</span>
                                 )}
 
-                                {/* Wish count + wisher avatars */}
+                                {/* Star selector — only on wished items for the current user */}
+                                {wished && profile && myWish && (
+                                  <div className="flex items-center gap-0.5 ml-1" onClick={(e) => e.stopPropagation()}>
+                                    {([1, 2, 3] as const).map((tier) => {
+                                      const isActive = myWish.star === tier;
+                                      const isUsedElsewhere = usedStarTiers.has(tier) && !isActive;
+                                      const disabled = isLocked || isUsedElsewhere;
+                                      return (
+                                        <button
+                                          key={tier}
+                                          disabled={disabled}
+                                          onClick={() => setItemStar(myWish.id, isActive ? null : tier)}
+                                          title={
+                                            isLocked ? 'Stars are locked by council' :
+                                            isUsedElsewhere ? 'Already assigned to another item' :
+                                            isActive ? 'Remove star' :
+                                            `Mark as ${STAR_LABELS[tier]}`
+                                          }
+                                          className={`text-xs px-0.5 rounded transition-colors leading-none ${
+                                            isActive
+                                              ? tier === 3 ? 'text-yellow-400' : tier === 2 ? 'text-yellow-300' : 'text-gray-300'
+                                              : disabled
+                                              ? 'text-gray-800 cursor-not-allowed'
+                                              : 'text-gray-600 hover:text-yellow-500'
+                                          }`}
+                                        >
+                                          {STAR_LABELS[tier]}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* Wish count + wisher tooltip */}
                                 {count > 0 && (
-                                  <span className="relative group/wishers flex-shrink-0">
-                                    <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5">
+                                  <span className="relative group/wishers flex-shrink-0 ml-auto" onClick={(e) => e.stopPropagation()}>
+                                    <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 cursor-default">
                                       ♥ {count}
                                     </span>
-                                    <div className="absolute right-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[140px]">
+                                    <div className="absolute right-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
                                       <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
                                         {itemWishers.map((w, i) => (
-                                          <div key={i} className="text-xs flex items-center gap-2">
+                                          <div key={i} className="text-xs flex items-center justify-between gap-3">
                                             <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
                                               {stripRealm(w.player_name)}
                                             </span>
+                                            {w.star && <StarBadge star={w.star} />}
                                           </div>
                                         ))}
                                       </div>
                                     </div>
                                   </span>
                                 )}
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -261,6 +329,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   <tr className="border-b border-gray-800 bg-gray-900/80">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Player</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Boss</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
                     {role === 'admin' && <th className="px-4 py-3"></th>}
@@ -278,6 +347,9 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-yellow-300/80 text-sm">{w.item_name}</td>
+                      <td className="px-4 py-2.5">
+                        {w.star ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
+                      </td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{w.boss_name ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{w.instance_name ?? '—'}</td>
                       {role === 'admin' && (

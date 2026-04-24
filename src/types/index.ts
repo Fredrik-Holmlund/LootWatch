@@ -56,6 +56,7 @@ export interface Profile {
   id: string;
   username: string;
   role: UserRole;
+  stars_locked: boolean;
   created_at: string;
 }
 
@@ -90,6 +91,7 @@ export interface SoftReserve {
   instance_name: string | null;
   boss_name: string | null;
   note: string | null;
+  star: 1 | 2 | 3 | null;
   created_at: string;
 }
 

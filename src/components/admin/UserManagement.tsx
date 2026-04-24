@@ -28,6 +28,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   const [editingUsername, setEditingUsername] = useState<string | null>(null);
   const [usernameValue, setUsernameValue] = useState('');
   const [renameMsg, setRenameMsg] = useState<string | null>(null);
+  const [batchLocking, setBatchLocking] = useState(false);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -50,7 +51,6 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
     const { error } = await supabase.from('profiles').update({ username: trimmed }).eq('id', id);
     if (error) { setError(error.message); setUpdating(null); return; }
 
-    // Cascade rename to wishlist and loot planner candidates (not history/attendance — those are historical)
     const [wishResult, candidateResult] = await Promise.all([
       supabase.from('soft_reserves').update({ player_name: trimmed }).eq('player_name', oldName),
       supabase.from('loot_candidates').update({ player_name: trimmed }).eq('player_name', oldName),
@@ -67,7 +67,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
   }
 
   async function changeRole(profile: Profile, newRole: UserRole) {
-    if (profile.id === currentUserId) return; // can't change own role
+    if (profile.id === currentUserId) return;
     setUpdating(profile.id);
     setError(null);
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', profile.id);
@@ -76,16 +76,50 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
     setUpdating(null);
   }
 
+  async function toggleStarsLocked(profile: Profile) {
+    setUpdating(profile.id);
+    const newVal = !profile.stars_locked;
+    const { error } = await supabase.from('profiles').update({ stars_locked: newVal }).eq('id', profile.id);
+    if (error) setError(error.message);
+    else setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, stars_locked: newVal } : p)));
+    setUpdating(null);
+  }
+
+  async function batchSetStarsLocked(locked: boolean) {
+    setBatchLocking(true);
+    setError(null);
+    const { error } = await supabase.from('profiles').update({ stars_locked: locked }).neq('id', '');
+    if (error) setError(error.message);
+    else setProfiles((prev) => prev.map((p) => ({ ...p, stars_locked: locked })));
+    setBatchLocking(false);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-300">Registered Users</h3>
-        <button
-          onClick={fetchProfiles}
-          className="text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-700 px-2 py-1 rounded-lg transition-colors"
-        >
-          ↻ Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => batchSetStarsLocked(true)}
+            disabled={batchLocking}
+            className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 hover:bg-amber-400/20 px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+          >
+            🔒 Lock all stars
+          </button>
+          <button
+            onClick={() => batchSetStarsLocked(false)}
+            disabled={batchLocking}
+            className="text-xs text-green-400 bg-green-400/10 border border-green-400/20 hover:bg-green-400/20 px-2 py-1 rounded-lg transition-colors disabled:opacity-40"
+          >
+            🔓 Unlock all stars
+          </button>
+          <button
+            onClick={fetchProfiles}
+            className="text-xs text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-700 px-2 py-1 rounded-lg transition-colors"
+          >
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -106,6 +140,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
               <tr className="border-b border-gray-800">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Role</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stars</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Change Role</th>
               </tr>
@@ -143,6 +178,19 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${ROLE_STYLE[profile.role]}`}>
                         {ROLE_LABEL[profile.role]}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {updating === profile.id ? (
+                        <span className="text-xs text-gray-600">…</span>
+                      ) : (
+                        <button
+                          onClick={() => toggleStarsLocked(profile)}
+                          title={profile.stars_locked ? 'Click to unlock stars' : 'Click to lock stars'}
+                          className="text-base transition-opacity hover:opacity-70"
+                        >
+                          {profile.stars_locked ? '🔒' : '🔓'}
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600">
                       {new Date(profile.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
