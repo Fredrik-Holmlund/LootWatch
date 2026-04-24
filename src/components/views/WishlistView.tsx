@@ -229,8 +229,8 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   <span className="text-sm text-yellow-300/90">{item.item_name}</span>
                                 )}
 
-                                {/* Star selector — only on wished items for the current user */}
-                                {wished && profile && myWish && (
+                                {/* Star selector — only on wished items, only when stars are enabled for this item */}
+                                {wished && profile && myWish && !item.stars_disabled && (
                                   <div className="flex items-center gap-0.5 ml-1" onClick={(e) => e.stopPropagation()}>
                                     {([1, 2, 3] as const).map((tier) => {
                                       const isActive = myWish.star === tier;

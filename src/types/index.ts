@@ -71,6 +71,7 @@ export interface RaidLoot {
   icon_url: string | null;
   icon_name: string | null;
   note: string | null;
+  stars_disabled: boolean;
 }
 
 export interface LootCandidate {
