@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
 import type { LootEntry, UserRole } from '../../types';
+import { canEdit } from '../../types';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
+
+const RESPONSES = ['BIS', 'Upgrade', 'Minor Upgrade', 'Offspec', 'Transmog', 'PvP', 'Greed', 'Other'];
 
 interface LootTableProps {
   entries: LootEntry[];
@@ -11,11 +14,13 @@ interface LootTableProps {
   onBulkDelete?: (ids: string[]) => Promise<string | null>;
   onUpdateNote?: (id: string, notes: string) => void;
   onUpdateRaid?: (id: string, raid: string) => void;
+  onUpdateBoss?: (id: string, boss: string) => void;
+  onUpdateResponse?: (id: string, response: string) => void;
 }
 
 type SortKey = 'timestamp' | 'player_name' | 'item_name' | 'raid' | 'boss' | 'response';
 
-export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote, onUpdateRaid }: LootTableProps) {
+export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote, onUpdateRaid, onUpdateBoss, onUpdateResponse }: LootTableProps) {
   const [search, setSearch] = useState('');
   const [filterRaid, setFilterRaid] = useState('');
   const [filterClass, setFilterClass] = useState('');
@@ -25,6 +30,9 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
   const [noteValue, setNoteValue] = useState('');
   const [editingRaid, setEditingRaid] = useState<string | null>(null);
   const [raidValue, setRaidValue] = useState('');
+  const [editingBoss, setEditingBoss] = useState<string | null>(null);
+  const [bossValue, setBossValue] = useState('');
+  const [editingResponse, setEditingResponse] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -148,6 +156,21 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
     setEditingRaid(null);
   }
 
+  function startEditBoss(e: LootEntry) {
+    setEditingBoss(e.id);
+    setBossValue(e.boss ?? '');
+  }
+
+  async function saveBoss(id: string) {
+    onUpdateBoss?.(id, bossValue.trim());
+    setEditingBoss(null);
+  }
+
+  async function saveResponse(id: string, response: string) {
+    onUpdateResponse?.(id, response);
+    setEditingResponse(null);
+  }
+
   return (
     <div className="space-y-3">
       {/* Filters */}
@@ -184,7 +207,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
         >
           Export CSV
         </button>
-        {role === 'council' && selected.size > 0 && (
+        {canEdit(role) && selected.size > 0 && (
           <button
             onClick={handleBulkDelete}
             disabled={bulkDeleting}
@@ -201,7 +224,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/80">
-                {role === 'council' && (
+                {canEdit(role) && (
                   <th className="px-4 py-3 w-8">
                     <input
                       type="checkbox"
@@ -229,7 +252,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                 ))}
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Votes</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</th>
-                {role === 'council' && (
+                {canEdit(role) && (
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
                 )}
               </tr>
@@ -244,7 +267,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
               ) : (
                 paged.map((entry) => (
                   <tr key={entry.id} className={`hover:bg-gray-800/30 transition-colors group ${selected.has(entry.id) ? 'bg-yellow-500/5' : ''}`}>
-                    {role === 'council' && (
+                    {canEdit(role) && (
                       <td className="px-4 py-2.5 w-8">
                         <input
                           type="checkbox"
@@ -294,17 +317,57 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </div>
                       ) : (
                         <span
-                          className={role === 'council' ? 'cursor-pointer hover:text-gray-200' : ''}
-                          onClick={() => role === 'council' && startEditRaid(entry)}
-                          title={role === 'council' ? 'Click to edit raid' : undefined}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-200' : ''}
+                          onClick={() => canEdit(role) && startEditRaid(entry)}
+                          title={canEdit(role) ? 'Click to edit raid' : undefined}
                         >
                           {entry.raid || '—'}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">{entry.boss}</td>
+                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">
+                      {editingBoss === entry.id ? (
+                        <div className="flex gap-1">
+                          <input
+                            autoFocus
+                            value={bossValue}
+                            onChange={(e) => setBossValue(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') saveBoss(entry.id); if (e.key === 'Escape') setEditingBoss(null); }}
+                            className="w-36 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                          />
+                          <button onClick={() => saveBoss(entry.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
+                          <button onClick={() => setEditingBoss(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                        </div>
+                      ) : (
+                        <span
+                          className={role === 'admin' ? 'cursor-pointer hover:text-gray-200' : ''}
+                          onClick={() => role === 'admin' && startEditBoss(entry)}
+                          title={role === 'admin' ? 'Click to edit boss' : undefined}
+                        >
+                          {entry.boss || '—'}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5">
-                      <ResponseBadge response={entry.response} />
+                      {editingResponse === entry.id ? (
+                        <select
+                          autoFocus
+                          defaultValue={entry.response}
+                          onChange={(e) => saveResponse(entry.id, e.target.value)}
+                          onBlur={() => setEditingResponse(null)}
+                          className="bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                        >
+                          {RESPONSES.map((r) => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      ) : (
+                        <span
+                          className={role === 'admin' ? 'cursor-pointer' : ''}
+                          onClick={() => role === 'admin' && setEditingResponse(entry.id)}
+                          title={role === 'admin' ? 'Click to edit response' : undefined}
+                        >
+                          <ResponseBadge response={entry.response} />
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-gray-400 text-center text-xs">{entry.votes || '—'}</td>
                     <td className="px-4 py-2.5 text-xs text-gray-500 max-w-xs">
@@ -322,15 +385,15 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </div>
                       ) : (
                         <span
-                          className={role === 'council' ? 'cursor-pointer hover:text-gray-300' : ''}
-                          onClick={() => role === 'council' && startEditNote(entry)}
-                          title={role === 'council' ? 'Click to edit note' : undefined}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-300' : ''}
+                          onClick={() => canEdit(role) && startEditNote(entry)}
+                          title={canEdit(role) ? 'Click to edit note' : undefined}
                         >
-                          {entry.notes || (role === 'council' ? <span className="text-gray-700 italic">add note…</span> : '—')}
+                          {entry.notes || (canEdit(role) ? <span className="text-gray-700 italic">add note…</span> : '—')}
                         </span>
                       )}
                     </td>
-                    {role === 'council' && (
+                    {canEdit(role) && (
                       <td className="px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onDelete?.(entry.id)}

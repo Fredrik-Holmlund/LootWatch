@@ -45,12 +45,18 @@ export interface CouncilNote {
   created_at: string;
 }
 
-export type UserRole = 'council' | 'raider';
+export type UserRole = 'council' | 'raider' | 'admin';
+
+/** True for roles that can perform council-level actions */
+export function canEdit(role: UserRole | null): boolean {
+  return role === 'council' || role === 'admin';
+}
 
 export interface Profile {
   id: string;
   username: string;
   role: UserRole;
+  stars_locked: boolean;
   created_at: string;
 }
 
@@ -64,6 +70,9 @@ export interface RaidLoot {
   wowhead_url: string | null;
   icon_url: string | null;
   icon_name: string | null;
+  note: string | null;
+  stars_disabled: boolean;
+  hidden: boolean;
 }
 
 export interface LootCandidate {
@@ -72,6 +81,19 @@ export interface LootCandidate {
   player_name: string;
   priority: number;
   note: string | null;
+  created_at: string;
+}
+
+export interface SoftReserve {
+  id: string;
+  player_name: string;
+  player_class: string | null;
+  raid_loot_id: number | null;
+  item_name: string;
+  instance_name: string | null;
+  boss_name: string | null;
+  note: string | null;
+  star: 1 | 2 | 3 | null;
   created_at: string;
 }
 

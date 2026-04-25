@@ -75,8 +75,8 @@ const BOSS_ORDER: Record<string, string[]> = {
     'Void Reaver',
     'High Astromancer Solarian',
     "Kael'thas Sunstrider",
-    'Recipes',
     'Trash',
+    'Recipes',
   ],
   "Mount Hyjal": [
     'Rage Winterchill',
@@ -122,13 +122,17 @@ const BOSS_ORDER: Record<string, string[]> = {
   ],
 };
 
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[''`´]/g, "'");
+}
+
 export function sortBosses(instanceName: string, bosses: string[]): string[] {
   const order = BOSS_ORDER[instanceName];
   if (!order) return [...bosses].sort();
 
   return [...bosses].sort((a, b) => {
-    const ai = order.findIndex((o) => o.toLowerCase() === a.toLowerCase());
-    const bi = order.findIndex((o) => o.toLowerCase() === b.toLowerCase());
+    const ai = order.findIndex((o) => normalize(o) === normalize(a));
+    const bi = order.findIndex((o) => normalize(o) === normalize(b));
     const aIdx = ai === -1 ? 9999 : ai;
     const bIdx = bi === -1 ? 9999 : bi;
     if (aIdx !== bIdx) return aIdx - bIdx;

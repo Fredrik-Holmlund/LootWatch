@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../utils/supabase';
 import type { RaidLoot } from '../types';
 
@@ -8,7 +8,7 @@ export function useRaidLoot() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchLoot() {
       const { data, error } = await supabase
         .from('raid_loot')
         .select('*')
@@ -23,8 +23,18 @@ export function useRaidLoot() {
       }
       setLoading(false);
     }
-    fetch();
+    fetchLoot();
   }, []);
 
-  return { loot, loading, error };
+  const updateItemNote = useCallback(async (id: number, note: string): Promise<string | null> => {
+    const { error } = await supabase
+      .from('raid_loot')
+      .update({ note: note.trim() || null })
+      .eq('id', id);
+    if (error) return error.message;
+    setLoot((prev) => prev.map((i) => (i.id === id ? { ...i, note: note.trim() || null } : i)));
+    return null;
+  }, []);
+
+  return { loot, loading, error, updateItemNote };
 }
