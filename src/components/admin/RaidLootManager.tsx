@@ -34,27 +34,51 @@ export function RaidLootManager() {
     setFixingIcons(true);
     setFixProgress({ done: 0, total: broken.length });
     let fixed = 0;
+    let failed = 0;
+
     for (let i = 0; i < broken.length; i++) {
       const item = broken[i];
       try {
         const res = await fetch(`https://nether.wowhead.com/tbc/tooltip/item/${item.item_id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.icon && data.icon !== 'inv_misc_questionmark') {
-          const iconName = (data.icon as string).toLowerCase();
+        const iconName = typeof data.icon === 'string' ? data.icon.toLowerCase() : null;
+        if (iconName && iconName !== 'inv_misc_questionmark') {
           const iconUrl = `https://wow.zamimg.com/images/wow/icons/large/${iconName}.jpg`;
-          await supabase.from('raid_loot').update({ icon_name: iconName, icon_url: iconUrl }).eq('id', item.id);
-          setItems(prev => prev.map(p => p.id === item.id ? { ...p, icon_name: iconName, icon_url: iconUrl } : p));
-          fixed++;
+          const { error: dbErr } = await supabase.from('raid_loot').update({ icon_name: iconName, icon_url: iconUrl }).eq('id', item.id);
+          if (!dbErr) {
+            setItems(prev => prev.map(p => p.id === item.id ? { ...p, icon_name: iconName, icon_url: iconUrl } : p));
+            fixed++;
+          } else {
+            console.error(`[fix-icons] DB error for item ${item.item_id}:`, dbErr);
+            failed++;
+          }
+        } else {
+          console.warn(`[fix-icons] No icon returned for item ${item.item_id}:`, data);
+          failed++;
         }
-      } catch {
-        // skip if fetch fails for this item
+      } catch (e) {
+        console.error(`[fix-icons] Fetch failed for item ${item.item_id}:`, e);
+        failed++;
+        // If the first 3 all fail it's likely a network/CORS issue — abort early
+        if (i < 3 && failed > i) {
+          setError('Icon fetch failed — check browser console (F12) for the error. Likely a network or CORS issue.');
+          setFixingIcons(false);
+          setFixProgress(null);
+          return;
+        }
       }
       setFixProgress({ done: i + 1, total: broken.length });
       await new Promise(r => setTimeout(r, 80));
     }
+
     setFixingIcons(false);
     setFixProgress(null);
-    if (fixed < broken.length) setError(`Fixed ${fixed}/${broken.length} icons — ${broken.length - fixed} items had no icon data on Wowhead.`);
+    if (fixed === 0) {
+      setError(`No icons were updated (${failed} failed). Check browser console (F12) for details.`);
+    } else if (failed > 0) {
+      setError(`Fixed ${fixed} icons. ${failed} could not be fetched — check browser console for details.`);
+    }
   }
 
   async function fetchItems() {
