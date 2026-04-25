@@ -23,6 +23,39 @@ export function RaidLootManager() {
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState(BLANK_FORM);
   const [saving, setSaving] = useState(false);
+  const [fixingIcons, setFixingIcons] = useState(false);
+  const [fixProgress, setFixProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const brokenIconCount = items.filter(i => i.icon_name === 'inv_misc_questionmark' && i.item_id).length;
+
+  async function fixBrokenIcons() {
+    const broken = items.filter(i => i.icon_name === 'inv_misc_questionmark' && i.item_id);
+    if (!broken.length) return;
+    setFixingIcons(true);
+    setFixProgress({ done: 0, total: broken.length });
+    let fixed = 0;
+    for (let i = 0; i < broken.length; i++) {
+      const item = broken[i];
+      try {
+        const res = await fetch(`https://nether.wowhead.com/tbc/tooltip/item/${item.item_id}`);
+        const data = await res.json();
+        if (data.icon && data.icon !== 'inv_misc_questionmark') {
+          const iconName = (data.icon as string).toLowerCase();
+          const iconUrl = `https://wow.zamimg.com/images/wow/icons/large/${iconName}.jpg`;
+          await supabase.from('raid_loot').update({ icon_name: iconName, icon_url: iconUrl }).eq('id', item.id);
+          setItems(prev => prev.map(p => p.id === item.id ? { ...p, icon_name: iconName, icon_url: iconUrl } : p));
+          fixed++;
+        }
+      } catch {
+        // skip if fetch fails for this item
+      }
+      setFixProgress({ done: i + 1, total: broken.length });
+      await new Promise(r => setTimeout(r, 80));
+    }
+    setFixingIcons(false);
+    setFixProgress(null);
+    if (fixed < broken.length) setError(`Fixed ${fixed}/${broken.length} icons — ${broken.length - fixed} items had no icon data on Wowhead.`);
+  }
 
   async function fetchItems() {
     setLoading(true);
@@ -136,6 +169,17 @@ export function RaidLootManager() {
           {bosses.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
         <span className="text-xs text-gray-600">{filtered.length} items</span>
+        {brokenIconCount > 0 && (
+          <button
+            onClick={fixBrokenIcons}
+            disabled={fixingIcons}
+            className="text-xs px-3 py-1.5 rounded-lg border border-orange-500/40 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {fixingIcons && fixProgress
+              ? `Fixing icons… ${fixProgress.done}/${fixProgress.total}`
+              : `🔧 Fix icons (${brokenIconCount})`}
+          </button>
+        )}
         <button
           onClick={() => setShowAdd((v) => !v)}
           className={`ml-auto text-xs px-3 py-1.5 rounded-lg border transition-colors ${
