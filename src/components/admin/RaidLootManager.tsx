@@ -74,6 +74,13 @@ export function RaidLootManager() {
     else setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, stars_disabled: newVal } : i));
   }
 
+  async function toggleHidden(item: RaidLoot) {
+    const newVal = !item.hidden;
+    const { error } = await supabase.from('raid_loot').update({ hidden: newVal }).eq('id', item.id);
+    if (error) setError(error.message);
+    else setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, hidden: newVal } : i));
+  }
+
   async function deleteItem(id: number) {
     if (!confirm('Delete this item from raid loot?')) return;
     const { error } = await supabase.from('raid_loot').delete().eq('id', id);
@@ -194,12 +201,13 @@ export function RaidLootManager() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Item ID</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Whether players can star this item">Stars</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Hide from wishlist without deleting">Visible</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/50">
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-600 text-sm">No items found</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-600 text-sm">No items found</td></tr>
                 ) : filtered.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-800/20 transition-colors group">
                     {editingId === item.id ? (
@@ -227,6 +235,15 @@ export function RaidLootManager() {
                             ★
                           </button>
                         </td>
+                        <td className="px-4 py-2 text-center">
+                          <button
+                            onClick={() => toggleHidden(item)}
+                            title={item.hidden ? 'Hidden from wishlist — click to show' : 'Visible in wishlist — click to hide'}
+                            className={`text-sm transition-colors ${item.hidden ? 'text-gray-700 hover:text-gray-500' : 'text-green-400 hover:text-green-300'}`}
+                          >
+                            {item.hidden ? '✕' : '✓'}
+                          </button>
+                        </td>
                         <td className="px-4 py-2 flex gap-1">
                           <button onClick={() => saveEdit(item.id)} disabled={saving} className="text-xs text-green-400 hover:text-green-300 px-2 py-1 border border-green-500/30 rounded disabled:opacity-40">✓ Save</button>
                           <button onClick={() => setEditingId(null)} className="text-xs text-gray-500 hover:text-gray-300 px-2 py-1 border border-gray-700 rounded">✕</button>
@@ -248,6 +265,15 @@ export function RaidLootManager() {
                             className={`text-base transition-colors ${item.stars_disabled ? 'text-gray-700 hover:text-gray-500' : 'text-yellow-400 hover:text-yellow-300'}`}
                           >
                             ★
+                          </button>
+                        </td>
+                        <td className="px-4 py-2.5 text-center">
+                          <button
+                            onClick={() => toggleHidden(item)}
+                            title={item.hidden ? 'Hidden from wishlist — click to show' : 'Visible in wishlist — click to hide'}
+                            className={`text-sm transition-colors ${item.hidden ? 'text-gray-700 hover:text-gray-500' : 'text-green-400 hover:text-green-300'}`}
+                          >
+                            {item.hidden ? '✕' : '✓'}
                           </button>
                         </td>
                         <td className="px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity">

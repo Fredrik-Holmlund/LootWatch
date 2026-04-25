@@ -36,7 +36,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
   const isLocked = profile?.stars_locked ?? false;
 
   const grouped = useMemo(() => {
-    const phaseLoot = loot.filter((item) => getPhaseForInstance(item.instance_name) === selectedPhase);
+    const phaseLoot = loot.filter((item) => getPhaseForInstance(item.instance_name) === selectedPhase && !item.hidden);
     const byInstance: Record<string, Record<string, RaidLoot[]>> = {};
     for (const item of phaseLoot) {
       if (!byInstance[item.instance_name]) byInstance[item.instance_name] = {};
