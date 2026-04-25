@@ -13,12 +13,12 @@ export const TBC_PHASES: TBCPhase[] = [
   {
     id: 2,
     label: 'Phase 2',
-    raids: ['Serpentshrine Cavern', 'Tempest Keep'],
+    raids: ['Serpentshrine Cavern', 'Tempest Keep', 'The Eye', 'The Eye (Tempest Keep)'],
   },
   {
     id: 3,
     label: 'Phase 3',
-    raids: ['Mount Hyjal', 'Black Temple'],
+    raids: ['Mount Hyjal', 'Hyjal Summit', 'Black Temple'],
   },
   {
     id: 4,
@@ -78,17 +78,42 @@ const BOSS_ORDER: Record<string, string[]> = {
     'Trash',
     'Recipes',
   ],
+  "The Eye": [
+    "Al'ar",
+    'Void Reaver',
+    'High Astromancer Solarian',
+    "Kael'thas Sunstrider",
+    'Trash',
+    'Recipes',
+  ],
+  "The Eye (Tempest Keep)": [
+    "Al'ar",
+    'Void Reaver',
+    'High Astromancer Solarian',
+    "Kael'thas Sunstrider",
+    'Trash',
+    'Recipes',
+  ],
   "Mount Hyjal": [
     'Rage Winterchill',
     'Anetheron',
     "Kaz'rogal",
     'Azgalor',
     'Archimonde',
-    'Recipes',
     'Trash',
+    'Recipes',
+  ],
+  "Hyjal Summit": [
+    'Rage Winterchill',
+    'Anetheron',
+    "Kaz'rogal",
+    'Azgalor',
+    'Archimonde',
+    'Trash',
+    'Recipes',
   ],
   "Black Temple": [
-    'High Warlord Naj\'entus',
+    "High Warlord Naj'entus",
     'Supremus',
     'Shade of Akama',
     'Teron Gorefiend',
@@ -96,29 +121,32 @@ const BOSS_ORDER: Record<string, string[]> = {
     'Reliquary of Souls',
     'Mother Shahraz',
     'The Illidari Council',
-    "Illidan Stormrage",
-    'Recipes',
+    'Illidan Stormrage',
     'Trash',
+    'Recipes',
   ],
   "Zul'Aman": [
     'Nalorakk',
-    'Akil\'zon',
-    'Jan\'alai',
+    "Akil'zon",
+    "Jan'alai",
     'Halazzi',
     'Hex Lord Malacrass',
-    'Zul\'jin',
-    'Recipes',
+    "Zul'jin",
     'Trash',
+    'Recipes',
   ],
   "Sunwell Plateau": [
     'Kalecgos',
+    'Kalecgos & Sathrovarr',
     'Brutallus',
     'Felmyst',
-    "Eredar Twins",
+    'Eredar Twins',
+    'Alythess & Sacrolash',
     "M'uru",
+    "M'uru / Entropius",
     "Kil'jaeden",
-    'Recipes',
     'Trash',
+    'Recipes',
   ],
 };
 
@@ -127,7 +155,8 @@ function normalize(s: string): string {
 }
 
 export function sortBosses(instanceName: string, bosses: string[]): string[] {
-  const order = BOSS_ORDER[instanceName];
+  const order = BOSS_ORDER[instanceName] ??
+    BOSS_ORDER[Object.keys(BOSS_ORDER).find((k) => normalize(k) === normalize(instanceName)) ?? ''];
   if (!order) return [...bosses].sort();
 
   return [...bosses].sort((a, b) => {
