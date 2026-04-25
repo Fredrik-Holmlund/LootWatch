@@ -45,7 +45,7 @@ export function RaidLootManager() {
         const iconName = typeof data.icon === 'string' ? data.icon.toLowerCase() : null;
         if (iconName && iconName !== 'inv_misc_questionmark') {
           const iconUrl = `https://wow.zamimg.com/images/wow/icons/large/${iconName}.jpg`;
-          const { error: dbErr } = await supabase.from('raid_loot').update({ icon_name: iconName, icon_url: iconUrl }).eq('id', item.id);
+          const { error: dbErr } = await supabase.from('raid_loot').update({ icon_name: iconName }).eq('id', item.id);
           if (!dbErr) {
             setItems(prev => prev.map(p => p.id === item.id ? { ...p, icon_name: iconName, icon_url: iconUrl } : p));
             fixed++;
