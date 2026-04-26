@@ -336,7 +336,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   <tr className="border-b border-gray-800 bg-gray-900/80">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Player</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                    {canSeeStars && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>}
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Boss</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
                     {role === 'admin' && <th className="px-4 py-3"></th>}
@@ -354,9 +354,11 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-yellow-300/80 text-sm">{w.item_name}</td>
-                      <td className="px-4 py-2.5">
-                        {w.star && canSeeStars ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
-                      </td>
+                      {canSeeStars && (
+                        <td className="px-4 py-2.5">
+                          {w.star ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
+                        </td>
+                      )}
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{w.boss_name ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{w.instance_name ?? '—'}</td>
                       {role === 'admin' && (
