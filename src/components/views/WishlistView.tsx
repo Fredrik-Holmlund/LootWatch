@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
+import { useAppSettings } from '../../hooks/useAppSettings';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
+import { canEdit } from '../../types';
 import type { Profile, RaidLoot, SoftReserve, UserRole } from '../../types';
 
 interface WishlistViewProps {
@@ -28,7 +30,10 @@ function StarBadge({ star }: { star: 1 | 2 | 3 }) {
 export function WishlistView({ profile, role }: WishlistViewProps) {
   const { loot, loading: lootLoading } = useRaidLoot();
   const { wishes, loading: wishLoading, myWishedIds, myWishes, usedStarTiers, toggleWish, setItemStar, deleteWish } = useWishlist(profile);
+  const { settings } = useAppSettings();
   const [subTab, setSubTab] = useState<SubTab>('browse');
+
+  const canSeeOthers = settings.show_wishes_publicly || canEdit(role);
   const [selectedPhase, setSelectedPhase] = useState(1);
   const [filterClass, setFilterClass] = useState('');
   const [filterInstance, setFilterInstance] = useState('');
@@ -72,12 +77,13 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
   const allWishes = useMemo(() => {
     return wishes
       .filter((w) => {
+        if (!canSeeOthers && w.player_name.toLowerCase() !== (profile?.username ?? '').toLowerCase()) return false;
         if (filterClass && w.player_class !== filterClass) return false;
         if (filterInstance && w.instance_name !== filterInstance) return false;
         return true;
       })
       .sort((a, b) => a.player_name.localeCompare(b.player_name));
-  }, [wishes, filterClass, filterInstance]);
+  }, [wishes, filterClass, filterInstance, canSeeOthers, profile]);
 
   const classes = useMemo(() =>
     Array.from(new Set(wishes.map((w) => w.player_class).filter(Boolean))).sort() as string[],
@@ -263,7 +269,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                 )}
 
                                 {/* Wish count + wisher tooltip */}
-                                {count > 0 && (
+                                {count > 0 && canSeeOthers && (
                                   <span className="relative group/wishers flex-shrink-0 ml-auto" onClick={(e) => e.stopPropagation()}>
                                     <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 cursor-default">
                                       ♥ {count}
