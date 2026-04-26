@@ -34,6 +34,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('browse');
 
   const canSeeOthers = settings.show_wishes_publicly || canEdit(role);
+  const canSeeStars  = settings.show_stars_publicly  || canEdit(role);
   const [selectedPhase, setSelectedPhase] = useState(1);
   const [filterClass, setFilterClass] = useState('');
   const [filterInstance, setFilterInstance] = useState('');
@@ -281,7 +282,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                             <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
                                               {stripRealm(w.player_name)}
                                             </span>
-                                            {w.star && <StarBadge star={w.star} />}
+                                            {w.star && canSeeStars && <StarBadge star={w.star} />}
                                           </div>
                                         ))}
                                       </div>
@@ -354,7 +355,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                       </td>
                       <td className="px-4 py-2.5 text-yellow-300/80 text-sm">{w.item_name}</td>
                       <td className="px-4 py-2.5">
-                        {w.star ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
+                        {w.star && canSeeStars ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
                       </td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{w.boss_name ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{w.instance_name ?? '—'}</td>

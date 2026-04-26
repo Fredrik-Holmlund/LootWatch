@@ -141,6 +141,7 @@ export function AdminView({ profile }: AdminViewProps) {
                 { key: 'show_dashboard' as const,       label: 'Dashboard',              desc: 'Overview stats, top recipients, weekly activity' },
                 { key: 'show_history' as const,         label: 'History',                desc: 'Loot table, player summaries, warnings' },
                 { key: 'show_wishes_publicly' as const, label: 'Public Wishlist',        desc: 'Raiders can see each other\'s wishes and wish counts. Turn off to hide until after loot is distributed.' },
+                { key: 'show_stars_publicly'  as const, label: 'Public Stars',           desc: 'Raiders can see each other\'s star ratings. Turn off to hide star priorities from other players.' },
               ]).map(({ key, label, desc }) => (
                 <div key={key} className="flex items-center justify-between px-4 py-3 gap-4">
                   <div>

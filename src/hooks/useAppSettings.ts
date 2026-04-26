@@ -5,9 +5,10 @@ export interface AppSettings {
   show_dashboard: boolean;
   show_history: boolean;
   show_wishes_publicly: boolean;
+  show_stars_publicly: boolean;
 }
 
-const DEFAULTS: AppSettings = { show_dashboard: false, show_history: false, show_wishes_publicly: true };
+const DEFAULTS: AppSettings = { show_dashboard: false, show_history: false, show_wishes_publicly: true, show_stars_publicly: true };
 
 export function useAppSettings() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULTS);
