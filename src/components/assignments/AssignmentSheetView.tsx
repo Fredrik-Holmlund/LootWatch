@@ -6,7 +6,17 @@ import { getClassColor } from '../../utils/classColors';
 import { canEdit } from '../../types';
 import type { UserRole } from '../../types';
 
-// ─── Draggable player pill ────────────────────────────────────────────────────
+const RAID_MARKERS = [
+  { label: 'Star',     icon: '⭐' },
+  { label: 'Circle',   icon: '🔵' },
+  { label: 'Diamond',  icon: '🔷' },
+  { label: 'Triangle', icon: '🔺' },
+  { label: 'Moon',     icon: '🌙' },
+  { label: 'Square',   icon: '🟦' },
+  { label: 'Cross',    icon: '❌' },
+  { label: 'Skull',    icon: '💀' },
+] as const;
+
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `p:${player.name}` });
@@ -115,6 +125,19 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
                 className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50"
                 placeholder="e.g. Boss, MT healer…"
               />
+              <div className="flex gap-1 mt-1.5 flex-wrap">
+                {RAID_MARKERS.map(m => (
+                  <button
+                    key={m.label}
+                    type="button"
+                    title={m.label}
+                    onClick={() => { setText(t => t ? t + ' ' + m.icon : m.icon); setRef(''); }}
+                    className="text-base leading-none hover:scale-125 transition-transform"
+                  >
+                    {m.icon}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex gap-1.5">
               <button onClick={save} className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-gray-950 rounded px-2 py-1 text-xs font-semibold">Save</button>
