@@ -97,29 +97,39 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
   cell: SheetCell | undefined;
   rows: SheetRow[];
   canWrite: boolean;
-  onSave: (value: { ref_row_id: number } | { text_value: string } | null) => void;
+  onSave: (value: { ref_row_id?: number | null; text_value?: string | null } | null) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
   const [ref, setRef] = useState<number | ''>('');
 
   const open = () => { if (!canWrite) return; setText(cell?.text_value ?? ''); setRef(cell?.ref_row_id ?? ''); setEditing(true); };
-  const save = () => { if (ref !== '') onSave({ ref_row_id: ref as number }); else if (text.trim()) onSave({ text_value: text.trim() }); else onSave(null); setEditing(false); };
+  const save = () => {
+    const hasRef = ref !== '';
+    const hasText = text.trim() !== '';
+    if (!hasRef && !hasText) onSave(null);
+    else onSave({ ref_row_id: hasRef ? ref as number : null, text_value: hasText ? text.trim() : null });
+    setEditing(false);
+  };
 
-  let display: React.ReactNode = null;
+  const displayParts: React.ReactNode[] = [];
   if (cell?.ref_row_id) {
     const refRow = rows.find(r => r.id === cell.ref_row_id);
     if (refRow) {
       const color = resolveColor(refRow.player_class);
-      display = (
-        <span style={{ backgroundColor: color + '28', borderColor: color + '55', color }} className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded border whitespace-nowrap">
+      displayParts.push(
+        <span key="ref" style={{ backgroundColor: color + '28', borderColor: color + '55', color }} className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded border whitespace-nowrap">
           {refRow.player_name ?? <em className="not-italic opacity-50">{refRow.label}</em>}
         </span>
       );
     }
-  } else if (cell?.text_value) {
-    display = <span className="text-xs text-gray-300 inline-flex items-center gap-0.5 flex-wrap">{renderMarkerText(cell.text_value)}</span>;
   }
+  if (cell?.text_value) {
+    displayParts.push(
+      <span key="text" className="text-xs text-gray-300 inline-flex items-center gap-0.5 flex-wrap">{renderMarkerText(cell.text_value)}</span>
+    );
+  }
+  const display = displayParts.length > 0 ? <div className="flex items-center gap-1 flex-wrap">{displayParts}</div> : null;
 
   if (editing) {
     return (
@@ -128,7 +138,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
           <div className="space-y-2">
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Link to role</p>
-              <select value={ref} onChange={e => { setRef(e.target.value ? Number(e.target.value) : ''); if (e.target.value) setText(''); }} className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50">
+              <select value={ref} onChange={e => setRef(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50">
                 <option value="">— none —</option>
                 {rows.map(r => <option key={r.id} value={r.id}>{r.label}{r.player_name ? ` · ${r.player_name}` : ''}</option>)}
               </select>
@@ -138,7 +148,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
               <input
                 autoFocus={ref === ''}
                 value={text}
-                onChange={e => { setText(e.target.value); if (e.target.value) setRef(''); }}
+                onChange={e => setText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
                 className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50"
                 placeholder="e.g. Boss, MT healer…"
@@ -209,7 +219,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onC
   row: SheetRow; rowBg: string; columns: SheetColumn[];
   cellMap: Map<string, SheetCell>; allRows: SheetRow[];
   canWrite: boolean; onClear: () => void; onDelete: () => void;
-  onSave: (colId: number, val: { ref_row_id: number } | { text_value: string } | null) => void;
+  onSave: (colId: number, val: { ref_row_id?: number | null; text_value?: string | null } | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };

@@ -62,13 +62,11 @@ export function useAssignmentSheet() {
 
   const setCell = useCallback(async (
     rowId: number, columnId: number,
-    value: { ref_row_id: number } | { text_value: string } | null
+    value: { ref_row_id?: number | null; text_value?: string | null } | null
   ) => {
     const update = value === null
       ? { ref_row_id: null, text_value: null }
-      : 'ref_row_id' in value
-        ? { ref_row_id: value.ref_row_id, text_value: null }
-        : { ref_row_id: null, text_value: value.text_value || null };
+      : { ref_row_id: value.ref_row_id ?? null, text_value: value.text_value || null };
     setAllCells(prev => {
       const exists = prev.find(c => c.row_id === rowId && c.column_id === columnId);
       if (exists) return prev.map(c => c.row_id === rowId && c.column_id === columnId ? { ...c, ...update } : c);
