@@ -5,7 +5,7 @@ export interface AssignmentSheet { id: number; title: string; sort_order: number
 export interface SheetColumn { id: number; sheet_id: number; label: string; sort_order: number; image_path: string | null; }
 export interface SheetRow { id: number; sheet_id: number; section: string; label: string; sort_order: number; player_name: string | null; player_class: string | null; }
 export interface SheetCell { id: number; row_id: number; column_id: number; ref_row_id: number | null; text_value: string | null; }
-export interface CompPlayer { name: string; className: string; specName: string; groupNumber: number; slotNumber: number; }
+export interface CompPlayer { name: string; className: string; specName: string; groupNumber: number; slotNumber: number; color: string; }
 
 export const SECTIONS = ['Tanks', 'Healers', 'Ranged', 'Melee'] as const;
 
@@ -83,6 +83,7 @@ export function useAssignmentSheet() {
     const players: CompPlayer[] = (parsed.slots ?? []).map((s: any) => ({
       name: s.name, className: s.className, specName: s.specName,
       groupNumber: s.groupNumber, slotNumber: s.slotNumber,
+      color: s.color ?? '#9ca3af',
     }));
     const compNames = new Set(players.map(p => p.name.toLowerCase()));
     const toClear = currentRows.filter(r => r.sheet_id === sheetId && r.player_name && !compNames.has(r.player_name.toLowerCase()));

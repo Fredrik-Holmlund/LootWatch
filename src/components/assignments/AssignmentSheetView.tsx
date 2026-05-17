@@ -10,7 +10,7 @@ import type { UserRole } from '../../types';
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `p:${player.name}` });
-  const color = getClassColor(player.className);
+  const color = player.color || getClassColor(player.className) || '#9ca3af';
   return (
     <div
       ref={setNodeRef}
@@ -32,7 +32,9 @@ function DraggablePlayerPill({ player }: { player: CompPlayer }) {
 
 function DroppableSlot({ row, onClear, canWrite }: { row: SheetRow; onClear: () => void; canWrite: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
-  const color = row.player_class ? getClassColor(row.player_class) : null;
+  // player_class stores either a WoW class name or a hex color from the comp JSON
+  const rawClass = row.player_class ?? '';
+  const color = rawClass.startsWith('#') ? rawClass : (getClassColor(rawClass) || '#9ca3af');
   return (
     <div
       ref={setNodeRef}
@@ -232,7 +234,8 @@ export function AssignmentSheetView({ role }: Props) {
     const rowId = Number(String(over.id).replace(/^r:/, ''));
     const player = compPool.find(p => p.name === name);
     if (!player || !rowId) return;
-    assignPlayer(rowId, player.name, player.className);
+    // Store the hex color from the JSON so the slot always shows the correct class color
+    assignPlayer(rowId, player.name, player.color || player.className);
   }
 
   function handleImport() {
