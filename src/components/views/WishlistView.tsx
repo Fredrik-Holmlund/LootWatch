@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { useRaidLoot } from '../../hooks/useRaidLoot';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
+import { useAppSettings } from '../../hooks/useAppSettings';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
+import { canEdit } from '../../types';
 import type { Profile, RaidLoot, SoftReserve, UserRole } from '../../types';
 
 interface WishlistViewProps {
@@ -28,7 +30,11 @@ function StarBadge({ star }: { star: 1 | 2 | 3 }) {
 export function WishlistView({ profile, role }: WishlistViewProps) {
   const { loot, loading: lootLoading } = useRaidLoot();
   const { wishes, loading: wishLoading, myWishedIds, myWishes, usedStarTiers, toggleWish, setItemStar, deleteWish } = useWishlist(profile);
+  const { settings } = useAppSettings();
   const [subTab, setSubTab] = useState<SubTab>('browse');
+
+  const canSeeOthers = settings.show_wishes_publicly || canEdit(role);
+  const canSeeStars  = settings.show_stars_publicly  || canEdit(role);
   const [selectedPhase, setSelectedPhase] = useState(1);
   const [filterClass, setFilterClass] = useState('');
   const [filterInstance, setFilterInstance] = useState('');
@@ -72,12 +78,13 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
   const allWishes = useMemo(() => {
     return wishes
       .filter((w) => {
+        if (!canSeeOthers && w.player_name.toLowerCase() !== (profile?.username ?? '').toLowerCase()) return false;
         if (filterClass && w.player_class !== filterClass) return false;
         if (filterInstance && w.instance_name !== filterInstance) return false;
         return true;
       })
       .sort((a, b) => a.player_name.localeCompare(b.player_name));
-  }, [wishes, filterClass, filterInstance]);
+  }, [wishes, filterClass, filterInstance, canSeeOthers, profile]);
 
   const classes = useMemo(() =>
     Array.from(new Set(wishes.map((w) => w.player_class).filter(Boolean))).sort() as string[],
@@ -263,7 +270,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                 )}
 
                                 {/* Wish count + wisher tooltip */}
-                                {count > 0 && (
+                                {count > 0 && canSeeOthers && (
                                   <span className="relative group/wishers flex-shrink-0 ml-auto" onClick={(e) => e.stopPropagation()}>
                                     <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 cursor-default">
                                       ♥ {count}
@@ -275,7 +282,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                             <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
                                               {stripRealm(w.player_name)}
                                             </span>
-                                            {w.star && <StarBadge star={w.star} />}
+                                            {w.star && canSeeStars && <StarBadge star={w.star} />}
                                           </div>
                                         ))}
                                       </div>
@@ -329,7 +336,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   <tr className="border-b border-gray-800 bg-gray-900/80">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Player</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                    {canSeeStars && <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>}
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Boss</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
                     {role === 'admin' && <th className="px-4 py-3"></th>}
@@ -347,9 +354,11 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-yellow-300/80 text-sm">{w.item_name}</td>
-                      <td className="px-4 py-2.5">
-                        {w.star ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
-                      </td>
+                      {canSeeStars && (
+                        <td className="px-4 py-2.5">
+                          {w.star ? <StarBadge star={w.star} /> : <span className="text-gray-700">—</span>}
+                        </td>
+                      )}
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{w.boss_name ?? '—'}</td>
                       <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{w.instance_name ?? '—'}</td>
                       {role === 'admin' && (
