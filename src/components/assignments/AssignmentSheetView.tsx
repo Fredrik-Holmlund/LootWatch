@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
-import { DndContext, DragEndEvent, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
 import { canEdit } from '../../types';
