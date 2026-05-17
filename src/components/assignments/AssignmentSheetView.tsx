@@ -227,8 +227,8 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onC
       <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-gray-800`}>
         <DroppableSlot row={row} onClear={onClear} canWrite={canWrite} />
       </td>
-      {columns.map(col => (
-        <td key={col.id} className="border-r border-gray-800/40 relative">
+      {columns.map((col, colIdx) => (
+        <td key={col.id} className={`border-r border-gray-800/40 relative ${colIdx % 2 !== 0 ? 'bg-black/[0.12]' : ''}`}>
           <AssignmentCell cell={cellMap.get(`${row.id}-${col.id}`)} rows={allRows} canWrite={canWrite} onSave={val => onSave(col.id, val)} />
         </td>
       ))}
@@ -358,8 +358,8 @@ export function AssignmentSheetView({ role }: Props) {
               <tr className="bg-gray-800">
                 <th className="sticky left-0 z-10 bg-gray-800 text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[90px] min-w-[90px] border-b border-r border-gray-700">Role</th>
                 <th className="sticky left-[90px] z-10 bg-gray-800 text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-gray-700">Player</th>
-                {columns.map(col => (
-                  <th key={col.id} className="text-left px-2 py-2 border-b border-r border-gray-700 min-w-[80px]">
+                {columns.map((col, colIdx) => (
+                  <th key={col.id} className={`text-left px-2 py-2 border-b border-r border-gray-700 min-w-[80px] ${colIdx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'}`}>
                     <BossColumnHeader
                       col={col} canWrite={canWrite}
                       onUpload={async f => { await uploadImage(col.id, f); }}
