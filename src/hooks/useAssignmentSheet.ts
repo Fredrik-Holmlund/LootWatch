@@ -124,11 +124,26 @@ export function useAssignmentSheet() {
     await supabase.from('sheet_rows').delete().eq('id', rowId);
   }, []);
 
+  const reorderRows = useCallback(async (activeId: number, overId: number, section: string) => {
+    const sectionRows = allRows
+      .filter(r => r.sheet_id === selectedSheetId && r.section === section)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const oldIndex = sectionRows.findIndex(r => r.id === activeId);
+    const newIndex = sectionRows.findIndex(r => r.id === overId);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+    const moved = [...sectionRows];
+    const [item] = moved.splice(oldIndex, 1);
+    moved.splice(newIndex, 0, item);
+    const updated = moved.map((r, i) => ({ ...r, sort_order: i + 1 }));
+    setAllRows(prev => prev.map(r => updated.find(u => u.id === r.id) ?? r));
+    await Promise.all(updated.map(r => supabase.from('sheet_rows').update({ sort_order: r.sort_order }).eq('id', r.id)));
+  }, [selectedSheetId, allRows]);
+
   return {
     sheets, columns, rows, cells, loading,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,
-    addRow, deleteRow,
+    addRow, deleteRow, reorderRows,
   };
 }

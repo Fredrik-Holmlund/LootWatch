@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
 import { canEdit } from '../../types';
@@ -201,12 +203,45 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   );
 }
 
+// ─── Sortable table row ───────────────────────────────────────────────────────
+
+function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onClear, onDelete, onSave }: {
+  row: SheetRow; rowBg: string; columns: SheetColumn[];
+  cellMap: Map<string, SheetCell>; allRows: SheetRow[];
+  canWrite: boolean; onClear: () => void; onDelete: () => void;
+  onSave: (colId: number, val: { ref_row_id: number } | { text_value: string } | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
+  const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
+  return (
+    <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-gray-800/50 group/row`}>
+      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-gray-400 border-r border-gray-800 whitespace-nowrap`}>
+        <div className="flex items-center gap-1.5">
+          {canWrite && (
+            <span {...attributes} {...listeners} className="cursor-grab text-gray-700 hover:text-gray-400 opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
+          )}
+          <span>{row.label}</span>
+          {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-gray-700 hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
+        </div>
+      </td>
+      <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-gray-800`}>
+        <DroppableSlot row={row} onClear={onClear} canWrite={canWrite} />
+      </td>
+      {columns.map(col => (
+        <td key={col.id} className="border-r border-gray-800/40 relative">
+          <AssignmentCell cell={cellMap.get(`${row.id}-${col.id}`)} rows={allRows} canWrite={canWrite} onSave={val => onSave(col.id, val)} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 // ─── Main view ────────────────────────────────────────────────────────────────
 
 interface Props { role: UserRole | null; }
 
 export function AssignmentSheetView({ role }: Props) {
-  const { sheets, columns, rows, cells, loading, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
   const canWrite = canEdit(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -218,6 +253,7 @@ export function AssignmentSheetView({ role }: Props) {
   const [addingRowSection, setAddingRowSection] = useState<string | null>(null);
   const [newRowLabel, setNewRowLabel] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | number | null>(null);
 
   const cellMap = useMemo(() => { const m = new Map<string, SheetCell>(); for (const c of cells) m.set(`${c.row_id}-${c.column_id}`, c); return m; }, [cells]);
   const assignedNames = useMemo(() => new Set(rows.map(r => r.player_name?.toLowerCase()).filter(Boolean) as string[]), [rows]);
@@ -225,14 +261,28 @@ export function AssignmentSheetView({ role }: Props) {
   const groupedPool = useMemo(() => { const g = new Map<number, CompPlayer[]>(); for (const p of pool) { if (!g.has(p.groupNumber)) g.set(p.groupNumber, []); g.get(p.groupNumber)!.push(p); } return [...g.entries()].sort((a, b) => a[0] - b[0]); }, [pool]);
   const rowsBySection = useMemo(() => { const m: Record<string, SheetRow[]> = {}; for (const s of SECTIONS) m[s] = rows.filter(r => r.section === s); return m; }, [rows]);
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
     const { active, over } = event;
-    if (!over) return;
-    const name = String(active.id).replace(/^p:/, '');
-    const rowId = Number(String(over.id).replace(/^r:/, ''));
-    const player = compPool.find(p => p.name === name);
-    if (!player || !rowId) return;
-    assignPlayer(rowId, player.name, player.color || player.className);
+    if (!over || active.id === over.id) return;
+    const activeStr = String(active.id);
+    if (activeStr.startsWith('p:')) {
+      const name = activeStr.replace(/^p:/, '');
+      const rowId = Number(String(over.id).replace(/^r:/, ''));
+      const player = compPool.find(p => p.name === name);
+      if (!player || !rowId) return;
+      assignPlayer(rowId, player.name, player.color || player.className);
+    } else {
+      const overId = Number(over.id);
+      if (!overId) return;
+      const activeRow = rows.find(r => r.id === Number(active.id));
+      if (!activeRow) return;
+      reorderRows(Number(active.id), overId, activeRow.section);
+    }
   }
 
   function handleImport() {
@@ -254,7 +304,7 @@ export function AssignmentSheetView({ role }: Props) {
   if (loading) return <div className="flex items-center justify-center py-20 text-gray-600 text-sm"><span className="animate-spin mr-2">⏳</span> Loading…</div>;
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-4">
 
         {/* Header */}
@@ -334,28 +384,26 @@ export function AssignmentSheetView({ role }: Props) {
                         </td>
                       </tr>
 
-                      {sectionRows.map(row => {
-                        const even = rowIdx++ % 2 === 0;
-                        const rowBg = even ? 'bg-gray-900' : 'bg-gray-800/30';
-                        return (
-                          <tr key={row.id} className={`${rowBg} border-b border-gray-800/50 group/row`}>
-                            <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-gray-400 border-r border-gray-800 whitespace-nowrap`}>
-                              <div className="flex items-center gap-1.5">
-                                <span>{row.label}</span>
-                                {canWrite && <button onClick={() => deleteRow(row.id)} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-gray-700 hover:text-red-500 transition-opacity" title="Delete row">✕</button>}
-                              </div>
-                            </td>
-                            <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-gray-800`}>
-                              <DroppableSlot row={row} onClear={() => clearPlayer(row.id)} canWrite={canWrite} />
-                            </td>
-                            {columns.map(col => (
-                              <td key={col.id} className="border-r border-gray-800/40 relative">
-                                <AssignmentCell cell={cellMap.get(`${row.id}-${col.id}`)} rows={rows} canWrite={canWrite} onSave={val => setCell(row.id, col.id, val)} />
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
+                      <SortableContext items={sectionRows.map(r => r.id)} strategy={verticalListSortingStrategy}>
+                        {sectionRows.map(row => {
+                          const even = rowIdx++ % 2 === 0;
+                          const rowBg = even ? 'bg-gray-900' : 'bg-gray-800/30';
+                          return (
+                            <SortableTableRow
+                              key={row.id}
+                              row={row}
+                              rowBg={rowBg}
+                              columns={columns}
+                              cellMap={cellMap}
+                              allRows={rows}
+                              canWrite={canWrite}
+                              onClear={() => clearPlayer(row.id)}
+                              onDelete={() => deleteRow(row.id)}
+                              onSave={(colId, val) => setCell(row.id, colId, val)}
+                            />
+                          );
+                        })}
+                      </SortableContext>
 
                       {canWrite && (
                         <tr key={`add-${section}`} className="border-b border-gray-800/30">
@@ -381,6 +429,19 @@ export function AssignmentSheetView({ role }: Props) {
           </table>
         </div>
       </div>
+
+      {/* Drag overlay for row reordering */}
+      <DragOverlay>
+        {activeId && !String(activeId).startsWith('p:') ? (() => {
+          const row = rows.find(r => r.id === Number(activeId));
+          if (!row) return null;
+          return (
+            <div className="bg-gray-800 border border-yellow-500/50 rounded px-3 py-1.5 shadow-2xl text-xs text-gray-200 opacity-90 whitespace-nowrap">
+              {row.label}{row.player_name ? ` · ${row.player_name}` : ''}
+            </div>
+          );
+        })() : null}
+      </DragOverlay>
 
       {/* Lightbox */}
       {lightboxImage && (
