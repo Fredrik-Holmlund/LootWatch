@@ -26,10 +26,10 @@ export function RaidLootManager() {
   const [fixingIcons, setFixingIcons] = useState(false);
   const [fixProgress, setFixProgress] = useState<{ done: number; total: number } | null>(null);
 
-  const brokenIconCount = items.filter(i => i.icon_name === 'inv_misc_questionmark' && i.item_id).length;
+  const brokenIconCount = items.filter(i => (!i.icon_name || i.icon_name === 'inv_misc_questionmark') && i.item_id).length;
 
   async function fixBrokenIcons() {
-    const broken = items.filter(i => i.icon_name === 'inv_misc_questionmark' && i.item_id);
+    const broken = items.filter(i => (!i.icon_name || i.icon_name === 'inv_misc_questionmark') && i.item_id);
     if (!broken.length) return;
     setFixingIcons(true);
     setFixProgress({ done: 0, total: broken.length });
