@@ -183,9 +183,20 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
 
 function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   col: SheetColumn; canWrite: boolean;
-  onUpload: (f: File) => void; onRemove: () => void; onEnlarge: (url: string) => void;
+  onUpload: (f: File) => Promise<string | null>; onRemove: () => void; onEnlarge: (url: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+
+  const handleFile = async (f: File) => {
+    setUploading(true);
+    setUploadErr(null);
+    const err = await onUpload(f);
+    setUploading(false);
+    if (err) setUploadErr(err);
+  };
+
   return (
     <div className="space-y-1.5">
       <span className="block text-sm font-semibold text-yellow-400 whitespace-nowrap">{col.label}</span>
@@ -204,11 +215,16 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
           )}
         </div>
       ) : canWrite ? (
-        <button onClick={() => inputRef.current?.click()} className="w-full h-8 border border-dashed border-gray-700 hover:border-gray-500 rounded text-[10px] text-gray-700 hover:text-gray-500 transition-colors">
-          + image
+        <button
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="w-full h-8 border border-dashed border-gray-700 hover:border-gray-500 rounded text-[10px] text-gray-700 hover:text-gray-500 transition-colors disabled:opacity-50"
+        >
+          {uploading ? '⏳ uploading…' : '+ image'}
         </button>
       ) : null}
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(f); e.target.value = ''; }} />
+      {uploadErr && <p className="text-[10px] text-red-400 break-all">{uploadErr}</p>}
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
     </div>
   );
 }
@@ -372,7 +388,7 @@ export function AssignmentSheetView({ role }: Props) {
                   <th key={col.id} className={`text-left px-2 py-2 border-b border-r border-gray-700 min-w-[80px] ${colIdx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'}`}>
                     <BossColumnHeader
                       col={col} canWrite={canWrite}
-                      onUpload={async f => { await uploadImage(col.id, f); }}
+                      onUpload={f => uploadImage(col.id, f)}
                       onRemove={() => removeImage(col.id)}
                       onEnlarge={setLightboxImage}
                     />
