@@ -7,15 +7,69 @@ import { canEdit } from '../../types';
 import type { UserRole } from '../../types';
 
 const RAID_MARKERS = [
-  { label: 'Star',     icon: '⭐' },
-  { label: 'Circle',   icon: '🔵' },
-  { label: 'Diamond',  icon: '🔷' },
-  { label: 'Triangle', icon: '🔺' },
-  { label: 'Moon',     icon: '🌙' },
-  { label: 'Square',   icon: '🟦' },
-  { label: 'Cross',    icon: '❌' },
-  { label: 'Skull',    icon: '💀' },
+  { key: 'star',     label: 'Star'     },
+  { key: 'circle',   label: 'Circle'   },
+  { key: 'diamond',  label: 'Diamond'  },
+  { key: 'triangle', label: 'Triangle' },
+  { key: 'moon',     label: 'Moon'     },
+  { key: 'square',   label: 'Square'   },
+  { key: 'cross',    label: 'Cross'    },
+  { key: 'skull',    label: 'Skull'    },
 ] as const;
+
+function RaidMarkerIcon({ markerKey, size = 18 }: { markerKey: string; size?: number }) {
+  const s = size;
+  switch (markerKey) {
+    case 'star':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><path d="M10,0 L12.5,7.5 L20,10 L12.5,12.5 L10,20 L7.5,12.5 L0,10 L7.5,7.5 Z" fill="#FFD700" stroke="#B8960C" strokeWidth="0.5"/></svg>;
+    case 'circle':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FF8000" stroke="#CC5500" strokeWidth="0.5"/><circle cx="10" cy="10" r="5" fill="none" stroke="#FFB060" strokeWidth="1.5" opacity="0.5"/></svg>;
+    case 'diamond':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><polygon points="10,1 19,10 10,19 1,10" fill="#9B30FF" stroke="#6600CC" strokeWidth="0.5"/><polygon points="10,5 15,10 10,15 5,10" fill="none" stroke="#CC88FF" strokeWidth="1" opacity="0.5"/></svg>;
+    case 'triangle':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><polygon points="10,18 1,3 19,3" fill="#00BB00" stroke="#007700" strokeWidth="0.5"/><polygon points="10,14 5,6 15,6" fill="none" stroke="#88FF88" strokeWidth="1" opacity="0.4"/></svg>;
+    case 'moon':
+      return (
+        <svg width={s} height={s} viewBox="0 0 20 20">
+          <defs><mask id="mm"><rect width="20" height="20" fill="white"/><circle cx="13.5" cy="10" r="7" fill="black"/></mask></defs>
+          <circle cx="10" cy="10" r="9" fill="#5BB8D4" mask="url(#mm)" stroke="#2288AA" strokeWidth="0.5"/>
+        </svg>
+      );
+    case 'square':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><rect x="1.5" y="1.5" width="17" height="17" rx="2" fill="#4169E1" stroke="#2244AA" strokeWidth="0.5"/><rect x="5" y="5" width="10" height="10" rx="1" fill="none" stroke="#88AAFF" strokeWidth="1" opacity="0.4"/></svg>;
+    case 'cross':
+      return <svg width={s} height={s} viewBox="0 0 20 20"><line x1="3" y1="3" x2="17" y2="17" stroke="#DD2222" strokeWidth="4.5" strokeLinecap="round"/><line x1="17" y1="3" x2="3" y2="17" stroke="#DD2222" strokeWidth="4.5" strokeLinecap="round"/></svg>;
+    case 'skull':
+      return (
+        <svg width={s} height={s} viewBox="0 0 20 20">
+          <ellipse cx="10" cy="8.5" rx="7.5" ry="7" fill="#E0E0E0" stroke="#999" strokeWidth="0.5"/>
+          <rect x="5.5" y="14" width="9" height="5" rx="1.5" fill="#E0E0E0" stroke="#999" strokeWidth="0.5"/>
+          <circle cx="7.5" cy="8.5" r="2" fill="#555"/>
+          <circle cx="12.5" cy="8.5" r="2" fill="#555"/>
+          <line x1="10" y1="14.5" x2="10" y2="19" stroke="#aaa" strokeWidth="1.5"/>
+          <line x1="7.5" y1="14.5" x2="7.5" y2="19" stroke="#aaa" strokeWidth="1" opacity="0.5"/>
+          <line x1="12.5" y1="14.5" x2="12.5" y2="19" stroke="#aaa" strokeWidth="1" opacity="0.5"/>
+        </svg>
+      );
+    default:
+      return <span className="text-xs text-gray-500">{markerKey}</span>;
+  }
+}
+
+// Parse text containing {marker} tokens and render as inline icons + text
+function renderMarkerText(text: string): React.ReactNode {
+  const parts = text.split(/(\{[a-z]+\})/g);
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = part.match(/^\{([a-z]+)\}$/);
+        if (match) return <RaidMarkerIcon key={i} markerKey={match[1]} size={15} />;
+        return part ? <span key={i}>{part}</span> : null;
+      })}
+    </>
+  );
+}
 
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
@@ -96,7 +150,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
       display = <span style={{ color }} className="text-xs font-medium">{refRow.player_name ?? <span className="italic opacity-50">{refRow.label}</span>}</span>;
     }
   } else if (cell?.text_value) {
-    display = <span className="text-xs text-gray-300">{cell.text_value}</span>;
+    display = <span className="text-xs text-gray-300 flex items-center gap-0.5 flex-wrap">{renderMarkerText(cell.text_value)}</span>;
   }
 
   if (editing) {
@@ -125,16 +179,16 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
                 className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50"
                 placeholder="e.g. Boss, MT healer…"
               />
-              <div className="flex gap-1 mt-1.5 flex-wrap">
+              <div className="flex gap-1.5 mt-1.5 flex-wrap">
                 {RAID_MARKERS.map(m => (
                   <button
-                    key={m.label}
+                    key={m.key}
                     type="button"
                     title={m.label}
-                    onClick={() => { setText(t => t ? t + ' ' + m.icon : m.icon); setRef(''); }}
-                    className="text-base leading-none hover:scale-125 transition-transform"
+                    onClick={() => { setText(t => t ? `${t} {${m.key}}` : `{${m.key}}`); setRef(''); }}
+                    className="hover:scale-125 transition-transform leading-none flex items-center justify-center"
                   >
-                    {m.icon}
+                    <RaidMarkerIcon markerKey={m.key} size={20} />
                   </button>
                 ))}
               </div>
