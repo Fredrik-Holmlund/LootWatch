@@ -161,7 +161,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
   }
 
   return (
-    <div onClick={open} className={`min-h-[30px] w-full px-2 py-1 flex items-center ${canWrite ? 'cursor-pointer hover:bg-gray-700/30' : ''}`}>
+    <div onClick={open} className={`min-h-[30px] w-full px-2 py-1 flex items-center justify-center ${canWrite ? 'cursor-pointer hover:bg-gray-700/30' : ''}`}>
       {display ?? (canWrite ? <span className="text-[10px] text-gray-800">+</span> : null)}
     </div>
   );
@@ -176,7 +176,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-1.5">
-      <span className="block text-xs font-semibold text-yellow-400 whitespace-nowrap">{col.label}</span>
+      <span className="block text-sm font-semibold text-yellow-400 whitespace-nowrap">{col.label}</span>
       {col.image_path ? (
         <div className="relative group/th">
           <img
