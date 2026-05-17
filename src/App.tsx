@@ -6,6 +6,7 @@ import { Navigation, type NavTab } from './components/Navigation';
 import { DashboardView } from './components/views/DashboardView';
 import { HistoryView } from './components/views/HistoryView';
 import { WishlistView } from './components/views/WishlistView';
+import { AssignmentSheetView } from './components/assignments/AssignmentSheetView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 import { canEdit } from './types';
@@ -35,6 +36,7 @@ function App() {
     if (canEdit(role) || role === 'admin') return true;
     if (tab === 'dashboard') return settings.show_dashboard;
     if (tab === 'history') return settings.show_history;
+    if (tab === 'assignments') return settings.show_assignments;
     if (tab === 'wishlist') return true;
     return false;
   };
@@ -67,6 +69,7 @@ function App() {
         {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
+        {effectiveTab === 'assignments' && <AssignmentSheetView role={role} />}
         {effectiveTab === 'council' && canEdit(role) && <CouncilView />}
         {effectiveTab === 'admin' && role === 'admin' && <AdminView profile={profile} />}
       </main>

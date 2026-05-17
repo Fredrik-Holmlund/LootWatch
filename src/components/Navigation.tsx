@@ -2,7 +2,7 @@ import { canEdit } from '../types';
 import type { UserRole } from '../types';
 import type { AppSettings } from '../hooks/useAppSettings';
 
-export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'council' | 'admin';
+export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'assignments' | 'council' | 'admin';
 
 interface NavigationProps {
   activeTab: NavTab;
@@ -20,6 +20,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'History' },
     { id: 'wishlist', label: 'Wishlist' },
+    { id: 'assignments', label: 'Assignments' },
     { id: 'council', label: 'Council', requireCouncil: true },
     { id: 'admin', label: 'Admin', requireAdmin: true },
   ];
@@ -42,6 +43,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
               // Hide dashboard/history from raiders if disabled
               if (!isPrivileged && tab.id === 'dashboard' && !settings.show_dashboard) return null;
               if (!isPrivileged && tab.id === 'history' && !settings.show_history) return null;
+              if (!isPrivileged && tab.id === 'assignments' && !settings.show_assignments) return null;
               return (
                 <button
                   key={tab.id}
