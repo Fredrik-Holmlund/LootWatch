@@ -44,7 +44,7 @@ export function useAssignmentSheet() {
   }, [selectedSheetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns = useMemo(() => allColumns.filter(c => c.sheet_id === selectedSheetId), [allColumns, selectedSheetId]);
-  const rows = useMemo(() => allRows.filter(r => r.sheet_id === selectedSheetId), [allRows, selectedSheetId]);
+  const rows = useMemo(() => allRows.filter(r => r.sheet_id === selectedSheetId).sort((a, b) => a.sort_order - b.sort_order), [allRows, selectedSheetId]);
   const cells = useMemo(() => {
     const ids = new Set(rows.map(r => r.id));
     return allCells.filter(c => ids.has(c.row_id));
