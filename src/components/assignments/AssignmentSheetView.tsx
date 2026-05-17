@@ -49,6 +49,13 @@ function resolveColor(playerClass: string | null): string {
   return playerClass.startsWith('#') ? playerClass : (getClassColor(playerClass) || '#9ca3af');
 }
 
+export const SECTION_ACCENT: Record<string, string> = {
+  Tanks:   '#60a5fa',
+  Healers: '#34d399',
+  Ranged:  '#a78bfa',
+  Melee:   '#fb923c',
+};
+
 // ─── Draggable player pill ────────────────────────────────────────────────────
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
@@ -59,7 +66,7 @@ function DraggablePlayerPill({ player }: { player: CompPlayer }) {
       ref={setNodeRef}
       style={{ transform: transform ? `translate3d(${transform.x}px,${transform.y}px,0)` : undefined, backgroundColor: color + '22', color, borderColor: color + '55', zIndex: isDragging ? 50 : undefined, position: isDragging ? 'relative' : undefined }}
       {...listeners} {...attributes}
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-40' : 'hover:brightness-125'}`}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-40' : 'hover:brightness-125'}`}
     >
       <span className="opacity-50 text-[10px]">{player.specName}</span>
       {player.name}
@@ -78,7 +85,7 @@ function DroppableSlot({ row, onClear, canWrite }: { row: SheetRow; onClear: () 
         <div className="flex items-center gap-1 w-full">
           <span
             style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
-            className="text-xs font-medium px-2 py-0.5 rounded border flex-1 truncate"
+            className="text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate"
           >
             {row.player_name}
           </span>
@@ -118,7 +125,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
     if (refRow) {
       const color = resolveColor(refRow.player_class);
       displayParts.push(
-        <span key="ref" style={{ backgroundColor: color + '28', borderColor: color + '55', color }} className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded border whitespace-nowrap">
+        <span key="ref" style={{ backgroundColor: color + '28', borderColor: color + '55', color }} className="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border whitespace-nowrap">
           {refRow.player_name ?? <em className="not-italic opacity-50">{refRow.label}</em>}
         </span>
       );
@@ -174,7 +181,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
 
   return (
     <div onClick={open} className={`min-h-[30px] w-full px-2 py-1 flex items-center justify-center ${canWrite ? 'cursor-pointer hover:bg-gray-700/30' : ''}`}>
-      {display ?? (canWrite ? <span className="text-[10px] text-gray-800">+</span> : null)}
+      {display ?? (canWrite ? <span className="text-[10px] text-gray-800">+</span> : <span className="text-xs text-gray-800">—</span>)}
     </div>
   );
 }
@@ -198,32 +205,36 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   };
 
   return (
-    <div className="space-y-1.5">
-      <span className="block text-sm font-semibold text-yellow-400 whitespace-nowrap">{col.label}</span>
-      {col.image_path ? (
-        <div className="relative group/th">
-          <img
-            src={col.image_path} alt={col.label}
-            onClick={() => onEnlarge(col.image_path!)}
-            className="h-10 w-full object-cover rounded border border-gray-700 cursor-pointer hover:opacity-80 transition-opacity"
-          />
-          {canWrite && (
-            <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/40 rounded">
-              <button onClick={() => inputRef.current?.click()} className="text-[9px] bg-gray-900/90 text-gray-300 rounded px-1 py-0.5">↑</button>
-              <button onClick={onRemove} className="text-[9px] bg-gray-900/90 text-red-400 rounded px-1 py-0.5">✕</button>
-            </div>
-          )}
-        </div>
-      ) : canWrite ? (
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="w-full h-8 border border-dashed border-gray-700 hover:border-gray-500 rounded text-[10px] text-gray-700 hover:text-gray-500 transition-colors disabled:opacity-50"
-        >
-          {uploading ? '⏳ uploading…' : '+ image'}
-        </button>
-      ) : null}
-      {uploadErr && <p className="text-[10px] text-red-400 break-all">{uploadErr}</p>}
+    <div className="flex flex-col items-center gap-1.5 w-full">
+      <span className="text-sm font-bold text-yellow-300 text-center leading-tight px-1">{col.label}</span>
+      <div className="w-full">
+        {col.image_path ? (
+          <div className="relative group/th">
+            <img
+              src={col.image_path} alt={col.label}
+              onClick={() => onEnlarge(col.image_path!)}
+              className="h-12 w-full object-cover rounded-md border border-gray-700/80 cursor-pointer hover:opacity-80 hover:border-gray-500 transition-all"
+            />
+            {canWrite && (
+              <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md">
+                <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-gray-900/90 text-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-800">↑</button>
+                <button onClick={e => { e.stopPropagation(); onRemove(); }} className="text-[9px] bg-gray-900/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-gray-800">✕</button>
+              </div>
+            )}
+          </div>
+        ) : canWrite ? (
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-8 border border-dashed border-gray-700 hover:border-yellow-500/30 rounded-md text-[10px] text-gray-700 hover:text-gray-500 transition-colors disabled:opacity-50"
+          >
+            {uploading ? '⏳' : '+ image'}
+          </button>
+        ) : (
+          <div className="h-8 border border-transparent" />
+        )}
+      </div>
+      {uploadErr && <p className="text-[10px] text-red-400 break-all text-center">{uploadErr}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
     </div>
   );
@@ -241,7 +252,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onC
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-gray-800/50 group/row`}>
-      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-gray-400 border-r border-gray-800 whitespace-nowrap`}>
+      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-gray-300 font-medium border-r border-gray-800 whitespace-nowrap`}>
         <div className="flex items-center gap-1.5">
           {canWrite && (
             <span {...attributes} {...listeners} className="cursor-grab text-gray-700 hover:text-gray-400 opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
@@ -385,7 +396,7 @@ export function AssignmentSheetView({ role }: Props) {
                 <th className="sticky left-0 z-10 bg-gray-800 text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[90px] min-w-[90px] border-b border-r border-gray-700">Role</th>
                 <th className="sticky left-[90px] z-10 bg-gray-800 text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-gray-700">Player</th>
                 {columns.map((col, colIdx) => (
-                  <th key={col.id} className={`text-left px-2 py-2 border-b border-r border-gray-700 min-w-[80px] ${colIdx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'}`}>
+                  <th key={col.id} className={`text-center px-2 py-2 border-b border-r border-gray-700 min-w-[80px] ${colIdx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'}`}>
                     <BossColumnHeader
                       col={col} canWrite={canWrite}
                       onUpload={f => uploadImage(col.id, f)}
@@ -404,9 +415,13 @@ export function AssignmentSheetView({ role }: Props) {
                   const sectionRows = rowsBySection[section] ?? [];
                   return (
                     <React.Fragment key={section}>
-                      <tr className="bg-gray-800/50">
-                        <td colSpan={2 + columns.length} className="sticky left-0 px-3 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800">
-                          {section}
+                      <tr>
+                        <td
+                          colSpan={2 + columns.length}
+                          style={{ borderLeftColor: SECTION_ACCENT[section] }}
+                          className="px-4 py-1.5 bg-gray-900/70 border-y border-gray-800/80 border-l-2"
+                        >
+                          <span style={{ color: SECTION_ACCENT[section] }} className="text-[10px] font-bold uppercase tracking-widest opacity-90">{section}</span>
                         </td>
                       </tr>
 
