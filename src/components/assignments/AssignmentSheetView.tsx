@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
@@ -327,10 +327,7 @@ export function AssignmentSheetView({ role }: Props) {
                 return SECTIONS.map(section => {
                   const sectionRows = rowsBySection[section] ?? [];
                   return (
-                    <
-                      // @ts-ignore – Fragment with key
-                      key={section}
-                    >
+                    <React.Fragment key={section}>
                       <tr className="bg-gray-800/50">
                         <td colSpan={2 + columns.length} className="sticky left-0 px-3 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800">
                           {section}
@@ -376,7 +373,7 @@ export function AssignmentSheetView({ role }: Props) {
                           {columns.map(col => <td key={col.id} className="border-r border-gray-800/30" />)}
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 });
               })()}
