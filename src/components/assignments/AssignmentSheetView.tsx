@@ -121,16 +121,23 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
           />
         </div>
         <div className="overflow-y-auto">
-          {filtered.map(o => (
-            <button
-              key={o.name}
-              onClick={() => { onSelect(o.name, o.cls); onClose(); }}
-              style={{ color: resolveColor(o.cls) }}
-              className="w-full text-left text-xs px-3 py-1.5 hover:bg-gray-800 transition-colors"
-            >
-              {o.name}
-            </button>
-          ))}
+          {filtered.map(o => {
+            const color = resolveColor(o.cls);
+            return (
+              <button
+                key={o.name}
+                onClick={() => { onSelect(o.name, o.cls); onClose(); }}
+                className="w-full text-left px-2 py-1 hover:bg-gray-800/60 transition-colors"
+              >
+                <span
+                  style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
+                  className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full border"
+                >
+                  {o.name}
+                </span>
+              </button>
+            );
+          })}
           {filtered.length === 0 && <p className="text-[11px] text-gray-600 px-3 py-2 italic">No players found</p>}
         </div>
       </div>
