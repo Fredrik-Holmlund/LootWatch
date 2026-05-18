@@ -74,25 +74,96 @@ function DraggablePlayerPill({ player }: { player: CompPlayer }) {
   );
 }
 
+// ─── Player picker dropdown ───────────────────────────────────────────────────
+
+function PlayerPicker({ compPool, profiles, onSelect, onClose }: {
+  compPool: CompPlayer[]; profiles: string[];
+  onSelect: (name: string, cls: string | null) => void; onClose: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const options = React.useMemo(() => {
+    const compNames = new Set(compPool.map(p => p.name.toLowerCase()));
+    const compOptions = compPool.map(p => ({ name: p.name, cls: p.color || p.className }));
+    const profileOnly = profiles
+      .filter(name => !compNames.has(name.toLowerCase()))
+      .map(name => ({ name, cls: null as string | null }));
+    return [...compOptions, ...profileOnly];
+  }, [compPool, profiles]);
+
+  const filtered = search
+    ? options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()))
+    : options;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-30" onClick={onClose} />
+      <div className="absolute z-40 top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl min-w-[160px] max-h-[220px] flex flex-col overflow-hidden">
+        <div className="p-1.5 border-b border-gray-800">
+          <input
+            ref={inputRef}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Escape' && onClose()}
+            placeholder="Search player…"
+            className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-yellow-500/50"
+          />
+        </div>
+        <div className="overflow-y-auto">
+          {filtered.map(o => (
+            <button
+              key={o.name}
+              onClick={() => { onSelect(o.name, o.cls); onClose(); }}
+              style={{ color: resolveColor(o.cls) }}
+              className="w-full text-left text-xs px-3 py-1.5 hover:bg-gray-800 transition-colors"
+            >
+              {o.name}
+            </button>
+          ))}
+          {filtered.length === 0 && <p className="text-[11px] text-gray-600 px-3 py-2 italic">No players found</p>}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Droppable role slot ──────────────────────────────────────────────────────
 
-function DroppableSlot({ row, onClear, canWrite }: { row: SheetRow; onClear: () => void; canWrite: boolean }) {
+function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }: {
+  row: SheetRow; compPool: CompPlayer[]; profiles: string[];
+  onAssign: (name: string, cls: string | null) => void;
+  onClear: () => void; canWrite: boolean;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
+  const [showPicker, setShowPicker] = useState(false);
   const color = resolveColor(row.player_class);
   return (
-    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-yellow-500/60 bg-yellow-500/10' : ''}`}>
+    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors relative ${isOver ? 'ring-1 ring-yellow-500/60 bg-yellow-500/10' : ''}`}>
       {row.player_name ? (
         <div className="flex items-center gap-1 w-full">
           <span
+            onClick={() => canWrite && setShowPicker(true)}
             style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
-            className="text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate"
+            className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
           >
             {row.player_name}
           </span>
           {canWrite && <button onClick={onClear} className="text-gray-700 hover:text-gray-400 text-[10px] flex-shrink-0">✕</button>}
         </div>
       ) : (
-        <span className="text-[11px] text-gray-700 italic">{canWrite ? 'drag here' : '—'}</span>
+        <div className="flex items-center gap-1 w-full">
+          <span className="text-[11px] text-gray-700 italic flex-1">{canWrite ? 'drag or pick ▾' : '—'}</span>
+          {canWrite && <button onClick={() => setShowPicker(true)} className="text-[10px] text-gray-700 hover:text-gray-400 flex-shrink-0" title="Pick player">▾</button>}
+        </div>
+      )}
+      {showPicker && (
+        <PlayerPicker
+          compPool={compPool} profiles={profiles}
+          onSelect={(name, cls) => { onAssign(name, cls); setShowPicker(false); }}
+          onClose={() => setShowPicker(false)}
+        />
       )}
     </div>
   );
@@ -242,10 +313,12 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
 
 // ─── Sortable table row ───────────────────────────────────────────────────────
 
-function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onClear, onDelete, onSave }: {
+function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onDelete, onSave }: {
   row: SheetRow; rowBg: string; columns: SheetColumn[];
   cellMap: Map<string, SheetCell>; allRows: SheetRow[];
-  canWrite: boolean; onClear: () => void; onDelete: () => void;
+  compPool: CompPlayer[]; profiles: string[];
+  canWrite: boolean; onAssign: (name: string, cls: string | null) => void;
+  onClear: () => void; onDelete: () => void;
   onSave: (colId: number, val: { ref_row_id?: number | null; text_value?: string | null } | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
@@ -262,7 +335,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onC
         </div>
       </td>
       <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-gray-800`}>
-        <DroppableSlot row={row} onClear={onClear} canWrite={canWrite} />
+        <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
         <td key={col.id} className={`border-r border-gray-800/40 relative ${colIdx % 2 !== 0 ? 'bg-black/[0.12]' : ''}`}>
@@ -278,7 +351,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, canWrite, onC
 interface Props { role: UserRole | null; }
 
 export function AssignmentSheetView({ role }: Props) {
-  const { sheets, columns, rows, cells, loading, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
   const canWrite = canEdit(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -437,7 +510,10 @@ export function AssignmentSheetView({ role }: Props) {
                               columns={columns}
                               cellMap={cellMap}
                               allRows={rows}
+                              compPool={compPool}
+                              profiles={profiles}
                               canWrite={canWrite}
+                              onAssign={(name, cls) => assignPlayer(row.id, name, cls)}
                               onClear={() => clearPlayer(row.id)}
                               onDelete={() => deleteRow(row.id)}
                               onSave={(colId, val) => setCell(row.id, colId, val)}

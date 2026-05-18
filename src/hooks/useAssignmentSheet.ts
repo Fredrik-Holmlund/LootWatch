@@ -15,18 +15,21 @@ export function useAssignmentSheet() {
   const [allRows, setAllRows] = useState<SheetRow[]>([]);
   const [allCells, setAllCells] = useState<SheetCell[]>([]);
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
+  const [profiles, setProfiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [{ data: s }, { data: c }, { data: r }] = await Promise.all([
+      const [{ data: s }, { data: c }, { data: r }, { data: p }] = await Promise.all([
         supabase.from('assignment_sheets').select('*').order('sort_order'),
         supabase.from('sheet_columns').select('*').order('sort_order'),
         supabase.from('sheet_rows').select('*').order('sort_order'),
+        supabase.from('profiles').select('username').order('username'),
       ]);
       setSheets((s ?? []) as AssignmentSheet[]);
       setAllColumns((c ?? []) as SheetColumn[]);
       setAllRows((r ?? []) as SheetRow[]);
+      setProfiles((p ?? []).map((x: { username: string }) => x.username));
       if (s && s.length > 0) setSelectedSheetId(s[0].id);
       setLoading(false);
     }
@@ -138,7 +141,7 @@ export function useAssignmentSheet() {
   }, [selectedSheetId, allRows]);
 
   return {
-    sheets, columns, rows, cells, loading,
+    sheets, columns, rows, cells, loading, profiles,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,
