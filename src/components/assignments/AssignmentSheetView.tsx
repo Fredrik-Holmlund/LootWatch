@@ -317,7 +317,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
               className="h-12 w-full object-cover rounded-md border border-gray-700/80 cursor-pointer hover:opacity-80 hover:border-gray-500 transition-all"
             />
             {canWrite && (
-              <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md">
+              <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md cursor-pointer" onClick={() => onEnlarge(col.image_path!)}>
                 <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-gray-900/90 text-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-800">↑</button>
                 <button onClick={e => { e.stopPropagation(); onRemove(); }} className="text-[9px] bg-gray-900/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-gray-800">✕</button>
               </div>
