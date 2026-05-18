@@ -296,6 +296,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleFile = async (f: File) => {
     setUploading(true);
@@ -317,9 +318,22 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
               className="h-12 w-full object-cover rounded-md border border-gray-700/80 cursor-pointer hover:opacity-80 hover:border-gray-500 transition-all"
             />
             {canWrite && (
-              <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md cursor-pointer" onClick={() => onEnlarge(col.image_path!)}>
-                <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-gray-900/90 text-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-800">↑</button>
-                <button onClick={e => { e.stopPropagation(); onRemove(); }} className="text-[9px] bg-gray-900/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-gray-800">✕</button>
+              <div
+                className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md cursor-pointer"
+                onClick={() => { if (!confirmDelete) onEnlarge(col.image_path!); }}
+              >
+                {confirmDelete ? (
+                  <>
+                    <span className="text-[9px] text-white font-semibold">Delete?</span>
+                    <button onClick={e => { e.stopPropagation(); onRemove(); setConfirmDelete(false); }} className="text-[9px] bg-red-600 hover:bg-red-500 text-white rounded px-1.5 py-0.5">Yes</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(false); }} className="text-[9px] bg-gray-700 hover:bg-gray-600 text-gray-200 rounded px-1.5 py-0.5">No</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-gray-900/90 text-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-800">↑</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-gray-900/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-gray-800">✕</button>
+                  </>
+                )}
               </div>
             )}
           </div>
