@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -76,15 +77,15 @@ function DraggablePlayerPill({ player }: { player: CompPlayer }) {
 
 // ─── Player picker dropdown ───────────────────────────────────────────────────
 
-function PlayerPicker({ compPool, profiles, onSelect, onClose }: {
-  compPool: CompPlayer[]; profiles: string[];
+function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
+  anchor: DOMRect; compPool: CompPlayer[]; profiles: string[];
   onSelect: (name: string, cls: string | null) => void; onClose: () => void;
 }) {
   const [search, setSearch] = useState('');
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  React.useEffect(() => { inputRef.current?.focus(); }, []);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const options = React.useMemo(() => {
+  const options = useMemo(() => {
     const compNames = new Set(compPool.map(p => p.name.toLowerCase()));
     const compOptions = compPool.map(p => ({ name: p.name, cls: p.color || p.className }));
     const profileOnly = profiles
@@ -97,10 +98,18 @@ function PlayerPicker({ compPool, profiles, onSelect, onClose }: {
     ? options.filter(o => o.name.toLowerCase().includes(search.toLowerCase()))
     : options;
 
-  return (
+  const style: React.CSSProperties = {
+    position: 'fixed',
+    top: anchor.bottom + 4,
+    left: anchor.left,
+    minWidth: Math.max(anchor.width, 180),
+    zIndex: 9999,
+  };
+
+  return ReactDOM.createPortal(
     <>
-      <div className="fixed inset-0 z-30" onClick={onClose} />
-      <div className="absolute z-40 top-full left-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl min-w-[160px] max-h-[220px] flex flex-col overflow-hidden">
+      <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={onClose} />
+      <div style={style} className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl max-h-[240px] flex flex-col overflow-hidden">
         <div className="p-1.5 border-b border-gray-800">
           <input
             ref={inputRef}
@@ -125,7 +134,8 @@ function PlayerPicker({ compPool, profiles, onSelect, onClose }: {
           {filtered.length === 0 && <p className="text-[11px] text-gray-600 px-3 py-2 italic">No players found</p>}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -137,14 +147,19 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   onClear: () => void; canWrite: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
-  const [showPicker, setShowPicker] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const color = resolveColor(row.player_class);
+
+  const openPicker = (e: React.MouseEvent<HTMLElement>) => {
+    setAnchor(e.currentTarget.getBoundingClientRect());
+  };
+
   return (
-    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors relative ${isOver ? 'ring-1 ring-yellow-500/60 bg-yellow-500/10' : ''}`}>
+    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-yellow-500/60 bg-yellow-500/10' : ''}`}>
       {row.player_name ? (
         <div className="flex items-center gap-1 w-full">
           <span
-            onClick={() => canWrite && setShowPicker(true)}
+            onClick={canWrite ? openPicker : undefined}
             style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
             className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
           >
@@ -154,15 +169,23 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
-          <span className="text-[11px] text-gray-700 italic flex-1">{canWrite ? 'drag or pick ▾' : '—'}</span>
-          {canWrite && <button onClick={() => setShowPicker(true)} className="text-[10px] text-gray-700 hover:text-gray-400 flex-shrink-0" title="Pick player">▾</button>}
+          <span className="text-[11px] text-gray-700 italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
+          {canWrite && (
+            <button
+              onClick={openPicker}
+              className="text-gray-500 hover:text-gray-200 flex-shrink-0 text-base leading-none px-0.5 transition-colors"
+              title="Pick player"
+            >
+              ⌄
+            </button>
+          )}
         </div>
       )}
-      {showPicker && (
+      {anchor && (
         <PlayerPicker
-          compPool={compPool} profiles={profiles}
-          onSelect={(name, cls) => { onAssign(name, cls); setShowPicker(false); }}
-          onClose={() => setShowPicker(false)}
+          anchor={anchor} compPool={compPool} profiles={profiles}
+          onSelect={(name, cls) => { onAssign(name, cls); setAnchor(null); }}
+          onClose={() => setAnchor(null)}
         />
       )}
     </div>
