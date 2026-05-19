@@ -6,16 +6,18 @@ interface UserManagementProps {
   currentUserId: string;
 }
 
-const ROLES: UserRole[] = ['raider', 'council', 'admin'];
+const ROLES: UserRole[] = ['raider', 'planner', 'council', 'admin'];
 
 const ROLE_STYLE: Record<UserRole, string> = {
   raider:  'text-gray-400 bg-gray-800 border-gray-700',
+  planner: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
   council: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
   admin:   'text-red-400 bg-red-400/10 border-red-400/20',
 };
 
 const ROLE_LABEL: Record<UserRole, string> = {
   raider:  '🛡️ Raider',
+  planner: '📋 Planner',
   council: '⚔️ Council',
   admin:   '👑 Admin',
 };

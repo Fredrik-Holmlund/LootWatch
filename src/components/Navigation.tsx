@@ -1,4 +1,4 @@
-import { canEdit } from '../types';
+import { canEdit, canEditAssignments } from '../types';
 import type { UserRole } from '../types';
 import type { AppSettings } from '../hooks/useAppSettings';
 
@@ -15,6 +15,7 @@ interface NavigationProps {
 
 export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut }: NavigationProps) {
   const isPrivileged = canEdit(role) || role === 'admin';
+  const isPlanner = canEditAssignments(role);
 
   const tabs: { id: NavTab; label: string; requireCouncil?: boolean; requireAdmin?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard' },
@@ -43,7 +44,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
               // Hide dashboard/history from raiders if disabled
               if (!isPrivileged && tab.id === 'dashboard' && !settings.show_dashboard) return null;
               if (!isPrivileged && tab.id === 'history' && !settings.show_history) return null;
-              if (!isPrivileged && tab.id === 'assignments' && !settings.show_assignments) return null;
+              if (!isPrivileged && !isPlanner && tab.id === 'assignments' && !settings.show_assignments) return null;
               return (
                 <button
                   key={tab.id}
@@ -65,7 +66,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
             <div className="text-right hidden sm:block">
               <p className="text-xs font-medium text-gray-300">{username}</p>
               <p className={`text-xs capitalize font-medium ${
-                role === 'admin' ? 'text-red-400' : role === 'council' ? 'text-yellow-500' : 'text-gray-600'
+                role === 'admin' ? 'text-red-400' : role === 'council' ? 'text-yellow-500' : role === 'planner' ? 'text-blue-400' : 'text-gray-600'
               }`}>{role}</p>
             </div>
             <button

@@ -9,7 +9,7 @@ import { WishlistView } from './components/views/WishlistView';
 import { AssignmentSheetView } from './components/assignments/AssignmentSheetView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
-import { canEdit } from './types';
+import { canEdit, canEditAssignments } from './types';
 
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut } = useAuth();
@@ -34,9 +34,9 @@ function App() {
   // Raiders can only access tabs that are enabled in app settings
   const raiderCanSee = (tab: NavTab) => {
     if (canEdit(role) || role === 'admin') return true;
+    if (tab === 'assignments') return canEditAssignments(role) || settings.show_assignments;
     if (tab === 'dashboard') return settings.show_dashboard;
     if (tab === 'history') return settings.show_history;
-    if (tab === 'assignments') return settings.show_assignments;
     if (tab === 'wishlist') return true;
     return false;
   };

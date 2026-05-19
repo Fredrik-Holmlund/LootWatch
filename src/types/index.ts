@@ -45,11 +45,16 @@ export interface CouncilNote {
   created_at: string;
 }
 
-export type UserRole = 'council' | 'raider' | 'admin';
+export type UserRole = 'council' | 'raider' | 'planner' | 'admin';
 
-/** True for roles that can perform council-level actions */
+/** True for roles that can perform loot council actions */
 export function canEdit(role: UserRole | null): boolean {
   return role === 'council' || role === 'admin';
+}
+
+/** True for roles that can edit raid assignments */
+export function canEditAssignments(role: UserRole | null): boolean {
+  return role === 'planner' || role === 'council' || role === 'admin';
 }
 
 export interface Profile {

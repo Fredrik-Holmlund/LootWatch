@@ -6,7 +6,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
-import { canEdit } from '../../types';
+import { canEditAssignments } from '../../types';
 import type { UserRole } from '../../types';
 
 // ─── Raid markers ─────────────────────────────────────────────────────────────
@@ -397,7 +397,7 @@ interface Props { role: UserRole | null; }
 export function AssignmentSheetView({ role }: Props) {
   const { sheets, columns, rows, cells, loading, profiles, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
-  const canWrite = canEdit(role);
+  const canWrite = canEditAssignments(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const [compJson, setCompJson] = useState('');
