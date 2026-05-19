@@ -16,27 +16,29 @@ export function useAppSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    function fetchSettings() {
-      supabase
-        .from('app_settings')
-        .select('key, value')
-        .then(({ data }) => {
-          if (data) {
-            const merged = { ...DEFAULTS };
-            for (const row of data) {
-              if (row.key in merged) (merged as Record<string, boolean>)[row.key] = row.value as boolean;
-            }
-            setSettings(merged);
-          }
-          setLoading(false);
-        });
+    function applyRows(data: { key: string; value: unknown }[]) {
+      const merged = { ...DEFAULTS };
+      for (const row of data) {
+        if (row.key in merged) (merged as Record<string, unknown>)[row.key] = row.value;
+      }
+      setSettings(merged);
     }
 
-    fetchSettings();
+    supabase.from('app_settings').select('key, value').then(({ data }) => {
+      if (data) applyRows(data);
+      setLoading(false);
+    });
 
-    const handleVisibility = () => { if (document.visibilityState === 'visible') fetchSettings(); };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    // Unique name avoids channel collision on React StrictMode double-invoke
+    const channel = supabase
+      .channel(`app_settings_${Date.now()}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, payload => {
+        const row = payload.new as { key: string; value: unknown };
+        setSettings(prev => (row.key in prev ? { ...prev, [row.key]: row.value } : prev));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const toggleSetting = useCallback(async (key: keyof AppSettings) => {
