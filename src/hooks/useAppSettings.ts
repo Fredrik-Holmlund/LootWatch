@@ -49,7 +49,7 @@ export function useAppSettings() {
           const row = payload.new as { key: string; value: boolean };
           setSettings(prev => (row.key in prev ? { ...prev, [row.key]: row.value } : prev));
         })
-        .subscribe(status => console.log('[AppSettings] realtime:', status));
+        .subscribe();
     } catch (err) {
       console.error('[AppSettings] realtime setup failed:', err);
     }
