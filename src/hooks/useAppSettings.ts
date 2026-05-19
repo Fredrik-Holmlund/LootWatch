@@ -16,21 +16,31 @@ export function useAppSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    function applyRows(data: { key: string; value: boolean }[]) {
+      const merged = { ...DEFAULTS };
+      for (const row of data) {
+        if (row.key in merged) (merged as Record<string, boolean>)[row.key] = row.value as boolean;
+      }
+      setSettings(merged);
+    }
+
     supabase
       .from('app_settings')
       .select('key, value')
       .then(({ data }) => {
-        if (data) {
-          const merged = { ...DEFAULTS };
-          for (const row of data) {
-            if (row.key in merged) {
-              (merged as Record<string, boolean>)[row.key] = row.value as boolean;
-            }
-          }
-          setSettings(merged);
-        }
+        if (data) applyRows(data as { key: string; value: boolean }[]);
         setLoading(false);
       });
+
+    const channel = supabase
+      .channel('app_settings_changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, payload => {
+        const { key, value } = payload.new as { key: string; value: boolean };
+        setSettings(prev => (key in prev ? { ...prev, [key]: value } : prev));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const toggleSetting = useCallback(async (key: keyof AppSettings) => {
