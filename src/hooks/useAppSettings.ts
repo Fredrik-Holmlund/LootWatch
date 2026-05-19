@@ -39,6 +39,23 @@ export function useAppSettings() {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
+  // Isolated effect — failures here cannot crash the app
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`app_settings_rt_${Date.now()}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, payload => {
+          const row = payload.new as { key: string; value: boolean };
+          setSettings(prev => (row.key in prev ? { ...prev, [row.key]: row.value } : prev));
+        })
+        .subscribe(status => console.log('[AppSettings] realtime:', status));
+    } catch (err) {
+      console.error('[AppSettings] realtime setup failed:', err);
+    }
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
   const toggleSetting = useCallback(async (key: keyof AppSettings) => {
     const newValue = !settings[key];
     setSettings((prev) => ({ ...prev, [key]: newValue }));
