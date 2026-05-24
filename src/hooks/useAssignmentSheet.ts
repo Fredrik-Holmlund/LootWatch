@@ -3,7 +3,7 @@ import { supabase } from '../utils/supabase';
 
 export interface AssignmentSheet { id: number; title: string; sort_order: number; sections: string[] | null; }
 export interface SheetColumn { id: number; sheet_id: number; label: string; sort_order: number; image_path: string | null; }
-export interface SheetRow { id: number; sheet_id: number; section: string; label: string; sort_order: number; player_name: string | null; player_class: string | null; }
+export interface SheetRow { id: number; sheet_id: number; section: string; label: string; sort_order: number; player_name: string | null; player_class: string | null; player_name_2: string | null; player_class_2: string | null; }
 export interface SheetCell { id: number; row_id: number; column_id: number; ref_row_id: number | null; text_value: string | null; }
 export interface CompPlayer { name: string; className: string; specName: string; groupNumber: number; slotNumber: number; color: string; }
 
@@ -118,6 +118,16 @@ export function useAssignmentSheet() {
     await supabase.from('sheet_rows').update({ player_name: null, player_class: null }).eq('id', rowId);
   }, []);
 
+  const assignPlayer2 = useCallback(async (rowId: number, playerName: string, playerClass: string | null) => {
+    setAllRows(prev => prev.map(r => r.id === rowId ? { ...r, player_name_2: playerName, player_class_2: playerClass } : r));
+    await supabase.from('sheet_rows').update({ player_name_2: playerName, player_class_2: playerClass }).eq('id', rowId);
+  }, []);
+
+  const clearPlayer2 = useCallback(async (rowId: number) => {
+    setAllRows(prev => prev.map(r => r.id === rowId ? { ...r, player_name_2: null, player_class_2: null } : r));
+    await supabase.from('sheet_rows').update({ player_name_2: null, player_class_2: null }).eq('id', rowId);
+  }, []);
+
   const setCell = useCallback(async (
     rowId: number, columnId: number,
     value: { ref_row_id?: number | null; text_value?: string | null } | null
@@ -198,7 +208,7 @@ export function useAssignmentSheet() {
   return {
     sheets, columns, rows, cells, loading, profiles, sections,
     selectedSheetId, setSelectedSheetId,
-    assignPlayer, clearPlayer, setCell,
+    assignPlayer, clearPlayer, assignPlayer2, clearPlayer2, setCell,
     importComp, uploadImage, removeImage,
     addRow, deleteRow, reorderRows,
   };

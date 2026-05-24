@@ -159,14 +159,17 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
 
 // ─── Droppable role slot ──────────────────────────────────────────────────────
 
-function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }: {
-  row: SheetRow; compPool: CompPlayer[]; profiles: string[];
+function DroppableSlot({ row, slot = 1, compPool, profiles, onAssign, onClear, canWrite }: {
+  row: SheetRow; slot?: 1 | 2; compPool: CompPlayer[]; profiles: string[];
   onAssign: (name: string, cls: string | null) => void;
   onClear: () => void; canWrite: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
+  const dropId = slot === 1 ? `r:${row.id}` : `r2:${row.id}`;
+  const playerName = slot === 1 ? row.player_name : row.player_name_2;
+  const playerClass = slot === 1 ? row.player_class : row.player_class_2;
+  const { setNodeRef, isOver } = useDroppable({ id: dropId, disabled: !canWrite });
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
-  const color = resolveColor(row.player_class);
+  const color = resolveColor(playerClass);
 
   const openPicker = (e: React.MouseEvent<HTMLElement>) => {
     setAnchor(e.currentTarget.getBoundingClientRect());
@@ -174,20 +177,20 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
 
   return (
     <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-yellow-500/60 bg-yellow-500/10' : ''}`}>
-      {row.player_name ? (
+      {playerName ? (
         <div className="flex items-center gap-1 w-full">
           <span
             onClick={canWrite ? openPicker : undefined}
             style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
             className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
           >
-            {row.player_name}
+            {playerName}
           </span>
           {canWrite && <button onClick={onClear} className="text-gray-700 hover:text-gray-400 text-[10px] flex-shrink-0">✕</button>}
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
-          <span className="text-[11px] text-gray-700 italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
+          <span className="text-[11px] text-gray-700 italic flex-1">{canWrite ? (slot === 2 ? '+ flex' : 'drag or pick') : '—'}</span>
           {canWrite && (
             <button
               onClick={openPicker}
@@ -368,16 +371,18 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
 
 // ─── Sortable table row ───────────────────────────────────────────────────────
 
-function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onDelete, onSave }: {
+function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onAssign2, onClear2, onDelete, onSave }: {
   row: SheetRow; rowBg: string; columns: SheetColumn[];
   cellMap: Map<string, SheetCell>; allRows: SheetRow[];
   compPool: CompPlayer[]; profiles: string[];
   canWrite: boolean; onAssign: (name: string, cls: string | null) => void;
-  onClear: () => void; onDelete: () => void;
+  onClear: () => void; onAssign2: (name: string, cls: string | null) => void;
+  onClear2: () => void; onDelete: () => void;
   onSave: (colId: number, val: { ref_row_id?: number | null; text_value?: string | null } | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
+  const showSlot2 = canWrite || !!row.player_name_2;
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-gray-800/50 group/row`}>
       <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-gray-300 font-medium border-r border-gray-800 whitespace-nowrap`}>
@@ -390,7 +395,14 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
         </div>
       </td>
       <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-gray-800`}>
-        <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
+        <div className="flex flex-col">
+          <DroppableSlot row={row} slot={1} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
+          {showSlot2 && (
+            <div className="border-t border-gray-800/60">
+              <DroppableSlot row={row} slot={2} compPool={compPool} profiles={profiles} onAssign={onAssign2} onClear={onClear2} canWrite={canWrite} />
+            </div>
+          )}
+        </div>
       </td>
       {columns.map((col, colIdx) => (
         <td key={col.id} className={`border-r border-gray-800/40 relative ${colIdx % 2 !== 0 ? 'bg-black/[0.12]' : ''}`}>
@@ -406,7 +418,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 interface Props { role: UserRole | null; username: string; }
 
 export function AssignmentSheetView({ role, username }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, assignPlayer2, clearPlayer2, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -453,7 +465,10 @@ export function AssignmentSheetView({ role, username }: Props) {
   }, [selectedSheetId, username]);
 
   const cellMap = useMemo(() => { const m = new Map<string, SheetCell>(); for (const c of cells) m.set(`${c.row_id}-${c.column_id}`, c); return m; }, [cells]);
-  const assignedNames = useMemo(() => new Set(rows.map(r => r.player_name?.toLowerCase()).filter(Boolean) as string[]), [rows]);
+  const assignedNames = useMemo(() => new Set([
+    ...rows.map(r => r.player_name?.toLowerCase()),
+    ...rows.map(r => r.player_name_2?.toLowerCase()),
+  ].filter(Boolean) as string[]), [rows]);
   const pool = useMemo(() => compPool.filter(p => !assignedNames.has(p.name.toLowerCase())), [compPool, assignedNames]);
   const groupedPool = useMemo(() => { const g = new Map<number, CompPlayer[]>(); for (const p of pool) { if (!g.has(p.groupNumber)) g.set(p.groupNumber, []); g.get(p.groupNumber)!.push(p); } return [...g.entries()].sort((a, b) => a[0] - b[0]); }, [pool]);
   const rowsBySection = useMemo(() => { const m: Record<string, SheetRow[]> = {}; for (const s of sections) m[s] = rows.filter(r => r.section === s); return m; }, [rows, sections]);
@@ -469,10 +484,16 @@ export function AssignmentSheetView({ role, username }: Props) {
     const activeStr = String(active.id);
     if (activeStr.startsWith('p:')) {
       const name = activeStr.replace(/^p:/, '');
-      const rowId = Number(String(over.id).replace(/^r:/, ''));
+      const overStr = String(over.id);
+      const isSlot2 = overStr.startsWith('r2:');
+      const rowId = Number(overStr.replace(/^r2?:/, ''));
       const player = compPool.find(p => p.name === name);
       if (!player || !rowId) return;
-      assignPlayer(rowId, player.name, player.color || player.className);
+      if (isSlot2) {
+        assignPlayer2(rowId, player.name, player.color || player.className);
+      } else {
+        assignPlayer(rowId, player.name, player.color || player.className);
+      }
     } else {
       const overId = Number(over.id);
       if (!overId) return;
@@ -615,6 +636,8 @@ export function AssignmentSheetView({ role, username }: Props) {
                               canWrite={canWrite}
                               onAssign={(name, cls) => assignPlayer(row.id, name, cls)}
                               onClear={() => clearPlayer(row.id)}
+                              onAssign2={(name, cls) => assignPlayer2(row.id, name, cls)}
+                              onClear2={() => clearPlayer2(row.id)}
                               onDelete={() => deleteRow(row.id)}
                               onSave={(colId, val) => setCell(row.id, colId, val)}
                             />
