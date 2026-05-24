@@ -8,6 +8,7 @@ import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type Sheet
 import { getClassColor } from '../../utils/classColors';
 import { canEditAssignments } from '../../types';
 import type { UserRole } from '../../types';
+import { supabase } from '../../utils/supabase';
 
 // ─── Raid markers ─────────────────────────────────────────────────────────────
 
@@ -392,9 +393,9 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 
-interface Props { role: UserRole | null; }
+interface Props { role: UserRole | null; username: string; }
 
-export function AssignmentSheetView({ role }: Props) {
+export function AssignmentSheetView({ role, username }: Props) {
   const { sheets, columns, rows, cells, loading, profiles, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
@@ -408,6 +409,36 @@ export function AssignmentSheetView({ role }: Props) {
   const [newRowLabel, setNewRowLabel] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  const [presentUsers, setPresentUsers] = useState<string[]>([]);
+
+  // Presence: track who else is on this sheet
+  useEffect(() => {
+    if (!selectedSheetId || !username) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase.channel(`assignment_presence_${selectedSheetId}`);
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          if (!channel) return;
+          const state = channel.presenceState<{ username: string }>();
+          const others = [...new Set(
+            Object.values(state).flat().map(p => p.username).filter(u => u !== username)
+          )];
+          setPresentUsers(others);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel!.track({ username });
+          }
+        });
+    } catch (err) {
+      console.error('[AssignmentSheet] presence failed:', err);
+    }
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+      setPresentUsers([]);
+    };
+  }, [selectedSheetId, username]);
 
   const cellMap = useMemo(() => { const m = new Map<string, SheetCell>(); for (const c of cells) m.set(`${c.row_id}-${c.column_id}`, c); return m; }, [cells]);
   const assignedNames = useMemo(() => new Set(rows.map(r => r.player_name?.toLowerCase()).filter(Boolean) as string[]), [rows]);
@@ -463,7 +494,18 @@ export function AssignmentSheetView({ role }: Props) {
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-xl font-bold text-white">Raid Assignments</h2>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-xl font-bold text-white">Raid Assignments</h2>
+            {presentUsers.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs text-gray-500">Also here:</span>
+                {presentUsers.map(u => (
+                  <span key={u} className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">{u}</span>
+                ))}
+              </div>
+            )}
+          </div>
           {canWrite && (
             <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700">
               {showImport ? 'Hide import' : '⬆ Import comp JSON'}

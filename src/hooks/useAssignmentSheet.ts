@@ -46,6 +46,56 @@ export function useAssignmentSheet() {
     });
   }, [selectedSheetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Realtime: sheet_rows
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`sheet_rows_rt_${Date.now()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sheet_rows' }, payload => {
+          if (payload.eventType === 'INSERT') {
+            const r = payload.new as SheetRow;
+            setAllRows(prev => prev.some(x => x.id === r.id) ? prev : [...prev, r]);
+          } else if (payload.eventType === 'UPDATE') {
+            setAllRows(prev => prev.map(x => x.id === (payload.new as SheetRow).id ? payload.new as SheetRow : x));
+          } else if (payload.eventType === 'DELETE') {
+            const id = (payload.old as { id: number }).id;
+            setAllRows(prev => prev.filter(x => x.id !== id));
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.error('[AssignmentSheet] sheet_rows realtime failed:', err);
+    }
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
+  // Realtime: sheet_cells
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`sheet_cells_rt_${Date.now()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sheet_cells' }, payload => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const c = payload.new as SheetCell;
+            setAllCells(prev => {
+              const idx = prev.findIndex(x => x.row_id === c.row_id && x.column_id === c.column_id);
+              if (idx >= 0) return prev.map((x, i) => i === idx ? c : x);
+              return [...prev, c];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const id = (payload.old as { id: number }).id;
+            setAllCells(prev => prev.filter(x => x.id !== id));
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.error('[AssignmentSheet] sheet_cells realtime failed:', err);
+    }
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
   const columns = useMemo(() => allColumns.filter(c => c.sheet_id === selectedSheetId), [allColumns, selectedSheetId]);
   const rows = useMemo(() => allRows.filter(r => r.sheet_id === selectedSheetId).sort((a, b) => a.sort_order - b.sort_order), [allRows, selectedSheetId]);
   const cells = useMemo(() => {

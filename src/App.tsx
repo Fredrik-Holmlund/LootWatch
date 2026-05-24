@@ -69,7 +69,7 @@ function App() {
         {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
-        {effectiveTab === 'assignments' && <AssignmentSheetView role={role} />}
+        {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
         {effectiveTab === 'council' && canEdit(role) && <CouncilView />}
         {effectiveTab === 'admin' && role === 'admin' && <AdminView profile={profile} />}
       </main>
