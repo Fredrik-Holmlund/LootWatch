@@ -402,7 +402,9 @@ export function AssignmentSheetView({ role, username }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const [compJson, setCompJson] = useState('');
-  const [compPool, setCompPool] = useState<CompPlayer[]>([]);
+  const [compPool, setCompPool] = useState<CompPlayer[]>(() => {
+    try { const s = localStorage.getItem('lootwatch_comp_pool'); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
   const [importErr, setImportErr] = useState('');
   const [showImport, setShowImport] = useState(false);
   const [addingRowSection, setAddingRowSection] = useState<string | null>(null);
@@ -475,6 +477,7 @@ export function AssignmentSheetView({ role, username }: Props) {
     const result = importComp(compJson, selectedSheetId!, rows);
     if (typeof result === 'string') { setImportErr(result); return; }
     setCompPool(result);
+    try { localStorage.setItem('lootwatch_comp_pool', JSON.stringify(result)); } catch { /* storage full */ }
     setShowImport(false);
     setCompJson('');
   }
