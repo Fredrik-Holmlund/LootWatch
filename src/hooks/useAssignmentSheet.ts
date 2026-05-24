@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../utils/supabase';
 
-export interface AssignmentSheet { id: number; title: string; sort_order: number; }
+export interface AssignmentSheet { id: number; title: string; sort_order: number; sections: string[] | null; }
 export interface SheetColumn { id: number; sheet_id: number; label: string; sort_order: number; image_path: string | null; }
 export interface SheetRow { id: number; sheet_id: number; section: string; label: string; sort_order: number; player_name: string | null; player_class: string | null; }
 export interface SheetCell { id: number; row_id: number; column_id: number; ref_row_id: number | null; text_value: string | null; }
 export interface CompPlayer { name: string; className: string; specName: string; groupNumber: number; slotNumber: number; color: string; }
 
-export const SECTIONS = ['Tanks', 'Healers', 'Ranged', 'Melee'] as const;
+export const DEFAULT_SECTIONS = ['Tanks', 'Healers', 'Ranged', 'Melee'];
+export const SECTIONS = DEFAULT_SECTIONS;
 
 export function useAssignmentSheet() {
   const [sheets, setSheets] = useState<AssignmentSheet[]>([]);
@@ -102,6 +103,10 @@ export function useAssignmentSheet() {
     const ids = new Set(rows.map(r => r.id));
     return allCells.filter(c => ids.has(c.row_id));
   }, [allCells, rows]);
+  const sections = useMemo(() => {
+    const sheet = sheets.find(s => s.id === selectedSheetId);
+    return sheet?.sections ?? DEFAULT_SECTIONS;
+  }, [sheets, selectedSheetId]);
 
   const assignPlayer = useCallback(async (rowId: number, playerName: string, playerClass: string | null) => {
     setAllRows(prev => prev.map(r => r.id === rowId ? { ...r, player_name: playerName, player_class: playerClass } : r));
@@ -191,7 +196,7 @@ export function useAssignmentSheet() {
   }, [selectedSheetId, allRows]);
 
   return {
-    sheets, columns, rows, cells, loading, profiles,
+    sheets, columns, rows, cells, loading, profiles, sections,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,

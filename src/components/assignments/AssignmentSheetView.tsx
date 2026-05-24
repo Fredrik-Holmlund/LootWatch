@@ -4,7 +4,7 @@ import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, use
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useAssignmentSheet, SECTIONS, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
+import { useAssignmentSheet, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
 import { canEditAssignments } from '../../types';
 import type { UserRole } from '../../types';
@@ -52,11 +52,21 @@ function resolveColor(playerClass: string | null): string {
 }
 
 export const SECTION_ACCENT: Record<string, string> = {
-  Tanks:   '#60a5fa',
-  Healers: '#34d399',
-  Ranged:  '#a78bfa',
-  Melee:   '#fb923c',
+  Tanks:        '#60a5fa',
+  Healers:      '#34d399',
+  Ranged:       '#a78bfa',
+  Melee:        '#fb923c',
+  'Clickers 1': '#f59e0b',
+  'Clickers 2': '#ef4444',
+  'Clickers 3': '#ec4899',
+  'Clickers 4': '#8b5cf6',
+  Misc:         '#6b7280',
 };
+
+const ACCENT_PALETTE = ['#60a5fa', '#34d399', '#a78bfa', '#fb923c', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#6b7280'];
+function sectionAccent(section: string, idx: number): string {
+  return SECTION_ACCENT[section] ?? ACCENT_PALETTE[idx % ACCENT_PALETTE.length];
+}
 
 // ─── Draggable player pill ────────────────────────────────────────────────────
 
@@ -396,7 +406,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 interface Props { role: UserRole | null; username: string; }
 
 export function AssignmentSheetView({ role, username }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -446,7 +456,7 @@ export function AssignmentSheetView({ role, username }: Props) {
   const assignedNames = useMemo(() => new Set(rows.map(r => r.player_name?.toLowerCase()).filter(Boolean) as string[]), [rows]);
   const pool = useMemo(() => compPool.filter(p => !assignedNames.has(p.name.toLowerCase())), [compPool, assignedNames]);
   const groupedPool = useMemo(() => { const g = new Map<number, CompPlayer[]>(); for (const p of pool) { if (!g.has(p.groupNumber)) g.set(p.groupNumber, []); g.get(p.groupNumber)!.push(p); } return [...g.entries()].sort((a, b) => a[0] - b[0]); }, [pool]);
-  const rowsBySection = useMemo(() => { const m: Record<string, SheetRow[]> = {}; for (const s of SECTIONS) m[s] = rows.filter(r => r.section === s); return m; }, [rows]);
+  const rowsBySection = useMemo(() => { const m: Record<string, SheetRow[]> = {}; for (const s of sections) m[s] = rows.filter(r => r.section === s); return m; }, [rows, sections]);
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id);
@@ -573,17 +583,18 @@ export function AssignmentSheetView({ role, username }: Props) {
             <tbody>
               {(() => {
                 let rowIdx = 0;
-                return SECTIONS.map(section => {
+                return sections.map((section, sectionIdx) => {
                   const sectionRows = rowsBySection[section] ?? [];
+                  const accent = sectionAccent(section, sectionIdx);
                   return (
                     <React.Fragment key={section}>
                       <tr>
                         <td
                           colSpan={2 + columns.length}
-                          style={{ borderLeftColor: SECTION_ACCENT[section] }}
+                          style={{ borderLeftColor: accent }}
                           className="px-4 py-1.5 bg-gray-900/70 border-y border-gray-800/80 border-l-2"
                         >
-                          <span style={{ color: SECTION_ACCENT[section] }} className="text-[10px] font-bold uppercase tracking-widest opacity-90">{section}</span>
+                          <span style={{ color: accent }} className="text-[10px] font-bold uppercase tracking-widest opacity-90">{section}</span>
                         </td>
                       </tr>
 
