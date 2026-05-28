@@ -53,13 +53,14 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
     const { error } = await supabase.from('profiles').update({ username: trimmed }).eq('id', id);
     if (error) { setError(error.message); setUpdating(null); return; }
 
-    const [wishResult, candidateResult, rowResult] = await Promise.all([
+    const [wishResult, candidateResult, rowResult, historyResult] = await Promise.all([
       supabase.from('soft_reserves').update({ player_name: trimmed }).eq('player_name', oldName),
       supabase.from('loot_candidates').update({ player_name: trimmed }).eq('player_name', oldName),
       supabase.from('sheet_rows').update({ player_name: trimmed }).eq('player_name', oldName),
+      supabase.from('loot_entries').update({ player_name: trimmed }).eq('player_name', oldName),
     ]);
 
-    const cascadeError = wishResult.error?.message ?? candidateResult.error?.message ?? rowResult.error?.message ?? null;
+    const cascadeError = wishResult.error?.message ?? candidateResult.error?.message ?? rowResult.error?.message ?? historyResult.error?.message ?? null;
     if (cascadeError) setError(`Profile renamed but cascade failed: ${cascadeError}`);
 
     setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, username: trimmed } : p)));
