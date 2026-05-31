@@ -33,7 +33,7 @@ interface LootPlannerProps {
 export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   const { loot, loading, error, updateItemNote } = useRaidLoot();
   const { players } = usePlayers();
-  const { priorities, attWindow, streakCap } = usePriorityScore();
+  const { priorities, attWindow } = usePriorityScore();
   const priorityDataMap = useMemo(() => {
     const m: Record<string, PlayerPriority> = {};
     for (const p of priorities) m[p.name.toLowerCase()] = p;
@@ -132,7 +132,7 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
                     players={players}
                     priorityDataMap={priorityDataMap}
                     attWindow={attWindow}
-                    streakCap={streakCap}
+
                     getAwardedCount={getAwardedCount}
                     getAwardedEntries={getAwardedEntries}
                     getWishers={getWishers}
@@ -152,7 +152,7 @@ function BossSection({ boss, items, players, priorityDataMap, attWindow, streakC
   boss: string; items: RaidLoot[]; players: Player[];
   priorityDataMap: Record<string, PlayerPriority>;
   attWindow: number;
-  streakCap: number;
+
   getAwardedCount: (item: RaidLoot) => number;
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
   getWishers: (item: RaidLoot) => SoftReserve[];
@@ -188,7 +188,7 @@ function ItemRow({
   players,
   priorityDataMap,
   attWindow,
-  streakCap,
+
   awardedCount,
   awardedEntries,
   wishers,
@@ -198,7 +198,7 @@ function ItemRow({
   players: Player[];
   priorityDataMap: Record<string, PlayerPriority>;
   attWindow: number;
-  streakCap: number;
+
   awardedCount: number;
   awardedEntries: LootEntry[];
   wishers: SoftReserve[];
@@ -378,7 +378,7 @@ function ItemRow({
                     players={players}
                     priorityData={priorityDataMap[c.player_name.toLowerCase()]}
                     attWindow={attWindow}
-                    streakCap={streakCap}
+
                     hasReceived={awardedEntries.some(
                       (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
                     )}
@@ -514,7 +514,7 @@ function CandidatePill({
   players,
   priorityData,
   attWindow,
-  streakCap,
+
   hasReceived,
   onRemove,
   onMove,
@@ -526,7 +526,7 @@ function CandidatePill({
   players: Player[];
   priorityData?: PlayerPriority;
   attWindow: number;
-  streakCap: number;
+
   hasReceived: boolean;
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
@@ -625,7 +625,7 @@ function CandidatePill({
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-gray-500">Streak</span>
                   <span className="text-green-400 font-medium tabular-nums">
-                    {priorityData.bestStreak}/{streakCap}
+                    {priorityData.bestStreak}/{priorityData.allTimeTotal}
                     <span className="text-gray-600 font-normal"> · now {priorityData.currentStreak}</span>
                   </span>
                 </div>

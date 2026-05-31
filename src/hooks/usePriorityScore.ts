@@ -30,7 +30,6 @@ const MAIN_SPEC_RESPONSES = ['bis', 'upgrade', 'best in slot'];
 const RECENT_WINDOW_DAYS = 42;
 const DROUGHT_CAP_DAYS = 30;
 const LOOT_PENALTY_PER_ITEM = 25;
-const DEFAULT_STREAK_CAP = 20;
 const DEFAULT_ATT_WINDOW = 6;
 
 function stripRealm(name: string): string {
@@ -45,10 +44,9 @@ export function usePriorityScore() {
   const [priorities, setPriorities] = useState<PlayerPriority[]>([]);
   const [weights, setWeights] = useState<PriorityWeights>({ attendance: 20, streak: 10, drought: 50, loot: 20 });
   const [attWindow, setAttWindow] = useState(DEFAULT_ATT_WINDOW);
-  const [streakCap, setStreakCap] = useState(DEFAULT_STREAK_CAP);
   const [loading, setLoading] = useState(true);
 
-  const compute = useCallback(async (w: PriorityWeights, window: number, cap: number) => {
+  const compute = useCallback(async (w: PriorityWeights, window: number) => {
     setLoading(true);
 
     const [lootRes, sessionRes, attRes] = await Promise.all([
@@ -134,7 +132,7 @@ export function usePriorityScore() {
       const attendanceScore = rollingPct;
 
       const { current: currentStreak, best: bestStreak } = calcStreaks(name);
-      const streakScore = Math.round(Math.min(bestStreak, cap) / cap * 100);
+      const streakScore = allTimeTotal > 0 ? Math.round(Math.min(bestStreak, allTimeTotal) / allTimeTotal * 100) : 0;
 
       const lastTs = lastBisDate[name];
       const droughtDays = lastTs !== undefined ? Math.round((now - lastTs) / 86400000) : 999;
@@ -168,11 +166,10 @@ export function usePriorityScore() {
     supabase
       .from('app_settings')
       .select('key, value')
-      .in('key', ['priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window', 'streak_cap'])
+      .in('key', ['priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window'])
       .then(({ data }) => {
         const w = { attendance: 20, streak: 10, drought: 50, loot: 20 };
         let win = DEFAULT_ATT_WINDOW;
-        let cap = DEFAULT_STREAK_CAP;
         for (const row of data ?? []) {
           const v = Number(row.value);
           if (row.key === 'priority_weight_attendance') w.attendance = v;
@@ -180,17 +177,15 @@ export function usePriorityScore() {
           if (row.key === 'priority_weight_drought')    w.drought    = v;
           if (row.key === 'priority_weight_loot')       w.loot       = v;
           if (row.key === 'attendance_window')          win          = v;
-          if (row.key === 'streak_cap')                 cap          = v;
         }
         setWeights(w);
         setAttWindow(win);
-        setStreakCap(cap);
-        compute(w, win, cap);
+        compute(w, win);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const refresh = useCallback(() => compute(weights, attWindow, streakCap), [compute, weights, attWindow, streakCap]);
+  const refresh = useCallback(() => compute(weights, attWindow), [compute, weights, attWindow]);
 
-  return { priorities, weights, attWindow, streakCap, loading, refresh };
+  return { priorities, weights, attWindow, loading, refresh };
 }

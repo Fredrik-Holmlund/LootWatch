@@ -26,7 +26,8 @@ function DroughtLabel({ days }: { days: number }) {
 }
 
 export function PriorityPanel() {
-  const { priorities, weights, attWindow, streakCap, loading, refresh } = usePriorityScore();
+  const { priorities, weights, attWindow, loading, refresh } = usePriorityScore();
+  const totalRaids = priorities[0]?.allTimeTotal ?? 0;
 
   if (loading) {
     return <div className="text-center py-10 text-gray-600 text-sm">Computing priority scores…</div>;
@@ -133,7 +134,7 @@ export function PriorityPanel() {
       </div>
 
       <p className="text-xs text-gray-700">
-        Rolling att. = last {attWindow} raids. Streak from first appearance (pre-join sessions excluded). Best streak capped at {streakCap} for scoring. Bench counts as present.
+        Rolling att. = last {attWindow} raids. Streak scored vs. total raids ({totalRaids}) — a {totalRaids}-raid streak = 100%. Streak counts from first appearance; bench = present.
       </p>
     </div>
   );
