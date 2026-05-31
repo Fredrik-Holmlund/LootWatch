@@ -69,6 +69,8 @@ export function AttendancePanel() {
   const allPlayers = [...new Set(Object.values(attendance).flatMap((m) => Object.keys(m)))];
 
   const [sortBy, setSortBy] = useState<'name' | 'pct'>('name');
+  const [sessionPage, setSessionPage] = useState(0);
+  const SESSIONS_PER_PAGE = 10;
 
   const total = sessions.length;
   const attPct = (name: string) => {
@@ -81,6 +83,8 @@ export function AttendancePanel() {
   const sortedSessions = [...sessions].sort(
     (a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
   );
+  const totalSessionPages = Math.ceil(sortedSessions.length / SESSIONS_PER_PAGE);
+  const visibleSessions = sortedSessions.slice(sessionPage * SESSIONS_PER_PAGE, (sessionPage + 1) * SESSIONS_PER_PAGE);
 
   const sortedPlayers = [...allPlayers].sort((a, b) =>
     sortBy === 'pct'
@@ -357,6 +361,30 @@ export function AttendancePanel() {
                   )}
                 </div>
               </div>
+              {/* Session pagination */}
+              {totalSessionPages > 1 && (
+                <div className="flex items-center gap-2 justify-end">
+                  <span className="text-xs text-gray-600">
+                    Raids {sessionPage * SESSIONS_PER_PAGE + 1}–{Math.min((sessionPage + 1) * SESSIONS_PER_PAGE, sortedSessions.length)} of {sortedSessions.length}
+                  </span>
+                  <button
+                    onClick={() => setSessionPage((p) => Math.max(0, p - 1))}
+                    disabled={sessionPage === 0}
+                    className="text-xs px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-400 hover:text-gray-200 disabled:opacity-30 transition-colors"
+                  >
+                    ← Newer
+                  </button>
+                  <span className="text-xs text-gray-500 tabular-nums">{sessionPage + 1}/{totalSessionPages}</span>
+                  <button
+                    onClick={() => setSessionPage((p) => Math.min(totalSessionPages - 1, p + 1))}
+                    disabled={sessionPage === totalSessionPages - 1}
+                    className="text-xs px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-400 hover:text-gray-200 disabled:opacity-30 transition-colors"
+                  >
+                    Older →
+                  </button>
+                </div>
+              )}
+
               <div className="overflow-x-auto rounded-xl border border-gray-800">
                 <table className="text-xs border-collapse min-w-full">
                   <thead>
@@ -375,7 +403,7 @@ export function AttendancePanel() {
                       <th className="px-2 py-2 text-gray-500 font-semibold text-center min-w-[48px] border-r border-gray-800">
                         Att.%
                       </th>
-                      {sortedSessions.map((s) => (
+                      {visibleSessions.map((s) => (
                         <th
                           key={s.id}
                           className="px-1 py-2 text-gray-500 font-semibold text-center min-w-[44px] border-r border-gray-800 last:border-0"
@@ -412,7 +440,7 @@ export function AttendancePanel() {
                           >
                             {pct}%
                           </td>
-                          {sortedSessions.map((s) => {
+                          {visibleSessions.map((s) => {
                             const status = attendance[s.id]?.[name];
                             const bg = status === 'attended' ? '#16a34a' : status === 'bench' ? '#c2410c' : '#111';
                             const border = status === 'attended' ? '#15803d' : status === 'bench' ? '#9a3412' : '#222';
@@ -437,7 +465,7 @@ export function AttendancePanel() {
 
                     {/* Add new player row */}
                     <tr className="border-t border-gray-800/60">
-                      <td colSpan={3 + sortedSessions.length} className="px-3 py-2 sticky left-0">
+                      <td colSpan={3 + visibleSessions.length} className="px-3 py-2 sticky left-0">
                         {addingToSession === '__new__' ? (
                           <div className="flex gap-2 items-center">
                             <input
