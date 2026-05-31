@@ -616,39 +616,52 @@ function CandidatePill({
 
       {/* Hover tooltip: stats + note */}
       {(priorityData || candidate.note) && !editingNote && (
-        <div className="absolute left-0 bottom-full mb-1.5 z-40 hidden group-hover/pill:block pointer-events-none min-w-[190px]">
-          <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl px-3 py-2 text-xs space-y-1.5">
+        <div className="absolute left-0 bottom-full mb-2 z-40 hidden group-hover/pill:block pointer-events-none w-52">
+          <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-3 text-xs space-y-2.5">
             {priorityData && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-gray-500">Streak</span>
-                  <span className="text-green-400 font-medium tabular-nums">
-                    {priorityData.bestStreak}/{priorityData.allTimeTotal}
-                    <span className="text-gray-600 font-normal"> · now {priorityData.currentStreak}</span>
-                  </span>
+              <>
+                {/* Streak */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 font-medium">Best Streak</span>
+                    <span className="text-green-400 font-bold tabular-nums">{priorityData.bestStreak}/{priorityData.allTimeTotal}</span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-1 overflow-hidden">
+                    <div className="h-full rounded-full bg-green-500/70 transition-all" style={{ width: `${priorityData.streakScore}%` }} />
+                  </div>
+                  <p className="text-gray-600 text-[10px]">
+                    {priorityData.currentStreak > 0
+                      ? `On a ${priorityData.currentStreak}-raid run`
+                      : 'Streak currently broken'}
+                  </p>
                 </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-gray-500">Rolling att.</span>
-                  <span className="text-blue-400 font-medium tabular-nums">
-                    {priorityData.rollingAttended}/{priorityData.rollingTotal}
-                    <span className="text-gray-600 font-normal"> ({priorityData.attendanceScore}%) · last {attWindow}</span>
-                  </span>
+
+                <div className="border-t border-gray-800/80" />
+
+                {/* Rolling attendance */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 font-medium">Rolling Att.</span>
+                    <span className="text-blue-400 font-bold tabular-nums">{priorityData.attendanceScore}%</span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-1 overflow-hidden">
+                    <div className="h-full rounded-full bg-blue-500/70 transition-all" style={{ width: `${priorityData.attendanceScore}%` }} />
+                  </div>
+                  <p className="text-gray-600 text-[10px]">{priorityData.rollingAttended}/{priorityData.rollingTotal} last {attWindow} raids</p>
                 </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-gray-500">All-time</span>
-                  <span className="text-gray-400 font-medium tabular-nums">
-                    {priorityData.allTimeAttended}/{priorityData.allTimeTotal}
-                  </span>
+
+                {/* All-time */}
+                <div className="flex items-center justify-between text-[10px] pt-0.5 border-t border-gray-800/80">
+                  <span className="text-gray-600">All-time</span>
+                  <span className="text-gray-500 tabular-nums">{priorityData.allTimeAttended}/{priorityData.allTimeTotal}</span>
                 </div>
-              </div>
+              </>
             )}
-            {priorityData && candidate.note && (
-              <div className="border-t border-gray-800 pt-1.5">
-                <p className="text-gray-300 whitespace-pre-wrap max-w-[220px]">{candidate.note}</p>
+
+            {candidate.note && (
+              <div className={priorityData ? 'border-t border-gray-800/80 pt-0.5' : ''}>
+                <p className="text-gray-300 whitespace-pre-wrap">{candidate.note}</p>
               </div>
-            )}
-            {!priorityData && candidate.note && (
-              <p className="text-gray-300 whitespace-pre-wrap max-w-[220px]">{candidate.note}</p>
             )}
           </div>
         </div>
