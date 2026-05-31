@@ -26,7 +26,7 @@ function DroughtLabel({ days }: { days: number }) {
 }
 
 export function PriorityPanel() {
-  const { priorities, weights, loading, refresh } = usePriorityScore();
+  const { priorities, weights, attWindow, loading, refresh } = usePriorityScore();
 
   if (loading) {
     return <div className="text-center py-10 text-gray-600 text-sm">Computing priority scores…</div>;
@@ -46,9 +46,11 @@ export function PriorityPanel() {
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-3 text-xs text-gray-500 bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
           <span>Weights:</span>
-          <span className="text-blue-400">Attendance {weights.attendance}%</span>
+          <span className="text-blue-400">Rolling att. {weights.attendance}%</span>
+          <span className="text-green-400">Streak {weights.streak}%</span>
           <span className="text-purple-400">Drought {weights.drought}%</span>
           <span className="text-yellow-400">Loot {weights.loot}%</span>
+          <span className="text-gray-600">· Window: last {attWindow} raids</span>
         </div>
         <button
           onClick={refresh}
@@ -62,11 +64,12 @@ export function PriorityPanel() {
       {/* Table */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr] gap-3 px-4 py-2 border-b border-gray-800 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <div className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 px-4 py-2 border-b border-gray-800 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           <span>#</span>
           <span>Player</span>
           <span className="text-center">Score</span>
-          <span>Attendance</span>
+          <span>Rolling Att.</span>
+          <span>Streak</span>
           <span>Drought</span>
           <span>Recent Loot</span>
         </div>
@@ -74,7 +77,7 @@ export function PriorityPanel() {
         {priorities.map((p: PlayerPriority, i) => (
           <div
             key={p.name}
-            className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr] gap-3 items-center px-4 py-2.5 border-b border-gray-800/60 last:border-0 hover:bg-gray-800/20 transition-colors"
+            className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 items-center px-4 py-2.5 border-b border-gray-800/60 last:border-0 hover:bg-gray-800/20 transition-colors"
           >
             {/* Rank */}
             <span className="text-xs text-gray-600 font-mono">{i + 1}</span>
@@ -96,10 +99,20 @@ export function PriorityPanel() {
               </span>
             </div>
 
-            {/* Attendance */}
+            {/* Rolling attendance */}
             <div className="space-y-0.5">
               <ScoreBar value={p.attendanceScore} color="#60a5fa" />
-              <p className="text-xs text-gray-600">{p.attendancePct}% attendance</p>
+              <p className="text-xs text-gray-600">
+                {p.rollingAttended}/{p.rollingTotal} last {attWindow} · {p.allTimeAttended}/{p.allTimeTotal} all-time
+              </p>
+            </div>
+
+            {/* Streak */}
+            <div className="space-y-0.5">
+              <ScoreBar value={p.streakScore} color="#4ade80" />
+              <p className="text-xs text-gray-600">
+                Best: {p.bestStreak} · Now: {p.currentStreak}
+              </p>
             </div>
 
             {/* Drought */}
@@ -120,7 +133,7 @@ export function PriorityPanel() {
       </div>
 
       <p className="text-xs text-gray-700">
-        Drought capped at 30 days. Only BIS/Upgrade responses count for loot score. Bench counts as attendance.
+        Rolling att. = last {attWindow} raids. Streak from first appearance (pre-join sessions excluded). Best streak capped at 20 for scoring. Bench counts as present.
       </p>
     </div>
   );

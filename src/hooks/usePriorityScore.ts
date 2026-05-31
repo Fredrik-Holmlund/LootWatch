@@ -3,17 +3,25 @@ import { supabase } from '../utils/supabase';
 
 export interface PlayerPriority {
   name: string;
-  score: number;           // 0–100 combined
-  attendanceScore: number; // 0–100
-  droughtScore: number;    // 0–100
-  lootScore: number;       // 0–100
-  attendancePct: number;   // raw %
-  droughtDays: number;     // days since last BIS/Upgrade (999 = never)
-  recentBisCount: number;  // BIS/Upgrade items in last 42 days
+  score: number;
+  attendanceScore: number;
+  streakScore: number;
+  droughtScore: number;
+  lootScore: number;
+  rollingPct: number;
+  rollingAttended: number;
+  rollingTotal: number;
+  allTimeAttended: number;
+  allTimeTotal: number;
+  currentStreak: number;
+  bestStreak: number;
+  droughtDays: number;
+  recentBisCount: number;
 }
 
 export interface PriorityWeights {
-  attendance: number; // default 30
+  attendance: number; // default 20
+  streak: number;     // default 10
   drought: number;    // default 50
   loot: number;       // default 20
 }
@@ -22,6 +30,8 @@ const MAIN_SPEC_RESPONSES = ['bis', 'upgrade', 'best in slot'];
 const RECENT_WINDOW_DAYS = 42;
 const DROUGHT_CAP_DAYS = 30;
 const LOOT_PENALTY_PER_ITEM = 25;
+const STREAK_CAP = 20;
+const DEFAULT_ATT_WINDOW = 6;
 
 function stripRealm(name: string): string {
   return name.split('-')[0];
@@ -33,74 +43,100 @@ function isMainSpec(response: string): boolean {
 
 export function usePriorityScore() {
   const [priorities, setPriorities] = useState<PlayerPriority[]>([]);
-  const [weights, setWeights] = useState<PriorityWeights>({ attendance: 30, drought: 50, loot: 20 });
+  const [weights, setWeights] = useState<PriorityWeights>({ attendance: 20, streak: 10, drought: 50, loot: 20 });
+  const [attWindow, setAttWindow] = useState(DEFAULT_ATT_WINDOW);
   const [loading, setLoading] = useState(true);
 
-  const compute = useCallback(async (w: PriorityWeights) => {
+  const compute = useCallback(async (w: PriorityWeights, window: number) => {
     setLoading(true);
 
-    // Fetch all data in parallel
     const [lootRes, sessionRes, attRes] = await Promise.all([
       supabase.from('loot_entries').select('player_name, response, timestamp'),
-      supabase.from('raid_sessions').select('id'),
+      supabase.from('raid_sessions').select('id, session_date'),
       supabase.from('raid_attendance').select('session_id, player_name, status'),
     ]);
 
     const lootEntries = lootRes.data ?? [];
-    const sessions = sessionRes.data ?? [];
+    const sessions = (sessionRes.data ?? []) as { id: string; session_date: string }[];
     const attRows = attRes.data ?? [];
 
-    const totalSessions = sessions.length;
+    // Sort sessions oldest → newest for streak calc
+    const sessionsSortedAsc = [...sessions].sort(
+      (a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime()
+    );
+    const rollingIds = new Set(sessionsSortedAsc.slice(-window).map((s) => s.id));
+    const rollingTotal = Math.min(window, sessions.length);
+    const allTimeTotal = sessions.length;
+
     const now = Date.now();
     const recentCutoff = now - RECENT_WINDOW_DAYS * 86400000;
 
-    // Build attendance map: normalizedName → count of sessions present (attended or bench)
-    const attCount: Record<string, number> = {};
+    // Build attendance structures
+    const attMap: Record<string, Record<string, string>> = {};  // sessionId → playerName → status
+    const allTimeCount: Record<string, number> = {};
+    const rollingCount: Record<string, number> = {};
+
     for (const row of attRows) {
+      if (!attMap[row.session_id]) attMap[row.session_id] = {};
+      const name = stripRealm(row.player_name);
+      attMap[row.session_id][name] = row.status;
+
       if (row.status === 'attended' || row.status === 'bench') {
-        const name = stripRealm(row.player_name);
-        attCount[name] = (attCount[name] ?? 0) + 1;
+        allTimeCount[name] = (allTimeCount[name] ?? 0) + 1;
+        if (rollingIds.has(row.session_id)) rollingCount[name] = (rollingCount[name] ?? 0) + 1;
       }
     }
 
-    // Build loot maps per player (normalized name)
-    const lastBisDate: Record<string, number> = {};   // ms timestamp of most recent BIS/Upgrade
-    const recentBis: Record<string, number> = {};     // count in last 42 days
+    // Streak calculation — starts from player's first appearance (pre-join sessions don't penalise)
+    function calcStreaks(name: string): { current: number; best: number } {
+      const firstIdx = sessionsSortedAsc.findIndex((s) => {
+        const st = attMap[s.id]?.[name];
+        return st === 'attended' || st === 'bench';
+      });
+      if (firstIdx === -1) return { current: 0, best: 0 };
+      let best = 0, temp = 0, current = 0;
+      for (const s of sessionsSortedAsc.slice(firstIdx)) {
+        const st = attMap[s.id]?.[name];
+        if (st === 'attended' || st === 'bench') { temp++; if (temp > best) best = temp; }
+        else temp = 0;
+      }
+      for (let i = sessionsSortedAsc.length - 1; i >= firstIdx; i--) {
+        const st = attMap[sessionsSortedAsc[i].id]?.[name];
+        if (st === 'attended' || st === 'bench') current++;
+        else break;
+      }
+      return { current, best };
+    }
 
+    // Loot maps
+    const lastBisDate: Record<string, number> = {};
+    const recentBis: Record<string, number> = {};
     for (const entry of lootEntries) {
       if (!isMainSpec(entry.response)) continue;
       const name = stripRealm(entry.player_name);
       const ts = new Date(entry.timestamp).getTime();
       if (isNaN(ts)) continue;
-
-      if (lastBisDate[name] === undefined || ts > lastBisDate[name]) {
-        lastBisDate[name] = ts;
-      }
-      if (ts >= recentCutoff) {
-        recentBis[name] = (recentBis[name] ?? 0) + 1;
-      }
+      if (lastBisDate[name] === undefined || ts > lastBisDate[name]) lastBisDate[name] = ts;
+      if (ts >= recentCutoff) recentBis[name] = (recentBis[name] ?? 0) + 1;
     }
 
-    // All known players (union of attendance + loot history)
     const allNames = new Set([
-      ...Object.keys(attCount),
+      ...Object.keys(allTimeCount),
       ...Object.keys(lastBisDate),
       ...Object.keys(recentBis),
     ]);
 
     const result: PlayerPriority[] = [];
-
     for (const name of allNames) {
-      const attendedCount = attCount[name] ?? 0;
-      const attendancePct = totalSessions > 0
-        ? Math.round((attendedCount / totalSessions) * 100)
-        : 0;
-      const attendanceScore = attendancePct;
+      const rollingAttended = rollingCount[name] ?? 0;
+      const rollingPct = rollingTotal > 0 ? Math.round((rollingAttended / rollingTotal) * 100) : 0;
+      const attendanceScore = rollingPct;
+
+      const { current: currentStreak, best: bestStreak } = calcStreaks(name);
+      const streakScore = Math.round(Math.min(bestStreak, STREAK_CAP) / STREAK_CAP * 100);
 
       const lastTs = lastBisDate[name];
-      const droughtDays = lastTs !== undefined
-        ? Math.round((now - lastTs) / 86400000)
-        : 999;
+      const droughtDays = lastTs !== undefined ? Math.round((now - lastTs) / 86400000) : 999;
       const droughtScore = Math.min(droughtDays, DROUGHT_CAP_DAYS) / DROUGHT_CAP_DAYS * 100;
 
       const recentBisCount = recentBis[name] ?? 0;
@@ -108,18 +144,17 @@ export function usePriorityScore() {
 
       const score =
         (attendanceScore * w.attendance / 100) +
+        (streakScore     * w.streak     / 100) +
         (droughtScore    * w.drought    / 100) +
         (lootScore       * w.loot       / 100);
 
       result.push({
-        name,
-        score: Math.round(score),
-        attendanceScore: Math.round(attendanceScore),
-        droughtScore: Math.round(droughtScore),
-        lootScore: Math.round(lootScore),
-        attendancePct,
-        droughtDays,
-        recentBisCount,
+        name, score: Math.round(score),
+        attendanceScore: Math.round(attendanceScore), streakScore: Math.round(streakScore),
+        droughtScore: Math.round(droughtScore), lootScore: Math.round(lootScore),
+        rollingPct, rollingAttended, rollingTotal,
+        allTimeAttended: allTimeCount[name] ?? 0, allTimeTotal,
+        currentStreak, bestStreak, droughtDays, recentBisCount,
       });
     }
 
@@ -128,27 +163,30 @@ export function usePriorityScore() {
     setLoading(false);
   }, []);
 
-  // Load weights from app_settings then compute
   useEffect(() => {
     supabase
       .from('app_settings')
       .select('key, value')
-      .in('key', ['priority_weight_attendance', 'priority_weight_drought', 'priority_weight_loot'])
+      .in('key', ['priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window'])
       .then(({ data }) => {
-        const w = { ...weights };
+        const w = { attendance: 20, streak: 10, drought: 50, loot: 20 };
+        let win = DEFAULT_ATT_WINDOW;
         for (const row of data ?? []) {
           const v = Number(row.value);
           if (row.key === 'priority_weight_attendance') w.attendance = v;
+          if (row.key === 'priority_weight_streak')     w.streak     = v;
           if (row.key === 'priority_weight_drought')    w.drought    = v;
           if (row.key === 'priority_weight_loot')       w.loot       = v;
+          if (row.key === 'attendance_window')          win          = v;
         }
         setWeights(w);
-        compute(w);
+        setAttWindow(win);
+        compute(w, win);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const refresh = useCallback(() => compute(weights), [compute, weights]);
+  const refresh = useCallback(() => compute(weights, attWindow), [compute, weights, attWindow]);
 
-  return { priorities, weights, loading, refresh };
+  return { priorities, weights, attWindow, loading, refresh };
 }

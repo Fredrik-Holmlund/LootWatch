@@ -23,35 +23,44 @@ export function AdminView({ profile }: AdminViewProps) {
   const [wclSaved, setWclSaved] = useState(false);
 
   // Priority score weights
-  const [pWeights, setPWeights] = useState({ attendance: 30, drought: 50, loot: 20 });
+  const [pWeights, setPWeights] = useState({ attendance: 20, streak: 10, drought: 50, loot: 20 });
+  const [attWindow, setAttWindow] = useState(6);
   const [pSaving, setPSaving] = useState(false);
   const [pSaved, setPSaved] = useState(false);
-  const pSum = pWeights.attendance + pWeights.drought + pWeights.loot;
+  const pSum = pWeights.attendance + pWeights.streak + pWeights.drought + pWeights.loot;
 
   useEffect(() => {
     supabase.from('app_settings').select('key, value')
-      .in('key', [...WCL_KEYS, 'priority_weight_attendance', 'priority_weight_drought', 'priority_weight_loot'])
+      .in('key', [...WCL_KEYS, 'priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window'])
       .then(({ data }) => {
         if (!data) return;
         const cfg = { ...wclConfig };
         const pw = { ...pWeights };
+        let win = 6;
         for (const row of data) {
           if (WCL_KEYS.includes(row.key as WclKey)) cfg[row.key as WclKey] = row.value as string;
           if (row.key === 'priority_weight_attendance') pw.attendance = Number(row.value);
+          if (row.key === 'priority_weight_streak')     pw.streak     = Number(row.value);
           if (row.key === 'priority_weight_drought')    pw.drought    = Number(row.value);
           if (row.key === 'priority_weight_loot')       pw.loot       = Number(row.value);
+          if (row.key === 'attendance_window')          win           = Number(row.value);
         }
         setWclConfig(cfg);
         setPWeights(pw);
+        setAttWindow(win);
       });
   }, []);
 
   async function savePWeights() {
     if (pSum !== 100) return;
     setPSaving(true);
-    await supabase.from('app_settings').upsert({ key: 'priority_weight_attendance', value: String(pWeights.attendance), updated_at: new Date().toISOString() });
-    await supabase.from('app_settings').upsert({ key: 'priority_weight_drought',    value: String(pWeights.drought),    updated_at: new Date().toISOString() });
-    await supabase.from('app_settings').upsert({ key: 'priority_weight_loot',       value: String(pWeights.loot),       updated_at: new Date().toISOString() });
+    await Promise.all([
+      supabase.from('app_settings').upsert({ key: 'priority_weight_attendance', value: String(pWeights.attendance), updated_at: new Date().toISOString() }),
+      supabase.from('app_settings').upsert({ key: 'priority_weight_streak',     value: String(pWeights.streak),     updated_at: new Date().toISOString() }),
+      supabase.from('app_settings').upsert({ key: 'priority_weight_drought',    value: String(pWeights.drought),    updated_at: new Date().toISOString() }),
+      supabase.from('app_settings').upsert({ key: 'priority_weight_loot',       value: String(pWeights.loot),       updated_at: new Date().toISOString() }),
+      supabase.from('app_settings').upsert({ key: 'attendance_window',          value: String(attWindow),           updated_at: new Date().toISOString() }),
+    ]);
     setPSaving(false);
     setPSaved(true);
     setTimeout(() => setPSaved(false), 2000);
@@ -177,10 +186,24 @@ export function AdminView({ profile }: AdminViewProps) {
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Priority Score Weights</h3>
             <p className="text-xs text-gray-600 mb-3">Must sum to 100. Controls how each factor influences the priority ranking.</p>
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              {/* Window size */}
+              <div className="flex items-center gap-3 pb-2 border-b border-gray-800">
+                <div className="w-28 flex-shrink-0">
+                  <p className="text-xs font-medium text-gray-300">Rolling window</p>
+                  <p className="text-xs text-gray-600">Last N raids for attendance %</p>
+                </div>
+                <input
+                  type="number" min={1} max={20} value={attWindow}
+                  onChange={(e) => setAttWindow(Number(e.target.value))}
+                  className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
+                />
+                <p className="text-xs text-gray-600">raids</p>
+              </div>
               {([
-                { key: 'attendance' as const, label: 'Attendance', color: 'text-blue-400', desc: 'Show-up rate (bench counts)' },
-                { key: 'drought'    as const, label: 'Drought',    color: 'text-purple-400', desc: 'Days since last BIS/Upgrade (cap 30d)' },
-                { key: 'loot'       as const, label: 'Recent Loot', color: 'text-yellow-400', desc: 'Penalty for items in last 6 weeks' },
+                { key: 'attendance' as const, label: 'Rolling Att.', color: 'text-blue-400', desc: `Show-up rate (last ${attWindow} raids)` },
+                { key: 'streak'     as const, label: 'Best Streak',  color: 'text-green-400', desc: 'Longest consecutive run ever (cap 20)' },
+                { key: 'drought'    as const, label: 'Drought',      color: 'text-purple-400', desc: 'Days since last BIS/Upgrade (cap 30d)' },
+                { key: 'loot'       as const, label: 'Recent Loot',  color: 'text-yellow-400', desc: 'Penalty for items in last 6 weeks' },
               ]).map(({ key, label, color, desc }) => (
                 <div key={key} className="flex items-center gap-3">
                   <div className="w-28 flex-shrink-0">

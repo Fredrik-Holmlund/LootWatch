@@ -169,18 +169,55 @@ export function useAttendance() {
     }
   }, [attendance]);
 
-  const attendanceStats = useCallback((): Record<string, { attended: number; benched: number; total: number; pct: number }> => {
+  const attendanceStats = useCallback((window = 6): Record<string, {
+    attended: number; benched: number; total: number; pct: number;
+    rollingAttended: number; rollingTotal: number; rollingPct: number;
+    currentStreak: number; bestStreak: number;
+  }> => {
     const total = sessions.length;
     if (total === 0) return {};
+
+    // Sessions sorted oldest → newest for streak calculation
+    const sortedAsc = [...sessions].sort(
+      (a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime()
+    );
+    const rollingIds = new Set(sortedAsc.slice(-window).map((s) => s.id));
+    const rollingTotal = Math.min(window, total);
+
     const allPlayers = [...new Set(Object.values(attendance).flatMap((m) => Object.keys(m)))];
-    const result: Record<string, { attended: number; benched: number; total: number; pct: number }> = {};
+    const result: Record<string, { attended: number; benched: number; total: number; pct: number; rollingAttended: number; rollingTotal: number; rollingPct: number; currentStreak: number; bestStreak: number; }> = {};
+
     for (const name of allPlayers) {
-      let attended = 0, benched = 0;
-      for (const m of Object.values(attendance)) {
-        if (m[name] === 'attended') attended++;
-        else if (m[name] === 'bench') benched++;
+      let attended = 0, benched = 0, rollingAttended = 0;
+      for (const [sid, m] of Object.entries(attendance)) {
+        if (m[name] === 'attended') { attended++; if (rollingIds.has(sid)) rollingAttended++; }
+        else if (m[name] === 'bench') { benched++; if (rollingIds.has(sid)) rollingAttended++; }
       }
-      result[name] = { attended, benched, total, pct: Math.round(((attended + benched) / total) * 100) };
+
+      // Find first session the player appeared in
+      const firstIdx = sortedAsc.findIndex((s) => attendance[s.id]?.[name] !== undefined);
+      let bestStreak = 0, currentStreak = 0;
+      if (firstIdx !== -1) {
+        let temp = 0;
+        for (const s of sortedAsc.slice(firstIdx)) {
+          const st = attendance[s.id]?.[name];
+          if (st === 'attended' || st === 'bench') { temp++; if (temp > bestStreak) bestStreak = temp; }
+          else temp = 0;
+        }
+        for (let i = sortedAsc.length - 1; i >= firstIdx; i--) {
+          const st = attendance[sortedAsc[i].id]?.[name];
+          if (st === 'attended' || st === 'bench') currentStreak++;
+          else break;
+        }
+      }
+
+      result[name] = {
+        attended, benched, total,
+        pct: Math.round(((attended + benched) / total) * 100),
+        rollingAttended, rollingTotal,
+        rollingPct: rollingTotal > 0 ? Math.round((rollingAttended / rollingTotal) * 100) : 0,
+        currentStreak, bestStreak,
+      };
     }
     return result;
   }, [sessions, attendance]);
