@@ -148,11 +148,10 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   );
 }
 
-function BossSection({ boss, items, players, priorityDataMap, attWindow, streakCap, getAwardedCount, getAwardedEntries, getWishers, updateItemNote }: {
+function BossSection({ boss, items, players, priorityDataMap, attWindow, getAwardedCount, getAwardedEntries, getWishers, updateItemNote }: {
   boss: string; items: RaidLoot[]; players: Player[];
   priorityDataMap: Record<string, PlayerPriority>;
   attWindow: number;
-
   getAwardedCount: (item: RaidLoot) => number;
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
   getWishers: (item: RaidLoot) => SoftReserve[];
@@ -171,7 +170,6 @@ function BossSection({ boss, items, players, priorityDataMap, attWindow, streakC
             players={players}
             priorityDataMap={priorityDataMap}
             attWindow={attWindow}
-            streakCap={streakCap}
             awardedCount={getAwardedCount(item)}
             awardedEntries={getAwardedEntries(item)}
             wishers={getWishers(item)}
