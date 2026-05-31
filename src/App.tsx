@@ -9,6 +9,7 @@ import { WishlistView } from './components/views/WishlistView';
 import { AssignmentSheetView } from './components/assignments/AssignmentSheetView';
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
+import { AbsenceView } from './components/views/AbsenceView';
 import { canEdit, canEditAssignments } from './types';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
     if (tab === 'dashboard') return settings.show_dashboard;
     if (tab === 'history') return settings.show_history;
     if (tab === 'wishlist') return true;
+    if (tab === 'absence') return true;
     return false;
   };
 
@@ -70,6 +72,7 @@ function App() {
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
         {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
+        {effectiveTab === 'absence' && <AbsenceView profile={profile} role={role} userId={user.id} />}
         {effectiveTab === 'council' && canEdit(role) && <CouncilView />}
         {effectiveTab === 'admin' && role === 'admin' && <AdminView profile={profile} />}
       </main>

@@ -2,7 +2,7 @@ import { canEdit, canEditAssignments } from '../types';
 import type { UserRole } from '../types';
 import type { AppSettings } from '../hooks/useAppSettings';
 
-export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'assignments' | 'council' | 'admin';
+export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'assignments' | 'council' | 'admin' | 'absence';
 
 interface NavigationProps {
   activeTab: NavTab;
@@ -21,6 +21,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'History' },
     { id: 'wishlist', label: 'Wishlist' },
+    { id: 'absence', label: 'Absence' },
     { id: 'assignments', label: 'Assignments' },
     { id: 'council', label: 'Council', requireCouncil: true },
     { id: 'admin', label: 'Admin', requireAdmin: true },
