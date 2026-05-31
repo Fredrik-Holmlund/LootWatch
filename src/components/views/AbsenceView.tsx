@@ -9,6 +9,28 @@ interface AbsenceViewProps {
   userId: string;
 }
 
+const RAID_DAYS = [0, 3]; // Sunday = 0, Wednesday = 3
+
+function getRaidDaysBetween(from: string, to: string): string[] {
+  const result: string[] = [];
+  const current = new Date(from + 'T00:00:00');
+  const end = new Date(to + 'T00:00:00');
+  while (current <= end) {
+    if (RAID_DAYS.includes(current.getDay())) {
+      result.push(current.toISOString().slice(0, 10));
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return result;
+}
+
+function formatRaidDate(dateStr: string) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.toLocaleDateString('en-GB', { weekday: 'long' });
+  const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return { day, date };
+}
+
 function formatDateRange(from: string, to: string) {
   const f = new Date(from + 'T00:00:00');
   const t = new Date(to + 'T00:00:00');
@@ -26,6 +48,12 @@ function daysUntil(dateStr: string) {
   return Math.round((d.getTime() - today.getTime()) / 86400000);
 }
 
+function missingColor(count: number) {
+  if (count >= 5) return 'text-red-400 bg-red-400/10 border-red-400/20';
+  if (count >= 3) return 'text-orange-400 bg-orange-400/10 border-orange-400/20';
+  return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+}
+
 export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const { absences, loading, error, addAbsence, deleteAbsence } = useAbsence();
 
@@ -41,6 +69,17 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
 
   const myAbsences = absences.filter((a) => a.user_id === userId);
   const upcomingAll = absences.filter((a) => a.to_date >= today);
+
+  // Build raid-grouped absence map
+  const raidMissing: Record<string, { player_name: string; note: string | null; absence_id: string }[]> = {};
+  for (const a of upcomingAll) {
+    const effectiveFrom = a.from_date < today ? today : a.from_date;
+    for (const raidDate of getRaidDaysBetween(effectiveFrom, a.to_date)) {
+      if (!raidMissing[raidDate]) raidMissing[raidDate] = [];
+      raidMissing[raidDate].push({ player_name: a.player_name, note: a.note, absence_id: a.id });
+    }
+  }
+  const sortedRaidDays = Object.keys(raidMissing).sort();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -151,45 +190,59 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
         )}
       </div>
 
-      {/* Council overview */}
+      {/* Council: grouped by raid */}
       {isCouncil && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-300">All Upcoming Absences</h3>
+            <h3 className="text-sm font-semibold text-gray-300">Upcoming Raids</h3>
             <span className="text-xs text-gray-600 bg-gray-800 border border-gray-700 rounded-full px-2 py-0.5">
-              {upcomingAll.length}
+              Wed &amp; Sun
             </span>
           </div>
           {error && <p className="text-xs text-red-400">{error}</p>}
           {loading ? (
             <p className="text-sm text-gray-600">Loading…</p>
-          ) : upcomingAll.length === 0 ? (
-            <p className="text-sm text-gray-600">No upcoming absences reported.</p>
+          ) : sortedRaidDays.length === 0 ? (
+            <p className="text-sm text-gray-600">No absences reported for upcoming raids.</p>
           ) : (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
-              {upcomingAll.map((a) => {
-                const days = daysUntil(a.from_date);
+            <div className="space-y-3">
+              {sortedRaidDays.map((raidDate) => {
+                const missing = raidMissing[raidDate];
+                const { day, date } = formatRaidDate(raidDate);
+                const daysAway = daysUntil(raidDate);
                 return (
-                  <div key={a.id} className="flex items-center justify-between px-4 py-3 gap-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="text-sm font-medium text-gray-200 w-28 flex-shrink-0 truncate">{a.player_name}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm text-gray-400">{formatDateRange(a.from_date, a.to_date)}</p>
-                        {a.note && <p className="text-xs text-gray-600 truncate">{a.note}</p>}
+                  <div key={raidDate} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                    {/* Raid header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-800/40 border-b border-gray-800">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="text-sm font-semibold text-gray-200">{day}</span>
+                          <span className="text-sm text-gray-500 ml-2">{date}</span>
+                        </div>
+                        {daysAway <= 7 && (
+                          <span className="text-xs text-amber-400">
+                            {daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`}
+                          </span>
+                        )}
                       </div>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${missingColor(missing.length)}`}>
+                        {missing.length} missing
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {days <= 7 && (
-                        <span className="text-xs text-amber-400">
-                          {days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days}d`}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => deleteAbsence(a.id)}
-                        className="text-xs text-gray-600 hover:text-red-400 transition-colors"
-                      >
-                        Delete
-                      </button>
+                    {/* Missing players */}
+                    <div className="divide-y divide-gray-800/60">
+                      {missing.map((m, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-2 gap-3">
+                          <span className="text-sm text-gray-300 font-medium w-28 flex-shrink-0">{m.player_name}</span>
+                          {m.note && <span className="text-xs text-gray-600 flex-1 truncate">{m.note}</span>}
+                          <button
+                            onClick={() => deleteAbsence(m.absence_id)}
+                            className="text-xs text-gray-700 hover:text-red-400 transition-colors flex-shrink-0 ml-auto"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
