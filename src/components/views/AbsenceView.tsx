@@ -70,8 +70,13 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const isCouncil = canEdit(role) || role === 'admin';
   const playerName = profile?.username ?? '';
+
+  function handleDeleteClick(id: string) { setConfirmDelete(id); }
+  function handleDeleteConfirm(id: string) { deleteAbsence(id); setConfirmDelete(null); }
+  function handleDeleteCancel() { setConfirmDelete(null); }
 
   const myAbsences = absences.filter((a) => a.user_id === userId);
   const upcomingAll = absences.filter((a) => a.to_date >= today);
@@ -183,12 +188,17 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                       {a.note && <span className="text-xs text-gray-500 truncate">{a.note}</span>}
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteAbsence(a.id)}
-                    className="text-xs text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
-                  >
-                    Delete
-                  </button>
+                  {confirmDelete === a.id ? (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs text-gray-500">Sure?</span>
+                      <button onClick={() => handleDeleteConfirm(a.id)} className="text-xs text-red-400 hover:text-red-300 transition-colors">Yes</button>
+                      <button onClick={handleDeleteCancel} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => handleDeleteClick(a.id)} className="text-xs text-gray-600 hover:text-red-400 transition-colors flex-shrink-0">
+                      Delete
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -241,12 +251,17 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                         <div key={i} className="flex items-center justify-between px-4 py-2 gap-3">
                           <span className="text-sm text-gray-300 font-medium w-28 flex-shrink-0">{m.player_name}</span>
                           {m.note && <span className="text-xs text-gray-600 flex-1 truncate">{m.note}</span>}
-                          <button
-                            onClick={() => deleteAbsence(m.absence_id)}
-                            className="text-xs text-gray-700 hover:text-red-400 transition-colors flex-shrink-0 ml-auto"
-                          >
-                            Delete
-                          </button>
+                          {confirmDelete === m.absence_id ? (
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+                              <span className="text-xs text-gray-500">Sure?</span>
+                              <button onClick={() => handleDeleteConfirm(m.absence_id)} className="text-xs text-red-400 hover:text-red-300 transition-colors">Yes</button>
+                              <button onClick={handleDeleteCancel} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">No</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => handleDeleteClick(m.absence_id)} className="text-xs text-gray-700 hover:text-red-400 transition-colors flex-shrink-0 ml-auto">
+                              Delete
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
