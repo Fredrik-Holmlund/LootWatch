@@ -60,6 +60,20 @@ function missingColor(count: number) {
   return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
 }
 
+function formatSubmitted(createdAt: string) {
+  const d = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
 export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const { absences, loading, error, addAbsence, deleteAbsence } = useAbsence();
 
@@ -82,12 +96,12 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const upcomingAll = absences.filter((a) => a.to_date >= today);
 
   // Build raid-grouped absence map
-  const raidMissing: Record<string, { player_name: string; note: string | null; absence_id: string }[]> = {};
+  const raidMissing: Record<string, { player_name: string; note: string | null; absence_id: string; created_at: string }[]> = {};
   for (const a of upcomingAll) {
     const effectiveFrom = a.from_date < today ? today : a.from_date;
     for (const raidDate of getRaidDaysBetween(effectiveFrom, a.to_date)) {
       if (!raidMissing[raidDate]) raidMissing[raidDate] = [];
-      raidMissing[raidDate].push({ player_name: a.player_name, note: a.note, absence_id: a.id });
+      raidMissing[raidDate].push({ player_name: a.player_name, note: a.note, absence_id: a.id, created_at: a.created_at });
     }
   }
   const sortedRaidDays = Object.keys(raidMissing).sort();
@@ -249,7 +263,10 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                     <div className="divide-y divide-gray-800/60">
                       {missing.map((m, i) => (
                         <div key={i} className="flex items-center justify-between px-4 py-2 gap-3">
-                          <span className="text-sm text-gray-300 font-medium w-28 flex-shrink-0">{m.player_name}</span>
+                          <div className="w-28 flex-shrink-0">
+                            <span className="text-sm text-gray-300 font-medium">{m.player_name}</span>
+                            <p className="text-xs text-gray-600">Submitted {formatSubmitted(m.created_at)}</p>
+                          </div>
                           {m.note && <span className="text-xs text-gray-600 flex-1 truncate">{m.note}</span>}
                           {confirmDelete === m.absence_id ? (
                             <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
