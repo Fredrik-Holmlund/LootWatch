@@ -11,13 +11,19 @@ interface AbsenceViewProps {
 
 const RAID_DAYS = [0, 3]; // Sunday = 0, Wednesday = 3
 
+function toLocalDateStr(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 function getRaidDaysBetween(from: string, to: string): string[] {
   const result: string[] = [];
   const current = new Date(from + 'T00:00:00');
   const end = new Date(to + 'T00:00:00');
   while (current <= end) {
     if (RAID_DAYS.includes(current.getDay())) {
-      result.push(current.toISOString().slice(0, 10));
+      result.push(toLocalDateStr(current));
     }
     current.setDate(current.getDate() + 1);
   }
