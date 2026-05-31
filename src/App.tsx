@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useAppSettings } from './hooks/useAppSettings';
 import { AuthForm } from './components/AuthForm';
+import { SetPasswordForm } from './components/SetPasswordForm';
 import { Navigation, type NavTab } from './components/Navigation';
 import { DashboardView } from './components/views/DashboardView';
 import { HistoryView } from './components/views/HistoryView';
@@ -13,7 +14,7 @@ import { AbsenceView } from './components/views/AbsenceView';
 import { canEdit, canEditAssignments } from './types';
 
 function App() {
-  const { user, profile, role, loading, signIn, signUp, signOut } = useAuth();
+  const { user, profile, role, loading, signIn, signUp, signOut, isRecovery, updatePassword } = useAuth();
   const { settings } = useAppSettings();
   const [activeTab, setActiveTab] = useState<NavTab>('wishlist');
 
@@ -26,6 +27,10 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  if (isRecovery) {
+    return <SetPasswordForm onSetPassword={updatePassword} />;
   }
 
   if (!user) {

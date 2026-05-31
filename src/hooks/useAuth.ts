@@ -101,6 +101,7 @@ export function useAuth() {
     role: null,
     loading: true,
   });
+  const [isRecovery, setIsRecovery] = useState(false);
   const cancelled = useRef(false);
 
   useEffect(() => {
@@ -112,10 +113,15 @@ export function useAuth() {
       applySession(session, setState, cancelled);
     });
 
-    // Watch for subsequent sign-in / sign-out events
+    // Watch for subsequent sign-in / sign-out / recovery events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       // Skip INITIAL_SESSION — already handled by getSession() above
       if (_event === 'INITIAL_SESSION') return;
+      if (_event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+        applySession(session, setState, cancelled);
+        return;
+      }
       applySession(session, setState, cancelled);
     });
 
@@ -144,5 +150,11 @@ export function useAuth() {
     await supabase.auth.signOut();
   }, []);
 
-  return { ...state, signIn, signUp, signOut };
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) setIsRecovery(false);
+    return error ?? null;
+  }, []);
+
+  return { ...state, signIn, signUp, signOut, isRecovery, updatePassword };
 }
