@@ -19,6 +19,7 @@ import { useLootCandidates } from '../../hooks/useLootCandidates';
 import { usePlayers } from '../../hooks/usePlayers';
 import { useWowheadTooltips } from '../../hooks/useWowheadTooltips';
 import { usePriorityScore } from '../../hooks/usePriorityScore';
+import type { PlayerPriority } from '../../hooks/usePriorityScore';
 import { TBC_PHASES, getPhaseForInstance, sortBosses } from '../../data/tbcPhases';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
@@ -32,10 +33,10 @@ interface LootPlannerProps {
 export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   const { loot, loading, error, updateItemNote } = useRaidLoot();
   const { players } = usePlayers();
-  const { priorities } = usePriorityScore();
-  const priorityMap = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const p of priorities) m[p.name.toLowerCase()] = p.score;
+  const { priorities, attWindow, streakCap } = usePriorityScore();
+  const priorityDataMap = useMemo(() => {
+    const m: Record<string, PlayerPriority> = {};
+    for (const p of priorities) m[p.name.toLowerCase()] = p;
     return m;
   }, [priorities]);
 
@@ -129,7 +130,9 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
                     boss={boss}
                     items={bosses[boss]}
                     players={players}
-                    priorityMap={priorityMap}
+                    priorityDataMap={priorityDataMap}
+                    attWindow={attWindow}
+                    streakCap={streakCap}
                     getAwardedCount={getAwardedCount}
                     getAwardedEntries={getAwardedEntries}
                     getWishers={getWishers}
@@ -145,9 +148,11 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
   );
 }
 
-function BossSection({ boss, items, players, priorityMap, getAwardedCount, getAwardedEntries, getWishers, updateItemNote }: {
+function BossSection({ boss, items, players, priorityDataMap, attWindow, streakCap, getAwardedCount, getAwardedEntries, getWishers, updateItemNote }: {
   boss: string; items: RaidLoot[]; players: Player[];
-  priorityMap: Record<string, number>;
+  priorityDataMap: Record<string, PlayerPriority>;
+  attWindow: number;
+  streakCap: number;
   getAwardedCount: (item: RaidLoot) => number;
   getAwardedEntries: (item: RaidLoot) => LootEntry[];
   getWishers: (item: RaidLoot) => SoftReserve[];
@@ -164,7 +169,9 @@ function BossSection({ boss, items, players, priorityMap, getAwardedCount, getAw
             key={item.id}
             item={item}
             players={players}
-            priorityMap={priorityMap}
+            priorityDataMap={priorityDataMap}
+            attWindow={attWindow}
+            streakCap={streakCap}
             awardedCount={getAwardedCount(item)}
             awardedEntries={getAwardedEntries(item)}
             wishers={getWishers(item)}
@@ -179,7 +186,9 @@ function BossSection({ boss, items, players, priorityMap, getAwardedCount, getAw
 function ItemRow({
   item,
   players,
-  priorityMap,
+  priorityDataMap,
+  attWindow,
+  streakCap,
   awardedCount,
   awardedEntries,
   wishers,
@@ -187,7 +196,9 @@ function ItemRow({
 }: {
   item: RaidLoot;
   players: Player[];
-  priorityMap: Record<string, number>;
+  priorityDataMap: Record<string, PlayerPriority>;
+  attWindow: number;
+  streakCap: number;
   awardedCount: number;
   awardedEntries: LootEntry[];
   wishers: SoftReserve[];
@@ -365,7 +376,9 @@ function ItemRow({
                     idx={idx}
                     total={candidates.length}
                     players={players}
-                    priorityScore={priorityMap[c.player_name.toLowerCase()]}
+                    priorityData={priorityDataMap[c.player_name.toLowerCase()]}
+                    attWindow={attWindow}
+                    streakCap={streakCap}
                     hasReceived={awardedEntries.some(
                       (e) => stripRealm(e.player_name).toLowerCase() === c.player_name.toLowerCase()
                     )}
@@ -499,7 +512,9 @@ function CandidatePill({
   idx,
   total,
   players,
-  priorityScore,
+  priorityData,
+  attWindow,
+  streakCap,
   hasReceived,
   onRemove,
   onMove,
@@ -509,7 +524,9 @@ function CandidatePill({
   idx: number;
   total: number;
   players: Player[];
-  priorityScore?: number;
+  priorityData?: PlayerPriority;
+  attWindow: number;
+  streakCap: number;
   hasReceived: boolean;
   onRemove: (id: number) => Promise<string | null>;
   onMove: (id: number, dir: 'up' | 'down') => Promise<void>;
@@ -556,13 +573,12 @@ function CandidatePill({
         {hasReceived && (
           <span className="text-[10px] font-bold opacity-70 ml-0.5" title="Already received this item">✓</span>
         )}
-        {priorityScore !== undefined && (
+        {priorityData !== undefined && (
           <span
             className="text-[10px] font-bold rounded px-1 ml-0.5"
-            style={{ backgroundColor: '#1f2937', color: scoreColor(priorityScore) }}
-            title={`Priority score: ${priorityScore}`}
+            style={{ backgroundColor: '#1f2937', color: scoreColor(priorityData.score) }}
           >
-            {priorityScore}
+            {priorityData.score}
           </span>
         )}
         <span className="hidden group-hover/pill:inline-flex items-center gap-0.5 ml-0.5">
@@ -600,11 +616,42 @@ function CandidatePill({
         </span>
       </span>
 
-      {/* Candidate note tooltip (read) */}
-      {candidate.note && !editingNote && (
-        <div className="absolute left-0 bottom-full mb-1.5 z-40 hidden group-hover/pill:block pointer-events-none">
-          <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl px-2.5 py-1.5 text-xs text-gray-300 whitespace-pre-wrap max-w-[220px]">
-            {candidate.note}
+      {/* Hover tooltip: stats + note */}
+      {(priorityData || candidate.note) && !editingNote && (
+        <div className="absolute left-0 bottom-full mb-1.5 z-40 hidden group-hover/pill:block pointer-events-none min-w-[190px]">
+          <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl px-3 py-2 text-xs space-y-1.5">
+            {priorityData && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-gray-500">Streak</span>
+                  <span className="text-green-400 font-medium tabular-nums">
+                    {priorityData.bestStreak}/{streakCap}
+                    <span className="text-gray-600 font-normal"> · now {priorityData.currentStreak}</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-gray-500">Rolling att.</span>
+                  <span className="text-blue-400 font-medium tabular-nums">
+                    {priorityData.rollingAttended}/{priorityData.rollingTotal}
+                    <span className="text-gray-600 font-normal"> ({priorityData.attendanceScore}%) · last {attWindow}</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-gray-500">All-time</span>
+                  <span className="text-gray-400 font-medium tabular-nums">
+                    {priorityData.allTimeAttended}/{priorityData.allTimeTotal}
+                  </span>
+                </div>
+              </div>
+            )}
+            {priorityData && candidate.note && (
+              <div className="border-t border-gray-800 pt-1.5">
+                <p className="text-gray-300 whitespace-pre-wrap max-w-[220px]">{candidate.note}</p>
+              </div>
+            )}
+            {!priorityData && candidate.note && (
+              <p className="text-gray-300 whitespace-pre-wrap max-w-[220px]">{candidate.note}</p>
+            )}
           </div>
         </div>
       )}
