@@ -25,18 +25,20 @@ export function AdminView({ profile }: AdminViewProps) {
   // Priority score weights
   const [pWeights, setPWeights] = useState({ attendance: 20, streak: 10, drought: 50, loot: 20 });
   const [attWindow, setAttWindow] = useState(6);
+  const [streakCap, setStreakCap] = useState(20);
   const [pSaving, setPSaving] = useState(false);
   const [pSaved, setPSaved] = useState(false);
   const pSum = pWeights.attendance + pWeights.streak + pWeights.drought + pWeights.loot;
 
   useEffect(() => {
     supabase.from('app_settings').select('key, value')
-      .in('key', [...WCL_KEYS, 'priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window'])
+      .in('key', [...WCL_KEYS, 'priority_weight_attendance', 'priority_weight_streak', 'priority_weight_drought', 'priority_weight_loot', 'attendance_window', 'streak_cap'])
       .then(({ data }) => {
         if (!data) return;
         const cfg = { ...wclConfig };
         const pw = { ...pWeights };
         let win = 6;
+        let cap = 20;
         for (const row of data) {
           if (WCL_KEYS.includes(row.key as WclKey)) cfg[row.key as WclKey] = row.value as string;
           if (row.key === 'priority_weight_attendance') pw.attendance = Number(row.value);
@@ -44,10 +46,12 @@ export function AdminView({ profile }: AdminViewProps) {
           if (row.key === 'priority_weight_drought')    pw.drought    = Number(row.value);
           if (row.key === 'priority_weight_loot')       pw.loot       = Number(row.value);
           if (row.key === 'attendance_window')          win           = Number(row.value);
+          if (row.key === 'streak_cap')                 cap           = Number(row.value);
         }
         setWclConfig(cfg);
         setPWeights(pw);
         setAttWindow(win);
+        setStreakCap(cap);
       });
   }, []);
 
@@ -60,6 +64,7 @@ export function AdminView({ profile }: AdminViewProps) {
       supabase.from('app_settings').upsert({ key: 'priority_weight_drought',    value: String(pWeights.drought),    updated_at: new Date().toISOString() }),
       supabase.from('app_settings').upsert({ key: 'priority_weight_loot',       value: String(pWeights.loot),       updated_at: new Date().toISOString() }),
       supabase.from('app_settings').upsert({ key: 'attendance_window',          value: String(attWindow),           updated_at: new Date().toISOString() }),
+      supabase.from('app_settings').upsert({ key: 'streak_cap',                 value: String(streakCap),           updated_at: new Date().toISOString() }),
     ]);
     setPSaving(false);
     setPSaved(true);
@@ -186,22 +191,36 @@ export function AdminView({ profile }: AdminViewProps) {
             <h3 className="text-sm font-semibold text-gray-300 mb-1">Priority Score Weights</h3>
             <p className="text-xs text-gray-600 mb-3">Must sum to 100. Controls how each factor influences the priority ranking.</p>
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-              {/* Window size */}
-              <div className="flex items-center gap-3 pb-2 border-b border-gray-800">
-                <div className="w-28 flex-shrink-0">
-                  <p className="text-xs font-medium text-gray-300">Rolling window</p>
-                  <p className="text-xs text-gray-600">Last N raids for attendance %</p>
+              {/* Window size + streak cap */}
+              <div className="flex items-center gap-6 pb-2 border-b border-gray-800 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-28 flex-shrink-0">
+                    <p className="text-xs font-medium text-gray-300">Rolling window</p>
+                    <p className="text-xs text-gray-600">Last N raids for attendance %</p>
+                  </div>
+                  <input
+                    type="number" min={1} max={20} value={attWindow}
+                    onChange={(e) => setAttWindow(Number(e.target.value))}
+                    className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
+                  />
+                  <p className="text-xs text-gray-600">raids</p>
                 </div>
-                <input
-                  type="number" min={1} max={20} value={attWindow}
-                  onChange={(e) => setAttWindow(Number(e.target.value))}
-                  className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
-                />
-                <p className="text-xs text-gray-600">raids</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-28 flex-shrink-0">
+                    <p className="text-xs font-medium text-green-400">Streak cap</p>
+                    <p className="text-xs text-gray-600">Max raids for 100% streak score</p>
+                  </div>
+                  <input
+                    type="number" min={1} max={200} value={streakCap}
+                    onChange={(e) => setStreakCap(Number(e.target.value))}
+                    className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
+                  />
+                  <p className="text-xs text-gray-600">raids</p>
+                </div>
               </div>
               {([
                 { key: 'attendance' as const, label: 'Rolling Att.', color: 'text-blue-400', desc: `Show-up rate (last ${attWindow} raids)` },
-                { key: 'streak'     as const, label: 'Best Streak',  color: 'text-green-400', desc: 'Longest consecutive run ever (cap 20)' },
+                { key: 'streak'     as const, label: 'Best Streak',  color: 'text-green-400', desc: `Longest consecutive run ever (cap ${streakCap})` },
                 { key: 'drought'    as const, label: 'Drought',      color: 'text-purple-400', desc: 'Days since last BIS/Upgrade (cap 30d)' },
                 { key: 'loot'       as const, label: 'Recent Loot',  color: 'text-yellow-400', desc: 'Penalty for items in last 6 weeks' },
               ]).map(({ key, label, color, desc }) => (
