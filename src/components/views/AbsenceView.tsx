@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAbsence } from '../../hooks/useAbsence';
 import { canEdit } from '../../types';
 import type { Profile, UserRole } from '../../types';
@@ -21,6 +21,21 @@ function getRaidDaysBetween(from: string, to: string): string[] {
   const result: string[] = [];
   const current = new Date(from + 'T00:00:00');
   const end = new Date(to + 'T00:00:00');
+  while (current <= end) {
+    if (RAID_DAYS.includes(current.getDay())) {
+      result.push(toLocalDateStr(current));
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return result;
+}
+
+function getUpcomingRaidDays(days: number): string[] {
+  const result: string[] = [];
+  const current = new Date();
+  current.setHours(0, 0, 0, 0);
+  const end = new Date(current);
+  end.setDate(end.getDate() + days);
   while (current <= end) {
     if (RAID_DAYS.includes(current.getDay())) {
       result.push(toLocalDateStr(current));
@@ -60,6 +75,19 @@ function missingColor(count: number) {
   return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
 }
 
+function cardAccent(count: number) {
+  if (count >= 5) return 'border-l-red-500/80';
+  if (count >= 3) return 'border-l-orange-500/70';
+  return 'border-l-yellow-500/60';
+}
+
+function chipStyle(count: number): { wrap: string; count: string } {
+  if (count === 0) return { wrap: 'border-gray-700/50 bg-gray-800/30', count: 'text-gray-700' };
+  if (count >= 5) return { wrap: 'border-red-500/40 bg-red-500/10 cursor-pointer hover:bg-red-500/20', count: 'text-red-400 font-bold' };
+  if (count >= 3) return { wrap: 'border-orange-500/40 bg-orange-500/10 cursor-pointer hover:bg-orange-500/20', count: 'text-orange-400 font-bold' };
+  return { wrap: 'border-yellow-500/40 bg-yellow-500/10 cursor-pointer hover:bg-yellow-500/20', count: 'text-yellow-400 font-bold' };
+}
+
 function formatSubmitted(createdAt: string) {
   const d = new Date(createdAt);
   const now = new Date();
@@ -76,6 +104,7 @@ function formatSubmitted(createdAt: string) {
 
 export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const { absences, loading, error, addAbsence, deleteAbsence } = useAbsence();
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const today = new Date().toISOString().slice(0, 10);
   const [fromDate, setFromDate] = useState(today);
@@ -105,6 +134,9 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
     }
   }
   const sortedRaidDays = Object.keys(raidMissing).sort();
+
+  // All upcoming raid days for the next 6 weeks (calendar strip)
+  const upcomingRaidDays = getUpcomingRaidDays(42);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -220,15 +252,54 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
         )}
       </div>
 
-      {/* Council: grouped by raid */}
+      {/* Council: overview + grouped by raid */}
       {isCouncil && (
-        <div className="space-y-3">
+        <div className="space-y-5">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-gray-300">Upcoming Raids</h3>
             <span className="text-xs text-gray-600 bg-gray-800 border border-gray-700 rounded-full px-2 py-0.5">
               Wed &amp; Sun
             </span>
           </div>
+
+          {/* Calendar strip — 6-week overview */}
+          {!loading && (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">6-week overview</p>
+                <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500/70 inline-block" />1–2</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500/70 inline-block" />3–4</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500/70 inline-block" />5+</span>
+                </div>
+              </div>
+              <div className="overflow-x-auto pb-1 -mx-1 px-1">
+                <div className="flex gap-1.5 w-max">
+                  {upcomingRaidDays.map((raidDate) => {
+                    const count = raidMissing[raidDate]?.length ?? 0;
+                    const { day, date } = formatRaidDate(raidDate);
+                    const daysAway = daysUntil(raidDate);
+                    const style = chipStyle(count);
+                    const dayAbbrev = day.slice(0, 3);
+                    return (
+                      <button
+                        key={raidDate}
+                        onClick={() => count > 0 && cardRefs.current[raidDate]?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                        className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-lg border transition-colors min-w-[52px] ${style.wrap} ${daysAway === 0 ? 'ring-1 ring-gray-500 ring-offset-1 ring-offset-gray-900' : ''}`}
+                      >
+                        <span className="text-xs font-medium text-gray-400">{dayAbbrev}</span>
+                        <span className="text-[10px] text-gray-500 whitespace-nowrap">{date}</span>
+                        <span className={`text-xs mt-0.5 ${style.count}`}>
+                          {count > 0 ? count : '—'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && <p className="text-xs text-red-400">{error}</p>}
           {loading ? (
             <p className="text-sm text-gray-600">Loading…</p>
@@ -240,8 +311,13 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                 const missing = raidMissing[raidDate];
                 const { day, date } = formatRaidDate(raidDate);
                 const daysAway = daysUntil(raidDate);
+                const isCritical = missing.length >= 5;
                 return (
-                  <div key={raidDate} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div
+                    key={raidDate}
+                    ref={(el) => { cardRefs.current[raidDate] = el; }}
+                    className={`bg-gray-900 border border-gray-800 border-l-4 ${cardAccent(missing.length)} rounded-xl overflow-hidden`}
+                  >
                     {/* Raid header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-800/40 border-b border-gray-800">
                       <div className="flex items-center gap-3">
@@ -259,6 +335,17 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                         {missing.length} missing
                       </span>
                     </div>
+
+                    {/* Critical warning banner */}
+                    {isCritical && (
+                      <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
+                        <span className="text-red-400 text-xs">⚠</span>
+                        <span className="text-xs text-red-400 font-medium">
+                          Critical raid — {missing.length} players missing
+                        </span>
+                      </div>
+                    )}
+
                     {/* Missing players */}
                     <div className="divide-y divide-gray-800/60">
                       {missing.map((m, i) => (
