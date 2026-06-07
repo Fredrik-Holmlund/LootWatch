@@ -12,6 +12,8 @@ interface NavigationProps {
   settings: AppSettings;
   username: string | null;
   onSignOut: () => void;
+  sidebarOpen?: boolean;
+  onCloseSidebar?: () => void;
 }
 
 const roleColor: Record<string, string> = {
@@ -86,7 +88,7 @@ function NavIcon({ id }: { id: NavTab }) {
   }
 }
 
-export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut, sidebarOpen = false, onCloseSidebar }: NavigationProps) {
   const isPrivileged = canEdit(role) || role === 'admin';
   const isPlanner = canEditAssignments(role);
 
@@ -112,17 +114,36 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
   const roleKey = role ?? 'raider';
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-56 border-r border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]" style={{ boxShadow: '4px 0 32px rgba(124, 77, 255, 0.08)' }}>
+    <aside
+      className={[
+        'fixed inset-y-0 left-0 z-50 flex flex-col w-56 border-r border-[var(--color-lw-border)] bg-[var(--color-lw-surface)] transition-transform duration-300 ease-in-out',
+        'lg:translate-x-0',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+      ].join(' ')}
+      style={{ boxShadow: '4px 0 32px rgba(124, 77, 255, 0.08)' }}
+    >
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--color-lw-border-sub)]">
         <CrossedSwordsLogo className="w-6 h-6 shrink-0 text-[var(--color-lw-gold-400)]" />
         <span
-          className="text-base font-semibold tracking-wide text-[var(--color-lw-gold-300)]"
+          className="text-base font-semibold tracking-wide text-[var(--color-lw-gold-300)] flex-1"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           LootWatch
         </span>
+        {onCloseSidebar && (
+          <button
+            onClick={onCloseSidebar}
+            className="lg:hidden p-1 rounded text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] transition-colors"
+            aria-label="Close menu"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6"  y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Nav items */}
