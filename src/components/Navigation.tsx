@@ -59,7 +59,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
   return (
     <>
       {/* Top navigation bar */}
-      <header className="fixed top-0 inset-x-0 z-50 h-14 border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]">
+      <header className="fixed top-0 inset-x-0 z-50 h-14 border-b border-white/[0.06] bg-[var(--color-lw-surface)] backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-6">
 
           {/* Logo */}

@@ -319,7 +319,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                         <span style={{ color: getClassColor(w.player_class) }} className="font-medium">{stripRealm(w.player_name)}</span>
                         {w.player_class && <span className="text-xs text-[var(--color-lw-text-muted)] ml-1.5">({w.player_class})</span>}
                       </td>
-                      <td className="px-4 py-2.5 text-[var(--color-lw-gold-300)]/80">{w.item_name}</td>
+                      <td className="px-4 py-2.5" style={{ color: '#a335ee' }}>{w.item_name}</td>
                       {canSeeStars && (
                         <td className="px-4 py-2.5">
                           {w.star ? <StarBadge star={w.star} /> : <span className="text-[var(--color-lw-text-muted)]">—</span>}

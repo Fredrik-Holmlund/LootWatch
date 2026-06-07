@@ -2,12 +2,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lw-base:       #14161f;
-  --color-lw-surface:    #1a1d28;
-  --color-lw-elevated:   #1e2130;
-  --color-lw-card:       #232638;
-  --color-lw-border:     rgba(255,255,255,0.07);
-  --color-lw-border-sub: rgba(255,255,255,0.04);
+  --color-lw-base:       #0c0e18;
+  --color-lw-surface:    #111320;
+  --color-lw-elevated:   #161929;
+  --color-lw-card:       #1b1f30;
+  --color-lw-border:     rgba(255,255,255,0.08);
+  --color-lw-border-sub: rgba(255,255,255,0.05);
 
   --color-lw-gold-300: #e4bf6a;
   --color-lw-gold-400: #c9a227;
@@ -19,23 +19,24 @@
   --color-lw-purple-600: #1d8a3c;
 
   --color-lw-text:       #dde3ed;
-  --color-lw-text-sub:   #8890a4;
-  --color-lw-text-muted: #525a70;
+  --color-lw-text-sub:   #8b94a8;
+  --color-lw-text-muted: #4e566a;
 
   --font-display: 'Cinzel', serif;
   --font-body:    'Inter', sans-serif;
 
-  /* Shadow tokens */
-  --shadow-card: 0 2px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
-  --shadow-card-hover: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.09);
+  /* Shadow tokens — subtle ring + depth, matching wowtbc.gg card feel */
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.09);
+  --shadow-card-hover: 0 4px 28px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.13);
 }
 
 @layer base {
   body {
     background-color: var(--color-lw-base);
     background-image:
-      radial-gradient(ellipse at 80% 10%, rgba(68,207,108,0.06) 0%, transparent 40%),
-      radial-gradient(ellipse at 5%  85%, rgba(68,207,108,0.04) 0%, transparent 35%);
+      radial-gradient(ellipse at 70% 0%,   rgba(68,207,108,0.07) 0%, transparent 45%),
+      radial-gradient(ellipse at 0%  80%,  rgba(68,207,108,0.04) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%,  rgba(10,12,30,0.6)    0%, transparent 80%);
     color: var(--color-lw-text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
