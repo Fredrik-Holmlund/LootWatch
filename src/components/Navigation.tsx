@@ -115,7 +115,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--color-lw-border-sub)]">
-        <img src="/favicon.svg" alt="LootWatch" className="w-7 h-7 shrink-0" />
+        <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="LootWatch" className="w-7 h-7 shrink-0" />
         <span
           className="text-base font-semibold tracking-wide text-[var(--color-lw-gold-300)]"
           style={{ fontFamily: 'var(--font-display)' }}

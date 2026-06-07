@@ -22,7 +22,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-lw-base)]">
         <div className="text-center space-y-4">
-          <img src="/favicon.svg" alt="" className="w-10 h-10 mx-auto animate-pulse" />
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="w-10 h-10 mx-auto animate-pulse" />
           <p className="text-[var(--color-lw-text-muted)] text-sm tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
             Loading LootWatch…
           </p>
