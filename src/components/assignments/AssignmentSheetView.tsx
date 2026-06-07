@@ -600,14 +600,14 @@ export function AssignmentSheetView({ role, username }: Props) {
         </div>
 
         {/* Grid */}
-        <div className="overflow-x-auto lw-card">
-          <table className="border-collapse text-sm w-full table-fixed">
+        <div className="overflow-x-auto lw-card relative [&::-webkit-scrollbar]:h-1.5">
+          <table className="border-collapse text-sm w-full">
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
                 <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[100px] min-w-[100px] border-b border-r border-[var(--color-lw-border)]">Role</th>
                 <th className="sticky left-[100px] z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[160px] min-w-[160px] border-b border-r border-[var(--color-lw-border)]">Player</th>
                 {columns.map((col, colIdx) => (
-                  <th key={col.id} className={`text-center px-2 py-2 border-b border-r border-[var(--color-lw-border)] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
+                  <th key={col.id} className={`text-center px-3 py-2 border-b border-r border-[var(--color-lw-border)] min-w-[150px] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
                     <BossColumnHeader
                       col={col} canWrite={canWrite}
                       onUpload={f => uploadImage(col.id, f)}
