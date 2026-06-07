@@ -2,21 +2,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lw-base:       #0c0e18;
-  --color-lw-surface:    #111320;
-  --color-lw-elevated:   #161929;
-  --color-lw-card:       #1b1f30;
+  --color-lw-base:       #0b0d17;
+  --color-lw-surface:    #0f1120;
+  --color-lw-elevated:   #141728;
+  --color-lw-card:       #191d2e;
   --color-lw-border:     rgba(255,255,255,0.08);
   --color-lw-border-sub: rgba(255,255,255,0.05);
 
+  /* WoW item quality — keep gold strictly for loot/item UI */
   --color-lw-gold-300: #e4bf6a;
   --color-lw-gold-400: #c9a227;
   --color-lw-gold-500: #a8841f;
 
-  /* Green accent — matches wowtbc.gg exactly */
-  --color-lw-purple-400: #44cf6c;
-  --color-lw-purple-500: #28a74e;
-  --color-lw-purple-600: #1d8a3c;
+  /* Fel energy — TBC primary accent */
+  --color-lw-fel-400: #44cf6c;
+  --color-lw-fel-500: #28a74e;
+  --color-lw-fel-600: #1d8a3c;
+
+  /* Legacy alias — keep so existing refs still compile */
+  --color-lw-purple-400: var(--color-lw-fel-400);
+  --color-lw-purple-500: var(--color-lw-fel-500);
+  --color-lw-purple-600: var(--color-lw-fel-600);
 
   --color-lw-text:       #dde3ed;
   --color-lw-text-sub:   #8b94a8;
@@ -25,18 +31,19 @@
   --font-display: 'Cinzel', serif;
   --font-body:    'Inter', sans-serif;
 
-  /* Shadow tokens — thin border ring only, flat wowtbc.gg style */
-  --shadow-card: 0 0 0 1px rgba(255,255,255,0.08), 0 1px 6px rgba(0,0,0,0.35);
-  --shadow-card-hover: 0 0 0 1px rgba(255,255,255,0.12), 0 2px 12px rgba(0,0,0,0.45);
+  /* Flat ring shadow — subtle fel tint on focus/hover ring */
+  --shadow-card:       0 0 0 1px rgba(255,255,255,0.07), 0 1px 6px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 0 0 1px rgba(68,207,108,0.18),  0 2px 14px rgba(0,0,0,0.5);
 }
 
 @layer base {
   body {
     background-color: var(--color-lw-base);
+    /* Fel energy atmosphere — stronger green corona at top, faint bloom at bottom */
     background-image:
-      radial-gradient(ellipse at 70% 0%,   rgba(68,207,108,0.07) 0%, transparent 45%),
-      radial-gradient(ellipse at 0%  80%,  rgba(68,207,108,0.04) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 50%,  rgba(10,12,30,0.6)    0%, transparent 80%);
+      radial-gradient(ellipse at 60% 0%,   rgba(68,207,108,0.13) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 90%,  rgba(68,207,108,0.07) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%,  rgba(8,10,24,0.7)     0%, transparent 80%);
     color: var(--color-lw-text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
@@ -45,13 +52,13 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.1) transparent;
+    scrollbar-color: rgba(68,207,108,0.15) transparent;
   }
 
   *::-webkit-scrollbar { width: 5px; height: 5px; }
   *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-  *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+  *::-webkit-scrollbar-thumb { background: rgba(68,207,108,0.15); border-radius: 4px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(68,207,108,0.28); }
 }
 
 @layer utilities {

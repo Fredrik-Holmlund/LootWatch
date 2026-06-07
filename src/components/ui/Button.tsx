@@ -7,8 +7,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClass: Record<string, string> = {
-  default: 'border border-[var(--color-lw-border)] text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-gold-500)]/50 hover:bg-[var(--color-lw-elevated)]',
-  active:  'border border-[var(--color-lw-gold-500)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10',
+  default: 'border border-[var(--color-lw-border)] text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-fel-500)]/40 hover:bg-[var(--color-lw-elevated)]',
+  active:  'border border-[var(--color-lw-fel-500)]/50 text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10',
   ghost:   'text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] hover:bg-[var(--color-lw-elevated)]',
   danger:  'border border-red-900/40 text-red-400 hover:bg-red-950/40',
 };

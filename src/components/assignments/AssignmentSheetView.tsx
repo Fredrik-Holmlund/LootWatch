@@ -173,7 +173,7 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   };
 
   return (
-    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-[var(--color-lw-gold-400)]/60 bg-[var(--color-lw-gold-400)]/10' : ''}`}>
+    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-[var(--color-lw-fel-400)]/50 bg-[var(--color-lw-fel-500)]/10' : ''}`}>
       {row.player_name ? (
         <div className="flex items-center gap-1 w-full">
           <span
@@ -346,7 +346,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
 
   return (
     <div className="flex flex-col items-center gap-1.5 w-full">
-      <span className="text-sm font-bold text-[var(--color-lw-gold-300)] text-center leading-tight px-1">{col.label}</span>
+      <span className="text-sm font-bold text-[var(--color-lw-text)] text-center leading-tight px-1">{col.label}</span>
       <div className="w-full">
         {col.image_path ? (
           <div className="relative group/th">
@@ -379,7 +379,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="w-full h-8 border border-dashed border-[var(--color-lw-border)] hover:border-[var(--color-lw-gold-400)]/40 rounded-md text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] transition-colors disabled:opacity-50"
+            className="w-full h-8 border border-dashed border-[var(--color-lw-border)] hover:border-[var(--color-lw-fel-500)]/40 rounded-md text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] transition-colors disabled:opacity-50"
           >
             {uploading ? '⏳' : '+ image'}
           </button>
@@ -589,7 +589,7 @@ export function AssignmentSheetView({ role, username }: Props) {
                 className={[
                   'px-4 py-2 text-sm font-medium rounded-lg transition-colors border',
                   active
-                    ? 'border-[var(--color-lw-gold-500)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10'
+                    ? 'border-[var(--color-lw-fel-500)]/50 text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10'
                     : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]',
                 ].join(' ')}
               >
@@ -667,7 +667,7 @@ export function AssignmentSheetView({ role, username }: Props) {
                             {addingRowSection === section ? (
                               <div className="flex items-center gap-1.5">
                                 <input autoFocus value={newRowLabel} onChange={e => setNewRowLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAddRow(); if (e.key === 'Escape') { setAddingRowSection(null); setNewRowLabel(''); } }} onBlur={() => { if (!newRowLabel.trim()) setAddingRowSection(null); }} className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-32" placeholder="Role name…" />
-                                <button onClick={handleAddRow} className="text-[10px] text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)]">Add</button>
+                                <button onClick={handleAddRow} className="text-[10px] text-[var(--color-lw-fel-400)] hover:text-[var(--color-lw-fel-400)]/80">Add</button>
                                 <button onClick={() => { setAddingRowSection(null); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-text-muted)]">✕</button>
                               </div>
                             ) : (
@@ -692,7 +692,7 @@ export function AssignmentSheetView({ role, username }: Props) {
           const row = rows.find(r => r.id === Number(activeId));
           if (!row) return null;
           return (
-            <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-gold-400)]/50 rounded px-3 py-1.5 shadow-2xl text-xs text-[var(--color-lw-text)] opacity-90 whitespace-nowrap">
+            <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-fel-500)]/40 rounded px-3 py-1.5 shadow-2xl text-xs text-[var(--color-lw-text)] opacity-90 whitespace-nowrap">
               {row.label}{row.player_name ? ` · ${row.player_name}` : ''}
             </div>
           );

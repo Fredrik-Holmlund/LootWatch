@@ -20,7 +20,7 @@ export function SubTabs<T extends string>({ tabs, active, onChange }: SubTabsPro
           className={[
             'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
             active === tab.id
-              ? 'border-[var(--color-lw-gold-400)] text-[var(--color-lw-gold-300)]'
+              ? 'border-[var(--color-lw-fel-400)] text-[var(--color-lw-fel-400)]'
               : 'border-transparent text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]',
           ].join(' ')}
         >
