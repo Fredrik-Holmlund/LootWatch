@@ -155,7 +155,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
               {profiles.map((profile) => {
                 const isSelf = profile.id === currentUserId;
                 return (
-                  <tr key={profile.id} className="hover:bg-[var(--color-lw-surface)]/40 transition-colors">
+                  <tr key={profile.id} className="transition-colors odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent hover:bg-[var(--color-lw-surface)]/60">
                     <td className="px-4 py-3 font-medium text-[var(--color-lw-text)]">
                       {editingUsername === profile.id ? (
                         <div className="flex gap-1 items-center">

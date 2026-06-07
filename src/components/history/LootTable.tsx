@@ -241,7 +241,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                 </tr>
               ) : (
                 paged.map((entry) => (
-                  <tr key={entry.id} className={`hover:bg-[var(--color-lw-surface)]/40 transition-colors group ${selected.has(entry.id) ? 'bg-[var(--color-lw-purple-500)]/5' : ''}`}>
+                  <tr key={entry.id} className={`transition-colors group odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent hover:bg-[var(--color-lw-surface)]/60 ${selected.has(entry.id) ? '!bg-[var(--color-lw-purple-500)]/8' : ''}`}>
                     {canEdit(role) && (
                       <td className="px-4 py-2.5 w-8">
                         <input

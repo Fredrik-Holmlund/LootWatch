@@ -314,7 +314,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                 </thead>
                 <tbody className="divide-y divide-[var(--color-lw-border-sub)]">
                   {allWishes.map((w) => (
-                    <tr key={w.id} className="hover:bg-[var(--color-lw-surface)]/30 transition-colors group">
+                    <tr key={w.id} className="transition-colors group odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent hover:bg-[var(--color-lw-surface)]/60">
                       <td className="px-4 py-2.5">
                         <span style={{ color: getClassColor(w.player_class) }} className="font-medium">{stripRealm(w.player_name)}</span>
                         {w.player_class && <span className="text-xs text-[var(--color-lw-text-muted)] ml-1.5">({w.player_class})</span>}

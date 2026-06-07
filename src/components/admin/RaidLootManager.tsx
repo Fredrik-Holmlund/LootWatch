@@ -279,7 +279,7 @@ export function RaidLootManager() {
                 {filtered.length === 0 ? (
                   <tr><td colSpan={7} className="px-4 py-10 text-center text-[var(--color-lw-text-muted)] text-sm">No items found</td></tr>
                 ) : filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-[var(--color-lw-surface)]/40 transition-colors group">
+                  <tr key={item.id} className="transition-colors group odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent hover:bg-[var(--color-lw-surface)]/60">
                     {editingId === item.id ? (
                       <>
                         <td className="px-4 py-2">
