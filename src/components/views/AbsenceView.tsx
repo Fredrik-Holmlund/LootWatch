@@ -360,8 +360,6 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                     );
                   })}
                 </div>
-                  ))}
-                </div>
               </CardBody>
             </Card>
           )}
