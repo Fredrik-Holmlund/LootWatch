@@ -86,7 +86,7 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
 
   useWowheadTooltips([grouped, selectedPhase]);
 
-  if (loading) return <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>;
+  if (loading) return <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>;
   if (error) return <div className="text-red-400 text-sm p-4">{error}</div>;
 
   const hasLoot = Object.keys(grouped).length > 0;
@@ -101,11 +101,12 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
             <button
               key={phase.id}
               onClick={() => setSelectedPhase(phase.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={[
+                'px-4 py-2 text-sm font-medium rounded-lg transition-colors border',
                 selectedPhase === phase.id
-                  ? 'bg-yellow-500 text-gray-950'
-                  : 'bg-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-700'
-              }`}
+                  ? 'border-[var(--color-lw-gold-500)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10'
+                  : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]',
+              ].join(' ')}
             >
               {phase.label}
               {count > 0 && <span className="ml-1.5 text-xs opacity-70">({count})</span>}
@@ -115,12 +116,12 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
       </div>
 
       {!hasLoot ? (
-        <div className="text-center py-10 text-gray-600 text-sm">No loot data for this phase.</div>
+        <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">No loot data for this phase.</div>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([instance, bosses]) => (
             <div key={instance}>
-              <h3 className="text-sm font-bold text-yellow-400 uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-bold text-[var(--color-lw-gold-300)] uppercase tracking-wider mb-3">
                 {instance}
               </h3>
               <div className="space-y-4">
@@ -158,11 +159,11 @@ function BossSection({ boss, items, players, priorityDataMap, attWindow, getAwar
   updateItemNote: (id: number, note: string) => Promise<string | null>;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg">
-      <div className="px-4 py-2 bg-gray-800/60 border-b border-gray-800 rounded-t-lg">
-        <p className="text-sm font-semibold text-gray-300">{boss}</p>
+    <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg">
+      <div className="px-4 py-2 bg-[var(--color-lw-surface)]/60 border-b border-[var(--color-lw-border)] rounded-t-lg">
+        <p className="text-sm font-semibold text-[var(--color-lw-text-sub)]">{boss}</p>
       </div>
-      <div className="divide-y divide-gray-800/60">
+      <div className="divide-y divide-[var(--color-lw-border-sub)]">
         {items.map((item) => (
           <ItemRow
             key={item.id}
@@ -285,7 +286,7 @@ function ItemRow({
             <img
               src={item.icon_url}
               alt=""
-              className="w-7 h-7 rounded flex-shrink-0 border border-gray-700"
+              className="w-7 h-7 rounded flex-shrink-0 border border-[var(--color-lw-border)]"
             />
           )}
           {item.wowhead_url ? (
@@ -293,18 +294,18 @@ function ItemRow({
               href={item.wowhead_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-yellow-300/90 hover:text-yellow-200 hover:underline leading-tight"
+              className="text-sm hover:underline leading-tight" style={{ color: '#a335ee' }}
             >
               {item.item_name}
             </a>
           ) : (
-            <span className="text-sm text-yellow-300/90 leading-tight">{item.item_name}</span>
+            <span className="text-sm leading-tight" style={{ color: '#a335ee' }}>{item.item_name}</span>
           )}
           {/* Note pencil — shown on row hover when no note exists */}
           {!item.note && !noteEdit && (
             <button
               onClick={() => setNoteEdit(true)}
-              className="text-gray-700 hover:text-gray-400 opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
+              className="text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
               title="Add item note"
             >
               ✎
@@ -319,13 +320,13 @@ function ItemRow({
               ×{awardedCount} awarded
             </span>
             <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/awarded:block min-w-[160px]">
-              <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
+              <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 space-y-1">
                 {awardedEntries.map((e, i) => (
                   <div key={i} className="flex items-center justify-between gap-3 text-xs">
                     <span style={{ color: getClassColor(e.player_class) }} className="font-medium">
                       {stripRealm(e.player_name)}
                     </span>
-                    <span className="text-gray-500 whitespace-nowrap">
+                    <span className="text-[var(--color-lw-text-muted)] whitespace-nowrap">
                       {new Date(e.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </span>
                   </div>
@@ -342,14 +343,14 @@ function ItemRow({
               ♥ {wishers.length}
             </span>
             <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
-              <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-2 space-y-1">
+              <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 space-y-1">
                 {[...wishers].sort((a, b) => (b.star ?? 0) - (a.star ?? 0)).map((w, i) => (
                   <div key={i} className="text-xs flex items-center justify-between gap-3">
                     <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
                       {stripRealm(w.player_name)}
                     </span>
                     {w.star && (
-                      <span className={`font-bold ${w.star === 3 ? 'text-yellow-400' : w.star === 2 ? 'text-yellow-300' : 'text-gray-400'}`}>
+                      <span className={`font-bold ${w.star === 3 ? 'text-[var(--color-lw-gold-300)]' : w.star === 2 ? 'text-[var(--color-lw-gold-400)]' : 'text-[var(--color-lw-text-muted)]'}`}>
                         {'★'.repeat(w.star)}
                       </span>
                     )}
@@ -363,7 +364,7 @@ function ItemRow({
         {/* Candidates */}
         <div className="flex flex-wrap items-center gap-1.5 flex-1">
           {loading ? (
-            <span className="text-xs text-gray-700">…</span>
+            <span className="text-xs text-[var(--color-lw-text-muted)]">…</span>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={candidates.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
@@ -401,38 +402,38 @@ function ItemRow({
                   onKeyDown={handleKeyDown}
                   placeholder="Type to search roster…"
                   autoFocus
-                  className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 w-44"
+                  className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-44 transition-colors"
                 />
                 {suggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full mt-1 w-52 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20 overflow-hidden">
+                  <ul className="absolute left-0 top-full mt-1 w-52 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-lg z-20 overflow-hidden">
                     {suggestions.map((p, i) => (
                       <li
                         key={p.id}
                         onMouseDown={() => commitAdd(stripRealm(p.name))}
-                        className={`px-3 py-1.5 text-xs cursor-pointer flex items-center gap-2 ${i === highlightIdx ? 'bg-gray-700' : 'hover:bg-gray-700/60'}`}
+                        className={`px-3 py-1.5 text-xs cursor-pointer flex items-center gap-2 ${i === highlightIdx ? 'bg-[var(--color-lw-border)]' : 'hover:bg-[var(--color-lw-border)]/60'}`}
                       >
                         <span className="font-medium" style={{ color: getClassColor(p.player_class) }}>
                           {stripRealm(p.name)}
                         </span>
                         {p.player_class && (
-                          <span className="text-gray-600">{p.player_class}</span>
+                          <span className="text-[var(--color-lw-text-muted)]">{p.player_class}</span>
                         )}
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
-              <button type="submit" disabled={adding || !newPlayer.trim()} className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-40 px-1">
+              <button type="submit" disabled={adding || !newPlayer.trim()} className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)] disabled:opacity-40 px-1">
                 {adding ? '…' : 'Add'}
               </button>
-              <button type="button" onClick={() => { setShowInput(false); setNewPlayer(''); setSuggestions([]); }} className="text-xs text-gray-600 hover:text-gray-400 px-1">
+              <button type="button" onClick={() => { setShowInput(false); setNewPlayer(''); setSuggestions([]); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-1">
                 ✕
               </button>
             </form>
           ) : (
             <button
               onClick={() => setShowInput(true)}
-              className="text-xs text-gray-600 hover:text-gray-400 border border-gray-800 hover:border-gray-700 rounded px-2 py-0.5 transition-colors"
+              className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] border border-[var(--color-lw-border-sub)] hover:border-[var(--color-lw-border)] rounded px-2 py-0.5 transition-colors"
             >
               + add
             </button>
@@ -455,19 +456,19 @@ function ItemRow({
                 placeholder="Add a council note for this item…"
                 rows={2}
                 autoFocus
-                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 resize-none w-full max-w-lg"
+                className="flex-1 bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 resize-none w-full max-w-lg transition-colors"
               />
               <div className="flex flex-col gap-1 pt-0.5">
                 <button
                   onClick={saveNote}
                   disabled={noteSaving}
-                  className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-40 whitespace-nowrap"
+                  className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)] disabled:opacity-40 whitespace-nowrap"
                 >
                   {noteSaving ? '…' : 'Save'}
                 </button>
                 <button
                   onClick={() => { setNoteEdit(false); setNoteText(item.note ?? ''); }}
-                  className="text-xs text-gray-600 hover:text-gray-400"
+                  className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]"
                 >
                   Cancel
                 </button>
@@ -475,17 +476,17 @@ function ItemRow({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 italic">{item.note}</span>
+              <span className="text-xs text-[var(--color-lw-text-muted)] italic">{item.note}</span>
               <button
                 onClick={() => setNoteEdit(true)}
-                className="text-gray-700 hover:text-gray-400 opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
+                className="text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
                 title="Edit note"
               >
                 ✎
               </button>
               <button
                 onClick={() => { setNoteText(''); updateItemNote(item.id, ''); }}
-                className="text-gray-700 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
+                className="text-[var(--color-lw-border)] hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-opacity text-xs"
                 title="Remove note"
               >
                 ✕
@@ -617,50 +618,47 @@ function CandidatePill({
       {/* Hover tooltip: stats + note */}
       {(priorityData || candidate.note) && !editingNote && (
         <div className="absolute left-0 bottom-full mb-2 z-40 hidden group-hover/pill:block pointer-events-none w-52">
-          <div className="bg-gray-950 border border-gray-700 rounded-lg shadow-xl p-3 text-xs space-y-2.5">
+          <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-3 text-xs space-y-2.5">
             {priorityData && (
               <>
-                {/* Streak */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400 font-medium">Best Streak</span>
+                    <span className="text-[var(--color-lw-text-sub)] font-medium">Best Streak</span>
                     <span className="text-green-400 font-bold tabular-nums">{priorityData.bestStreak}/{priorityData.allTimeTotal}</span>
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-1 overflow-hidden">
+                  <div className="w-full bg-[var(--color-lw-border)] rounded-full h-1 overflow-hidden">
                     <div className="h-full rounded-full bg-green-500/70 transition-all" style={{ width: `${priorityData.streakScore}%` }} />
                   </div>
-                  <p className="text-gray-600 text-[10px]">
+                  <p className="text-[var(--color-lw-text-muted)] text-[10px]">
                     {priorityData.currentStreak > 0
                       ? `On a ${priorityData.currentStreak}-raid run`
                       : 'Streak currently broken'}
                   </p>
                 </div>
 
-                <div className="border-t border-gray-800/80" />
+                <div className="border-t border-[var(--color-lw-border-sub)]" />
 
-                {/* Rolling attendance */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400 font-medium">Rolling Att.</span>
-                    <span className="text-blue-400 font-bold tabular-nums">{priorityData.attendanceScore}%</span>
+                    <span className="text-[var(--color-lw-text-sub)] font-medium">Rolling Att.</span>
+                    <span className="text-[var(--color-lw-purple-400)] font-bold tabular-nums">{priorityData.attendanceScore}%</span>
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-1 overflow-hidden">
-                    <div className="h-full rounded-full bg-blue-500/70 transition-all" style={{ width: `${priorityData.attendanceScore}%` }} />
+                  <div className="w-full bg-[var(--color-lw-border)] rounded-full h-1 overflow-hidden">
+                    <div className="h-full rounded-full bg-[var(--color-lw-purple-500)]/70 transition-all" style={{ width: `${priorityData.attendanceScore}%` }} />
                   </div>
-                  <p className="text-gray-600 text-[10px]">{priorityData.rollingAttended}/{priorityData.rollingTotal} last {attWindow} raids</p>
+                  <p className="text-[var(--color-lw-text-muted)] text-[10px]">{priorityData.rollingAttended}/{priorityData.rollingTotal} last {attWindow} raids</p>
                 </div>
 
-                {/* All-time */}
-                <div className="flex items-center justify-between text-[10px] pt-0.5 border-t border-gray-800/80">
-                  <span className="text-gray-600">All-time</span>
-                  <span className="text-gray-500 tabular-nums">{priorityData.allTimeAttended}/{priorityData.allTimeTotal}</span>
+                <div className="flex items-center justify-between text-[10px] pt-0.5 border-t border-[var(--color-lw-border-sub)]">
+                  <span className="text-[var(--color-lw-text-muted)]">All-time</span>
+                  <span className="text-[var(--color-lw-text-sub)] tabular-nums">{priorityData.allTimeAttended}/{priorityData.allTimeTotal}</span>
                 </div>
               </>
             )}
 
             {candidate.note && (
-              <div className={priorityData ? 'border-t border-gray-800/80 pt-0.5' : ''}>
-                <p className="text-gray-300 whitespace-pre-wrap">{candidate.note}</p>
+              <div className={priorityData ? 'border-t border-[var(--color-lw-border-sub)] pt-0.5' : ''}>
+                <p className="text-[var(--color-lw-text)] whitespace-pre-wrap">{candidate.note}</p>
               </div>
             )}
           </div>
@@ -669,7 +667,7 @@ function CandidatePill({
 
       {/* Candidate note editor */}
       {editingNote && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-2 w-56">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 w-56">
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
@@ -680,11 +678,11 @@ function CandidatePill({
             placeholder="Note for this candidate…"
             rows={3}
             autoFocus
-            className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-yellow-500/50 resize-none"
+            className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 resize-none transition-colors"
           />
           <div className="flex justify-end gap-2 mt-1.5">
-            <button onClick={() => { setEditingNote(false); setNoteText(candidate.note ?? ''); }} className="text-xs text-gray-600 hover:text-gray-400">Cancel</button>
-            <button onClick={saveNote} className="text-xs text-yellow-400 hover:text-yellow-300">Save</button>
+            <button onClick={() => { setEditingNote(false); setNoteText(candidate.note ?? ''); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]">Cancel</button>
+            <button onClick={saveNote} className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)]">Save</button>
           </div>
         </div>
       )}
