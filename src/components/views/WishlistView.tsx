@@ -222,14 +222,14 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                             isActive          ? 'Remove star'                          :
                                             `Mark as ${STAR_LABELS[tier]}`
                                           }
-                                          className={`text-xs px-0.5 rounded transition-colors leading-none ${
+                                          className={`text-base px-0.5 rounded transition-colors leading-none ${
                                             isActive
                                               ? tier === 3 ? 'text-[var(--color-lw-gold-400)]'
                                               : tier === 2 ? 'text-[var(--color-lw-gold-300)]'
                                               : 'text-[var(--color-lw-text)]'
                                             : disabled
-                                              ? 'text-[var(--color-lw-border)] cursor-not-allowed'
-                                              : 'text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-gold-400)]'
+                                              ? 'text-[var(--color-lw-text-muted)]/30 cursor-not-allowed'
+                                              : 'text-[var(--color-lw-text-sub)]/60 hover:text-[var(--color-lw-gold-400)]'
                                           }`}
                                         >
                                           {STAR_LABELS[tier]}
