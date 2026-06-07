@@ -178,7 +178,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   profile ? 'cursor-pointer' : 'cursor-default',
                                   wished
                                     ? 'bg-[#a335ee]/5 hover:bg-[#a335ee]/10 border-l-2 border-l-[#a335ee]/50'
-                                    : 'border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/50 hover:border-l-[#a335ee]/30',
+                                    : 'odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/60 hover:border-l-[#a335ee]/30',
                                 ].join(' ')}
                               >
                                 {/* Heart */}
