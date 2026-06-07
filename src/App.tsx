@@ -105,7 +105,7 @@ function App() {
           </span>
         </header>
 
-        <main className="flex-1">
+        <main key={effectiveTab} className="flex-1 animate-fade-in">
           {effectiveTab === 'dashboard'   && <DashboardView />}
           {effectiveTab === 'history'     && <HistoryView role={role} />}
           {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}

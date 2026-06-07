@@ -20,6 +20,8 @@ interface LootTableProps {
 
 type SortKey = 'timestamp' | 'player_name' | 'item_name' | 'raid' | 'boss' | 'response';
 
+const inputEdit = 'bg-[var(--color-lw-base)] border border-[var(--color-lw-purple-500)]/50 rounded px-2 py-0.5 text-[var(--color-lw-text)] text-xs focus:outline-none';
+
 export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote, onUpdateRaid, onUpdateBoss, onUpdateResponse }: LootTableProps) {
   const [search, setSearch] = useState('');
   const [filterRaid, setFilterRaid] = useState('');
@@ -63,10 +65,8 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-  // Wowhead tooltips after filter/page changes
   useWowheadTooltips([paged]);
 
-  // Select helpers
   const allPageIds = useMemo(() => paged.map((e) => e.id), [paged]);
   const allPageSelected = allPageIds.length > 0 && allPageIds.every((id) => selected.has(id));
 
@@ -126,8 +126,8 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
   }
 
   function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="text-gray-700 ml-1">↕</span>;
-    return <span className="text-yellow-400 ml-1">{sortAsc ? '↑' : '↓'}</span>;
+    if (sortKey !== col) return <span className="text-[var(--color-lw-border)] ml-1">↕</span>;
+    return <span className="text-[var(--color-lw-purple-400)] ml-1">{sortAsc ? '↑' : '↓'}</span>;
   }
 
   function formatDate(ts: string) {
@@ -136,40 +136,15 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
     } catch { return ts; }
   }
 
-  function startEditNote(e: LootEntry) {
-    setEditingNote(e.id);
-    setNoteValue(e.notes ?? '');
-  }
+  function startEditNote(e: LootEntry) { setEditingNote(e.id); setNoteValue(e.notes ?? ''); }
+  async function saveNote(id: string) { onUpdateNote?.(id, noteValue); setEditingNote(null); }
+  function startEditRaid(e: LootEntry) { setEditingRaid(e.id); setRaidValue(e.raid); }
+  async function saveRaid(id: string) { onUpdateRaid?.(id, raidValue.trim()); setEditingRaid(null); }
+  function startEditBoss(e: LootEntry) { setEditingBoss(e.id); setBossValue(e.boss ?? ''); }
+  async function saveBoss(id: string) { onUpdateBoss?.(id, bossValue.trim()); setEditingBoss(null); }
+  async function saveResponse(id: string, response: string) { onUpdateResponse?.(id, response); setEditingResponse(null); }
 
-  async function saveNote(id: string) {
-    onUpdateNote?.(id, noteValue);
-    setEditingNote(null);
-  }
-
-  function startEditRaid(e: LootEntry) {
-    setEditingRaid(e.id);
-    setRaidValue(e.raid);
-  }
-
-  async function saveRaid(id: string) {
-    onUpdateRaid?.(id, raidValue.trim());
-    setEditingRaid(null);
-  }
-
-  function startEditBoss(e: LootEntry) {
-    setEditingBoss(e.id);
-    setBossValue(e.boss ?? '');
-  }
-
-  async function saveBoss(id: string) {
-    onUpdateBoss?.(id, bossValue.trim());
-    setEditingBoss(null);
-  }
-
-  async function saveResponse(id: string, response: string) {
-    onUpdateResponse?.(id, response);
-    setEditingResponse(null);
-  }
+  const filterCls = 'bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
 
   return (
     <div className="space-y-3">
@@ -180,12 +155,12 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           placeholder="Search player, item, boss…"
-          className="flex-1 min-w-48 bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+          className={`flex-1 min-w-48 ${filterCls}`}
         />
         <select
           value={filterRaid}
           onChange={(e) => { setFilterRaid(e.target.value); setPage(0); }}
-          className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-yellow-500/50"
+          className={filterCls}
         >
           <option value="">All Raids</option>
           {raids.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -193,17 +168,17 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
         <select
           value={filterClass}
           onChange={(e) => { setFilterClass(e.target.value); setPage(0); }}
-          className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-yellow-500/50"
+          className={filterCls}
         >
           <option value="">All Classes</option>
           {classes.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <span className="text-xs text-gray-600 self-center ml-1">
+        <span className="text-xs text-[var(--color-lw-text-muted)] self-center ml-1">
           {filtered.length} entries
         </span>
         <button
           onClick={exportCSV}
-          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 transition-colors"
+          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-[var(--color-lw-border)] text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-border-sub)] transition-colors"
         >
           Export CSV
         </button>
@@ -219,18 +194,18 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800 bg-gray-900/80">
+              <tr className="border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60">
                 {canEdit(role) && (
                   <th className="px-4 py-3 w-8">
                     <input
                       type="checkbox"
                       checked={allPageSelected}
                       onChange={toggleSelectAll}
-                      className="accent-yellow-500 cursor-pointer"
+                      className="accent-[var(--color-lw-purple-500)] cursor-pointer"
                     />
                   </th>
                 )}
@@ -245,39 +220,39 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                   <th
                     key={key}
                     onClick={() => handleSort(key)}
-                    className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-300 whitespace-nowrap select-none"
+                    className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--color-lw-text-sub)] whitespace-nowrap select-none transition-colors"
                   >
                     {label}<SortIcon col={key} />
                   </th>
                 ))}
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Votes</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Votes</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Notes</th>
                 {canEdit(role) && (
-                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
+                  <th className="px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider"></th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-[var(--color-lw-border-sub)]">
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-600 text-sm">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[var(--color-lw-text-muted)] text-sm">
                     No loot entries found
                   </td>
                 </tr>
               ) : (
                 paged.map((entry) => (
-                  <tr key={entry.id} className={`hover:bg-gray-800/30 transition-colors group ${selected.has(entry.id) ? 'bg-yellow-500/5' : ''}`}>
+                  <tr key={entry.id} className={`hover:bg-[var(--color-lw-surface)]/40 transition-colors group ${selected.has(entry.id) ? 'bg-[var(--color-lw-purple-500)]/5' : ''}`}>
                     {canEdit(role) && (
                       <td className="px-4 py-2.5 w-8">
                         <input
                           type="checkbox"
                           checked={selected.has(entry.id)}
                           onChange={() => toggleSelect(entry.id)}
-                          className="accent-yellow-500 cursor-pointer"
+                          className="accent-[var(--color-lw-purple-500)] cursor-pointer"
                         />
                       </td>
                     )}
-                    <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap text-xs">
+                    <td className="px-4 py-2.5 text-[var(--color-lw-text-muted)] whitespace-nowrap text-xs">
                       {formatDate(entry.timestamp)}
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
@@ -285,7 +260,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         {stripRealm(entry.player_name)}
                       </span>
                       {entry.player_class && (
-                        <span className="text-xs text-gray-600 ml-1.5">({entry.player_class})</span>
+                        <span className="text-xs text-[var(--color-lw-text-muted)] ml-1.5">({entry.player_class})</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5">
@@ -294,30 +269,30 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                           href={`https://www.wowhead.com/tbc/item=${entry.item_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 hover:underline"
+                          className="hover:underline"
+                          style={{ color: '#a335ee' }}
                         >
                           {entry.item_name}
                         </a>
                       ) : (
-                        <span className="text-gray-200">{entry.item_name}</span>
+                        <span className="text-[var(--color-lw-text)]">{entry.item_name}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">
+                    <td className="px-4 py-2.5 text-[var(--color-lw-text-sub)] whitespace-nowrap text-xs">
                       {editingRaid === entry.id ? (
                         <div className="flex gap-1">
                           <input
-                            autoFocus
-                            value={raidValue}
+                            autoFocus value={raidValue}
                             onChange={(e) => setRaidValue(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') saveRaid(entry.id); if (e.key === 'Escape') setEditingRaid(null); }}
-                            className="w-40 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                            className={`w-40 ${inputEdit}`}
                           />
                           <button onClick={() => saveRaid(entry.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
-                          <button onClick={() => setEditingRaid(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                          <button onClick={() => setEditingRaid(null)} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-xs px-1">✕</button>
                         </div>
                       ) : (
                         <span
-                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-200' : ''}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-[var(--color-lw-text)]' : ''}
                           onClick={() => canEdit(role) && startEditRaid(entry)}
                           title={canEdit(role) ? 'Click to edit raid' : undefined}
                         >
@@ -325,22 +300,21 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap text-xs">
+                    <td className="px-4 py-2.5 text-[var(--color-lw-text-sub)] whitespace-nowrap text-xs">
                       {editingBoss === entry.id ? (
                         <div className="flex gap-1">
                           <input
-                            autoFocus
-                            value={bossValue}
+                            autoFocus value={bossValue}
                             onChange={(e) => setBossValue(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') saveBoss(entry.id); if (e.key === 'Escape') setEditingBoss(null); }}
-                            className="w-36 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                            className={`w-36 ${inputEdit}`}
                           />
                           <button onClick={() => saveBoss(entry.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
-                          <button onClick={() => setEditingBoss(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                          <button onClick={() => setEditingBoss(null)} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-xs px-1">✕</button>
                         </div>
                       ) : (
                         <span
-                          className={role === 'admin' ? 'cursor-pointer hover:text-gray-200' : ''}
+                          className={role === 'admin' ? 'cursor-pointer hover:text-[var(--color-lw-text)]' : ''}
                           onClick={() => role === 'admin' && startEditBoss(entry)}
                           title={role === 'admin' ? 'Click to edit boss' : undefined}
                         >
@@ -355,7 +329,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                           defaultValue={entry.response}
                           onChange={(e) => saveResponse(entry.id, e.target.value)}
                           onBlur={() => setEditingResponse(null)}
-                          className="bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                          className={`${inputEdit} w-auto`}
                         >
                           {RESPONSES.map((r) => <option key={r} value={r}>{r}</option>)}
                         </select>
@@ -369,27 +343,26 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-gray-400 text-center text-xs">{entry.votes || '—'}</td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500 max-w-xs">
+                    <td className="px-4 py-2.5 text-[var(--color-lw-text-sub)] text-center text-xs">{entry.votes || '—'}</td>
+                    <td className="px-4 py-2.5 text-xs text-[var(--color-lw-text-muted)] max-w-xs">
                       {editingNote === entry.id ? (
                         <div className="flex gap-1">
                           <input
-                            autoFocus
-                            value={noteValue}
+                            autoFocus value={noteValue}
                             onChange={(e) => setNoteValue(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') saveNote(entry.id); if (e.key === 'Escape') setEditingNote(null); }}
-                            className="flex-1 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                            className={`flex-1 ${inputEdit}`}
                           />
                           <button onClick={() => saveNote(entry.id)} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
-                          <button onClick={() => setEditingNote(null)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+                          <button onClick={() => setEditingNote(null)} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-xs px-1">✕</button>
                         </div>
                       ) : (
                         <span
-                          className={canEdit(role) ? 'cursor-pointer hover:text-gray-300' : ''}
+                          className={canEdit(role) ? 'cursor-pointer hover:text-[var(--color-lw-text-sub)]' : ''}
                           onClick={() => canEdit(role) && startEditNote(entry)}
                           title={canEdit(role) ? 'Click to edit note' : undefined}
                         >
-                          {entry.notes || (canEdit(role) ? <span className="text-gray-700 italic">add note…</span> : '—')}
+                          {entry.notes || (canEdit(role) ? <span className="text-[var(--color-lw-border)] italic">add note…</span> : '—')}
                         </span>
                       )}
                     </td>
@@ -418,17 +391,17 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="text-xs px-3 py-1.5 border border-gray-800 rounded-lg text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
+            className="text-xs px-3 py-1.5 border border-[var(--color-lw-border)] rounded-lg text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-border-sub)] disabled:opacity-30 transition-colors"
           >
             ← Prev
           </button>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-[var(--color-lw-text-muted)]">
             Page {page + 1} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page === totalPages - 1}
-            className="text-xs px-3 py-1.5 border border-gray-800 rounded-lg text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
+            className="text-xs px-3 py-1.5 border border-[var(--color-lw-border)] rounded-lg text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-border-sub)] disabled:opacity-30 transition-colors"
           >
             Next →
           </button>
@@ -440,11 +413,12 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
 
 function ResponseBadge({ response }: { response: string }) {
   const r = response.toLowerCase();
-  let cls = 'text-gray-500 bg-gray-800';
-  if (r.includes('bis') || r.includes('major') || r === 'ms') cls = 'text-green-400 bg-green-400/10';
-  else if (r.includes('minor') || r === 'os' || r.includes('offspec')) cls = 'text-blue-400 bg-blue-400/10';
-  else if (r.includes('pass') || r.includes('greed')) cls = 'text-gray-500 bg-gray-800';
-  else if (r.includes('rot') || r.includes('open')) cls = 'text-orange-400 bg-orange-400/10';
+  let cls = 'text-[var(--color-lw-text-muted)] bg-[var(--color-lw-base)]';
+  if (r === 'bis')                              cls = 'text-green-400 bg-green-400/10';
+  else if (r === 'upgrade')                     cls = 'text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10';
+  else if (r.includes('minor') || r === 'offspec') cls = 'text-blue-400 bg-blue-400/10';
+  else if (r.includes('transmog') || r === 'pvp') cls = 'text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10';
+  else if (r.includes('greed') || r === 'other') cls = 'text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)]';
 
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>

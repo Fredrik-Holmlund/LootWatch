@@ -4,30 +4,58 @@ import { RaidLootManager } from '../admin/RaidLootManager';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { supabase } from '../../utils/supabase';
 import type { Profile } from '../../types';
+import { PageHeader } from '../ui/PageHeader';
+import { SubTabs } from '../ui/SubTabs';
+import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
+import { PageSpinner } from '../ui/Spinner';
 
-interface AdminViewProps {
-  profile: Profile | null;
-}
-
+interface AdminViewProps { profile: Profile | null; }
 type SubTab = 'users' | 'raidloot' | 'settings';
+
+const tabs = [
+  { id: 'users'    as SubTab, label: 'Users'     },
+  { id: 'raidloot' as SubTab, label: 'Raid Loot' },
+  { id: 'settings' as SubTab, label: 'Settings'  },
+];
+
+const inputCls = 'bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors w-full';
+
+const ROLE_CARDS = [
+  {
+    label: 'Admin',
+    color: 'text-red-400',
+    bg: 'bg-red-950/30 border-red-900/40',
+    perks: ['All council permissions', 'Manage user roles', 'Add/edit/delete raid loot', 'Full database access via UI'],
+  },
+  {
+    label: 'Council',
+    color: 'text-[var(--color-lw-gold-300)]',
+    bg: 'bg-[var(--color-lw-gold-400)]/5 border-[var(--color-lw-gold-500)]/20',
+    perks: ['Import CSV loot history', 'Award and delete entries', 'Edit notes and raids', 'Manage priority notes'],
+  },
+  {
+    label: 'Raider',
+    color: 'text-[var(--color-lw-text-sub)]',
+    bg: 'bg-[var(--color-lw-elevated)] border-[var(--color-lw-border)]',
+    perks: ['View loot history (if enabled)', 'View player summaries', 'Browse & add to wishlist', 'Read-only access'],
+  },
+];
 
 export function AdminView({ profile }: AdminViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('users');
   const { settings, loading: settingsLoading, toggleSetting } = useAppSettings();
 
-  // WarcraftLogs guild config
   const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region', 'wcl_game'] as const;
   type WclKey = typeof WCL_KEYS[number];
   const [wclConfig, setWclConfig] = useState<Record<WclKey, string>>({ wcl_guild_name: '', wcl_guild_realm: '', wcl_guild_region: 'EU', wcl_game: 'fresh' });
   const [wclSaving, setWclSaving] = useState(false);
-  const [wclSaved, setWclSaved] = useState(false);
+  const [wclSaved,  setWclSaved]  = useState(false);
 
-  // Priority score weights
   const [pWeights, setPWeights] = useState({ attendance: 20, streak: 10, drought: 50, loot: 20 });
   const [attWindow, setAttWindow] = useState(6);
   const [pSaving, setPSaving] = useState(false);
-  const [pSaved, setPSaved] = useState(false);
-  const pSum = pWeights.attendance + pWeights.streak + pWeights.drought + pWeights.loot;
+  const [pSaved,  setPSaved]  = useState(false);
+  const pSum = Object.values(pWeights).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
     supabase.from('app_settings').select('key, value')
@@ -35,7 +63,7 @@ export function AdminView({ profile }: AdminViewProps) {
       .then(({ data }) => {
         if (!data) return;
         const cfg = { ...wclConfig };
-        const pw = { ...pWeights };
+        const pw  = { ...pWeights };
         let win = 6;
         for (const row of data) {
           if (WCL_KEYS.includes(row.key as WclKey)) cfg[row.key as WclKey] = row.value as string;
@@ -61,224 +89,197 @@ export function AdminView({ profile }: AdminViewProps) {
       supabase.from('app_settings').upsert({ key: 'priority_weight_loot',       value: String(pWeights.loot),       updated_at: new Date().toISOString() }),
       supabase.from('app_settings').upsert({ key: 'attendance_window',          value: String(attWindow),           updated_at: new Date().toISOString() }),
     ]);
-    setPSaving(false);
-    setPSaved(true);
+    setPSaving(false); setPSaved(true);
     setTimeout(() => setPSaved(false), 2000);
   }
 
   async function saveWclConfig() {
     setWclSaving(true);
-    for (const key of WCL_KEYS) {
-      await supabase.from('app_settings')
-        .upsert({ key, value: wclConfig[key], updated_at: new Date().toISOString() });
-    }
-    setWclSaving(false);
-    setWclSaved(true);
+    for (const key of WCL_KEYS)
+      await supabase.from('app_settings').upsert({ key, value: wclConfig[key], updated_at: new Date().toISOString() });
+    setWclSaving(false); setWclSaved(true);
     setTimeout(() => setWclSaved(false), 2000);
   }
 
+  const saveBtn = (saving: boolean, saved: boolean, onClick: () => void, disabled = false) => (
+    <button
+      onClick={onClick}
+      disabled={saving || disabled}
+      className="text-xs px-3 py-1.5 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold rounded-lg disabled:opacity-40 transition-colors"
+    >
+      {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save'}
+    </button>
+  );
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-white">Admin</h2>
-          <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 px-2 py-0.5 rounded-full">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <PageHeader
+        title="Admin"
+        subtitle="Manage users, roles, raid loot, and site settings"
+        actions={
+          <span className="text-xs font-medium text-red-400 bg-red-950/40 border border-red-900/40 px-2.5 py-1 rounded-full">
             Admin Only
           </span>
-        </div>
-        <p className="text-sm text-gray-500 mt-0.5">Manage users, roles, raid loot, and site settings</p>
-      </div>
+        }
+      />
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1 border-b border-gray-800">
-        {([
-          ['users',    '👥 Users'],
-          ['raidloot', '⚔️ Raid Loot'],
-          ['settings', '⚙️ Settings'],
-        ] as [SubTab, string][]).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setSubTab(id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              subTab === id
-                ? 'border-red-500 text-red-400'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SubTabs tabs={tabs} active={subTab} onChange={setSubTab} />
 
+      {/* Users */}
       {subTab === 'users' && (
-        <>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: '👑 Admin', color: 'text-red-400 border-red-400/20 bg-red-400/5', perks: ['All council permissions', 'Manage user roles', 'Add/edit/delete raid loot', 'Full database access via UI'] },
-              { label: '⚔️ Council', color: 'text-yellow-400 border-yellow-400/20 bg-yellow-400/5', perks: ['Import CSV loot history', 'Award and delete entries', 'Edit notes and raids', 'Manage priority notes'] },
-              { label: '🛡️ Raider', color: 'text-gray-400 border-gray-700 bg-gray-800/40', perks: ['View loot history (if enabled)', 'View player summaries (if enabled)', 'Browse & add to wishlist', 'Read-only access'] },
-            ].map(({ label, color, perks }) => (
-              <div key={label} className={`rounded-xl border p-3 ${color}`}>
-                <p className="text-sm font-semibold mb-2">{label}</p>
-                <ul className="text-xs text-gray-500 space-y-0.5">
-                  {perks.map((p) => <li key={p}>• {p}</li>)}
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {ROLE_CARDS.map(({ label, color, bg, perks }) => (
+              <div key={label} className={`rounded-xl border p-4 ${bg}`}>
+                <p className={`text-sm font-semibold mb-2 ${color}`}>{label}</p>
+                <ul className="text-xs text-[var(--color-lw-text-muted)] space-y-1">
+                  {perks.map((p) => <li key={p} className="flex gap-1.5"><span className="opacity-50">•</span>{p}</li>)}
                 </ul>
               </div>
             ))}
           </div>
           <UserManagement currentUserId={profile?.id ?? ''} />
-        </>
+        </div>
       )}
 
       {subTab === 'raidloot' && <RaidLootManager />}
 
       {subTab === 'settings' && (
-        <div className="space-y-4 max-w-lg">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-1">Raider Visibility</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Control which tabs raiders can see. Council and Admin always see all tabs. Wishlist is always visible.
-            </p>
-          </div>
+        <div className="space-y-6 max-w-lg">
 
-          {settingsLoading ? (
-            <div className="text-sm text-gray-600">Loading…</div>
-          ) : (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
-              {([
-                { key: 'show_dashboard' as const,       label: 'Dashboard',              desc: 'Overview stats, top recipients, weekly activity' },
-                { key: 'show_history' as const,         label: 'History',                desc: 'Loot table, player summaries, warnings' },
-                { key: 'show_wishes_publicly' as const, label: 'Public Wishlist',        desc: 'Raiders can see each other\'s wishes and wish counts. Turn off to hide until after loot is distributed.' },
-                { key: 'show_stars_publicly'  as const, label: 'Public Stars',           desc: 'Raiders can see each other\'s star ratings. Turn off to hide star priorities from other players.' },
-                { key: 'show_assignments'     as const, label: 'Raid Assignments',       desc: 'Raiders can see the Assignments tab. Keep off while council is setting up, enable before the raid.' },
-              ]).map(({ key, label, desc }) => (
-                <div key={key} className="flex items-center justify-between px-4 py-3 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-200 font-medium">{label}</p>
-                    <p className="text-xs text-gray-600">{desc}</p>
+          {/* Raider Visibility */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Raider Visibility</CardTitle>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
+                Control which tabs raiders can see. Council and Admin always see everything.
+              </p>
+            </CardHeader>
+            {settingsLoading ? <PageSpinner /> : (
+              <div className="divide-y divide-[var(--color-lw-border-sub)]">
+                {([
+                  { key: 'show_dashboard'       as const, label: 'Dashboard',        desc: 'Overview stats and weekly activity' },
+                  { key: 'show_history'          as const, label: 'History',           desc: 'Loot table and player summaries' },
+                  { key: 'show_wishes_publicly'  as const, label: 'Public Wishlist',   desc: "Raiders see each other's wishes and counts" },
+                  { key: 'show_stars_publicly'   as const, label: 'Public Stars',      desc: "Raiders see each other's star priorities" },
+                  { key: 'show_assignments'      as const, label: 'Raid Assignments',  desc: 'Enable before the raid, disable while setting up' },
+                ]).map(({ key, label, desc }) => (
+                  <div key={key} className="flex items-center justify-between px-4 py-3 gap-4">
+                    <div>
+                      <p className="text-sm text-[var(--color-lw-text)] font-medium">{label}</p>
+                      <p className="text-xs text-[var(--color-lw-text-muted)]">{desc}</p>
+                    </div>
+                    <button
+                      onClick={() => toggleSetting(key)}
+                      role="switch"
+                      aria-checked={settings[key]}
+                      className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${settings[key] ? 'bg-[var(--color-lw-purple-500)]' : 'bg-[var(--color-lw-border)]'}`}
+                    >
+                      <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${settings[key] ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => toggleSetting(key)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                      settings[key] ? 'bg-yellow-500' : 'bg-gray-700'
-                    }`}
-                    role="switch"
-                    aria-checked={settings[key]}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
-                        settings[key] ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <p className="text-xs text-gray-700">
-            Changes take effect immediately for all users on next page load.
-          </p>
-
-          {/* Priority score weights */}
-          <div className="pt-2">
-            <h3 className="text-sm font-semibold text-gray-300 mb-1">Priority Score Weights</h3>
-            <p className="text-xs text-gray-600 mb-3">Must sum to 100. Controls how each factor influences the priority ranking.</p>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-              {/* Window size */}
-              <div className="flex items-center gap-3 pb-2 border-b border-gray-800">
-                <div className="w-28 flex-shrink-0">
-                  <p className="text-xs font-medium text-gray-300">Rolling window</p>
-                  <p className="text-xs text-gray-600">Last N raids for attendance %</p>
-                </div>
-                <input
-                  type="number" min={1} max={20} value={attWindow}
-                  onChange={(e) => setAttWindow(Number(e.target.value))}
-                  className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
-                />
-                <p className="text-xs text-gray-600">raids</p>
+                ))}
               </div>
-              {([
-                { key: 'attendance' as const, label: 'Rolling Att.', color: 'text-blue-400', desc: `Show-up rate (last ${attWindow} raids)` },
-                { key: 'streak'     as const, label: 'Best Streak',  color: 'text-green-400', desc: 'Longest consecutive run (scored vs. total raids)' },
-                { key: 'drought'    as const, label: 'Drought',      color: 'text-purple-400', desc: 'Days since last BIS/Upgrade (cap 30d)' },
-                { key: 'loot'       as const, label: 'Recent Loot',  color: 'text-yellow-400', desc: 'Penalty for items in last 6 weeks' },
-              ]).map(({ key, label, color, desc }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <div className="w-28 flex-shrink-0">
-                    <p className={`text-xs font-medium ${color}`}>{label}</p>
-                    <p className="text-xs text-gray-600">{desc}</p>
-                  </div>
+            )}
+          </Card>
+
+          {/* Priority weights */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Priority Score Weights</CardTitle>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">Must sum to 100.</p>
+            </CardHeader>
+            <CardBody className="space-y-4">
+              {/* Rolling window */}
+              <div className="flex items-center gap-3 pb-3 border-b border-[var(--color-lw-border-sub)]">
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-[var(--color-lw-text)]">Rolling window</p>
+                  <p className="text-xs text-[var(--color-lw-text-muted)]">Last N raids for attendance %</p>
+                </div>
+                <div className="flex items-center gap-2">
                   <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={pWeights[key]}
-                    onChange={(e) => setPWeights((p) => ({ ...p, [key]: Number(e.target.value) }))}
-                    className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white text-center focus:outline-none focus:border-yellow-500/50"
+                    type="number" min={1} max={20} value={attWindow}
+                    onChange={(e) => setAttWindow(Number(e.target.value))}
+                    className="w-16 bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-2 py-1.5 text-sm text-[var(--color-lw-text)] text-center focus:outline-none focus:border-[var(--color-lw-purple-400)]/60"
                   />
-                  <div className="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden">
-                    <div className="h-full rounded-full bg-yellow-500/60 transition-all" style={{ width: `${pWeights[key]}%` }} />
+                  <span className="text-xs text-[var(--color-lw-text-muted)]">raids</span>
+                </div>
+              </div>
+
+              {([
+                { key: 'attendance' as const, label: 'Rolling Attendance', color: '#60a5fa', desc: `Show-up rate (last ${attWindow} raids)` },
+                { key: 'streak'     as const, label: 'Best Streak',        color: '#4ade80', desc: 'Longest consecutive run' },
+                { key: 'drought'    as const, label: 'Loot Drought',       color: '#c084fc', desc: 'Days since last BIS/Upgrade' },
+                { key: 'loot'       as const, label: 'Recent Loot',        color: '#facc15', desc: 'Penalty for items in last 6 weeks' },
+              ]).map(({ key, label, color, desc }) => (
+                <div key={key} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium" style={{ color }}>{label}</p>
+                      <p className="text-xs text-[var(--color-lw-text-muted)]">{desc}</p>
+                    </div>
+                    <input
+                      type="number" min={0} max={100} value={pWeights[key]}
+                      onChange={(e) => setPWeights((p) => ({ ...p, [key]: Number(e.target.value) }))}
+                      className="w-16 bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-2 py-1.5 text-sm text-[var(--color-lw-text)] text-center focus:outline-none focus:border-[var(--color-lw-purple-400)]/60"
+                    />
+                  </div>
+                  <div className="h-1.5 bg-[var(--color-lw-border)] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pWeights[key]}%`, backgroundColor: color, opacity: 0.7 }} />
                   </div>
                 </div>
               ))}
+
               <div className="flex items-center justify-between pt-1">
                 <span className={`text-xs font-semibold ${pSum === 100 ? 'text-green-400' : 'text-red-400'}`}>
                   Sum: {pSum}/100 {pSum !== 100 && '— must equal 100'}
                 </span>
-                <button
-                  onClick={savePWeights}
-                  disabled={pSaving || pSum !== 100}
-                  className="text-xs px-3 py-1.5 bg-yellow-500 text-gray-950 font-semibold rounded-lg disabled:opacity-40"
-                >
-                  {pSaved ? '✓ Saved' : pSaving ? 'Saving…' : 'Save'}
-                </button>
+                {saveBtn(pSaving, pSaved, savePWeights, pSum !== 100)}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
 
-          {/* WarcraftLogs guild config */}
-          <div className="pt-2">
-            <h3 className="text-sm font-semibold text-gray-300 mb-1">WarcraftLogs Guild</h3>
-            <p className="text-xs text-gray-600 mb-3">Used to sync raid attendance automatically.</p>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+          {/* WarcraftLogs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>WarcraftLogs Guild</CardTitle>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">Used to sync raid attendance automatically.</p>
+            </CardHeader>
+            <CardBody className="space-y-3">
               {([
-                { key: 'wcl_guild_name' as WclKey, label: 'Guild Name', placeholder: 'GLI TCH' },
-                { key: 'wcl_guild_realm' as WclKey, label: 'Realm Slug', placeholder: 'spineshatter' },
-                { key: 'wcl_guild_region' as WclKey, label: 'Region', placeholder: 'EU' },
+                { key: 'wcl_guild_name'   as WclKey, label: 'Guild Name',  placeholder: 'GLI TCH' },
+                { key: 'wcl_guild_realm'  as WclKey, label: 'Realm Slug',  placeholder: 'spineshatter' },
+                { key: 'wcl_guild_region' as WclKey, label: 'Region',      placeholder: 'EU' },
               ]).map(({ key, label, placeholder }) => (
                 <div key={key} className="flex items-center gap-3">
-                  <label className="text-xs text-gray-500 w-24 flex-shrink-0">{label}</label>
+                  <label className="text-xs text-[var(--color-lw-text-sub)] w-24 shrink-0">{label}</label>
                   <input
                     value={wclConfig[key]}
                     onChange={(e) => setWclConfig((c) => ({ ...c, [key]: e.target.value }))}
                     placeholder={placeholder}
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                    className={inputCls}
                   />
                 </div>
               ))}
               <div className="flex items-center gap-3">
-                <label className="text-xs text-gray-500 w-24 flex-shrink-0">Game</label>
+                <label className="text-xs text-[var(--color-lw-text-sub)] w-24 shrink-0">Game</label>
                 <select
                   value={wclConfig.wcl_game}
                   onChange={(e) => setWclConfig((c) => ({ ...c, wcl_game: e.target.value }))}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                  className={inputCls}
                 >
                   <option value="retail">Retail</option>
                   <option value="classic">Classic / TBC / Wrath</option>
                   <option value="fresh">Fresh / Season of Discovery</option>
                 </select>
               </div>
-              <button
-                onClick={saveWclConfig}
-                disabled={wclSaving}
-                className="text-xs px-3 py-1.5 bg-yellow-500 text-gray-950 font-semibold rounded-lg disabled:opacity-40"
-              >
-                {wclSaved ? '✓ Saved' : wclSaving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
+              <div className="pt-1">
+                {saveBtn(wclSaving, wclSaved, saveWclConfig)}
+              </div>
+            </CardBody>
+          </Card>
+
+          <p className="text-xs text-[var(--color-lw-text-muted)]">Changes take effect immediately for all users on next page load.</p>
         </div>
       )}
     </div>
