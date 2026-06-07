@@ -121,9 +121,9 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
         <div className="space-y-6">
           {Object.entries(grouped).map(([instance, bosses]) => (
             <div key={instance}>
-              <h3 className="text-sm font-bold text-[var(--color-lw-gold-300)] uppercase tracking-wider mb-3">
-                {instance}
-              </h3>
+              <h3 className="text-base font-bold text-[var(--color-lw-text)] uppercase tracking-wider mb-3 flex items-center gap-3 before:content-[''] before:flex-1 before:h-px before:bg-[var(--color-lw-border)] after:content-[''] after:flex-1 after:h-px after:bg-[var(--color-lw-border)]">
+                    {instance}
+                  </h3>
               <div className="space-y-4">
                 {sortBosses(instance, Object.keys(bosses)).map((boss) => (
                   <BossSection
@@ -278,7 +278,7 @@ function ItemRow({
   }
 
   return (
-    <div className="group/row">
+    <div className="group/row odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent transition-colors hover:bg-[var(--color-lw-surface)]/50">
       <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         {/* Item name + icon */}
         <div className="min-w-[220px] flex items-center gap-2">
