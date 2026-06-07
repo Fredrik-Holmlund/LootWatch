@@ -319,7 +319,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
   }
 
   return (
-    <div onClick={open} className={`min-h-[26px] w-full px-1.5 py-0.5 flex items-center justify-center flex-wrap gap-0.5 ${canWrite ? 'cursor-pointer hover:bg-[var(--color-lw-surface)]/50' : ''}`}>
+    <div onClick={open} className={`min-h-[28px] w-full px-2 py-1 flex items-center justify-center flex-wrap gap-0.5 ${canWrite ? 'cursor-pointer hover:bg-[var(--color-lw-surface)]/50' : ''}`}>
       {display ?? (canWrite ? <span className="text-[10px] text-[var(--color-lw-border)]">+</span> : <span className="text-xs text-[var(--color-lw-text-muted)]">—</span>)}
     </div>
   );
@@ -407,7 +407,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row`}>
-      <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] whitespace-nowrap w-[80px] min-w-[80px]`}>
+      <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] whitespace-nowrap w-[72px] min-w-[72px]`}>
         <div className="flex items-center gap-1.5">
           {canWrite && (
             <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
@@ -416,7 +416,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
           {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-text-muted)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
         </div>
       </td>
-      <td className={`sticky left-[80px] z-10 ${rowBg} px-1.5 py-1 border-r border-[var(--color-lw-border-sub)] w-[130px] min-w-[130px]`}>
+      <td className={`sticky left-[72px] z-10 ${rowBg} px-1.5 py-1 border-r border-[var(--color-lw-border-sub)] w-[110px] min-w-[110px]`}>
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
@@ -604,8 +604,8 @@ export function AssignmentSheetView({ role, username }: Props) {
           <table className="border-collapse text-sm w-full table-fixed">
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
-                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[80px] min-w-[80px] border-b border-r border-[var(--color-lw-border)]">Role</th>
-                <th className="sticky left-[80px] z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[130px] min-w-[130px] border-b border-r border-[var(--color-lw-border)]">Player</th>
+                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[72px] min-w-[72px] border-b border-r border-[var(--color-lw-border)]">Role</th>
+                <th className="sticky left-[72px] z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[110px] min-w-[110px] border-b border-r border-[var(--color-lw-border)]">Player</th>
                 {columns.map((col, colIdx) => (
                   <th key={col.id} className={`text-center px-1.5 py-1.5 border-b border-r border-[var(--color-lw-border)] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
                     <BossColumnHeader
