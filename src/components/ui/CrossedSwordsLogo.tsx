@@ -9,7 +9,7 @@ export function CrossedSwordsLogo({ className = 'w-7 h-7' }: { className?: strin
       {/* ── Sword 2 (NE tip → SW handle) — drawn behind ── */}
 
       {/* Blade: tapered triangle, tip at (28,3), base at guard */}
-      <polygon points="28,3 8.6,22.4 11.4,19.6" fill="currentColor" opacity="0.75" />
+      <polygon points="28,3 7,24 13,18" fill="currentColor" opacity="0.85" />
 
       {/* Crossguard: perpendicular bar */}
       <line x1="8.0" y1="17.0" x2="14.0" y2="23.0"
