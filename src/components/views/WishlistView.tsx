@@ -153,10 +153,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             <div className="space-y-6">
               {Object.entries(grouped).map(([instance, bosses]) => (
                 <div key={instance}>
-                  <h3
-                    className="text-xs font-bold text-[var(--color-lw-gold-300)] uppercase tracking-widest mb-3"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <h3 className="text-xs font-bold text-[var(--color-lw-gold-300)] uppercase tracking-widest mb-3">
                     {instance}
                   </h3>
                   <div className="space-y-2">
@@ -229,7 +226,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                               : 'text-[var(--color-lw-text)]'
                                             : disabled
                                               ? 'text-[var(--color-lw-text-muted)]/30 cursor-not-allowed'
-                                              : 'text-[var(--color-lw-text-sub)]/60 hover:text-[var(--color-lw-gold-400)]'
+                                              : 'text-[var(--color-lw-text-muted)]/40 hover:text-[var(--color-lw-gold-400)]'
                                           }`}
                                         >
                                           {STAR_LABELS[tier]}

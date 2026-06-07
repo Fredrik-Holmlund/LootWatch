@@ -10,10 +10,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h2
-          className="text-xl font-semibold text-[var(--color-lw-text)] tracking-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
+        <h2 className="text-lg font-semibold text-[var(--color-lw-text)] tracking-tight">
           {title}
         </h2>
         {subtitle && (
