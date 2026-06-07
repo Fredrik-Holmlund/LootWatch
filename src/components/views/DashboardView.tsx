@@ -77,8 +77,8 @@ function RankRow({ rank, name, right, pct, color }: RankRowProps) {
           style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }}
         />
         <div className="absolute inset-0 flex items-center justify-between px-2.5">
-          <span className="text-xs font-semibold text-white drop-shadow truncate">{name}</span>
-          <span className="text-xs font-medium text-white/70 tabular-nums ml-2 shrink-0">{right}</span>
+          <span className="text-xs font-semibold truncate" style={{ color: 'rgba(0,0,0,0.75)' }}>{name}</span>
+          <span className="text-xs font-medium tabular-nums ml-2 shrink-0" style={{ color: 'rgba(0,0,0,0.55)' }}>{right}</span>
         </div>
       </div>
     </div>
