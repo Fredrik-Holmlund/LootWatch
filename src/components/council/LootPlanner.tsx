@@ -104,7 +104,7 @@ export function LootPlanner({ historyEntries, wishes }: LootPlannerProps) {
               className={[
                 'px-4 py-2 text-sm font-medium rounded-lg transition-colors border',
                 selectedPhase === phase.id
-                  ? 'border-[var(--color-lw-gold-500)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10'
+                  ? 'border-[var(--color-lw-fel-500)]/50 text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10'
                   : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]',
               ].join(' ')}
             >
@@ -423,7 +423,7 @@ function ItemRow({
                   </ul>
                 )}
               </div>
-              <button type="submit" disabled={adding || !newPlayer.trim()} className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)] disabled:opacity-40 px-1">
+              <button type="submit" disabled={adding || !newPlayer.trim()} className="text-xs text-[var(--color-lw-fel-400)] hover:text-[var(--color-lw-fel-400)]/80 disabled:opacity-40 px-1">
                 {adding ? '…' : 'Add'}
               </button>
               <button type="button" onClick={() => { setShowInput(false); setNewPlayer(''); setSuggestions([]); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-1">
@@ -462,7 +462,7 @@ function ItemRow({
                 <button
                   onClick={saveNote}
                   disabled={noteSaving}
-                  className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)] disabled:opacity-40 whitespace-nowrap"
+                  className="text-xs text-[var(--color-lw-fel-400)] hover:text-[var(--color-lw-fel-400)]/80 disabled:opacity-40 whitespace-nowrap"
                 >
                   {noteSaving ? '…' : 'Save'}
                 </button>
@@ -682,7 +682,7 @@ function CandidatePill({
           />
           <div className="flex justify-end gap-2 mt-1.5">
             <button onClick={() => { setEditingNote(false); setNoteText(candidate.note ?? ''); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]">Cancel</button>
-            <button onClick={saveNote} className="text-xs text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)]">Save</button>
+            <button onClick={saveNote} className="text-xs text-[var(--color-lw-fel-400)] hover:text-[var(--color-lw-fel-400)]/80">Save</button>
           </div>
         </div>
       )}

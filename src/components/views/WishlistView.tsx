@@ -98,7 +98,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
           ? `Click any item to add it to your wishlist — ${myWishedIds.size} wished`
           : 'Browse item wishes across the guild'}
         actions={isLocked ? (
-          <div className="flex items-center gap-1.5 text-xs text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10 border border-[var(--color-lw-gold-500)]/30 rounded-lg px-3 py-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/30 rounded-lg px-3 py-1.5">
             🔒 Stars locked by council
           </div>
         ) : undefined}
@@ -121,7 +121,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   className={[
                     'px-4 py-2 text-sm font-medium rounded-lg transition-colors border',
                     active
-                      ? 'border-[var(--color-lw-gold-500)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10'
+                      ? 'border-[var(--color-lw-fel-500)]/50 text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10'
                       : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]',
                   ].join(' ')}
                 >
@@ -143,7 +143,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   {usedStarTiers.has(tier) && <span className="opacity-50">(used)</span>}
                 </span>
               ))}
-              {isLocked && <span className="text-[var(--color-lw-gold-300)]">🔒 locked</span>}
+              {isLocked && <span className="text-[var(--color-lw-fel-400)]">🔒 locked</span>}
             </div>
           )}
 
@@ -232,7 +232,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                               : 'text-[var(--color-lw-text)]'
                                             : disabled
                                               ? 'text-[var(--color-lw-text-muted)]/30 cursor-not-allowed'
-                                              : 'text-[var(--color-lw-text-muted)]/40 hover:text-[var(--color-lw-gold-400)]'
+                                              : 'text-[var(--color-lw-text-muted)]/40 hover:text-[var(--color-lw-fel-400)]'
                                           }`}
                                         >
                                           {STAR_LABELS[tier]}
