@@ -25,15 +25,7 @@
   --font-body:    'Inter', sans-serif;
 }
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.18s ease-out both;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0);   }
-  }
-}
+@layer base {
   body {
     background-color: var(--color-lw-base);
     background-image:
@@ -66,5 +58,15 @@
 
   *::-webkit-scrollbar-thumb:hover {
     background: #2a3d57;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.18s ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
   }
 }
