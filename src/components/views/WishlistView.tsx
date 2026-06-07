@@ -153,7 +153,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             <div className="space-y-6">
               {Object.entries(grouped).map(([instance, bosses]) => (
                 <div key={instance}>
-                  <h3 className="text-sm font-bold text-[var(--color-lw-text)] uppercase tracking-wider mb-3 flex items-center gap-3 before:content-[''] before:flex-1 before:h-px before:bg-[var(--color-lw-border)] after:content-[''] after:flex-1 after:h-px after:bg-[var(--color-lw-border)]">
+                  <h3 className="text-base font-bold text-[var(--color-lw-text)] uppercase tracking-wider mb-3 flex items-center gap-3 before:content-[''] before:flex-1 before:h-px before:bg-[var(--color-lw-border)] after:content-[''] after:flex-1 after:h-px after:bg-[var(--color-lw-border)]">
                     {instance}
                   </h3>
                   <div className="space-y-2">
