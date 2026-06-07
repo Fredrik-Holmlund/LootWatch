@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { canEdit, canEditAssignments } from '../types';
 import type { UserRole } from '../types';
 import type { AppSettings } from '../hooks/useAppSettings';
@@ -23,72 +24,8 @@ const roleColor: Record<string, string> = {
   raider:  'text-[var(--color-lw-text-sub)]',
 };
 
-const roleBg: Record<string, string> = {
-  admin:   'bg-red-950/40 border-red-900/40',
-  council: 'bg-[var(--color-lw-gold-400)]/5 border-[var(--color-lw-gold-500)]/20',
-  planner: 'bg-[var(--color-lw-purple-500)]/10 border-[var(--color-lw-purple-500)]/25',
-  raider:  'bg-[var(--color-lw-elevated)] border-[var(--color-lw-border)]',
-};
-
-function NavIcon({ id }: { id: NavTab }) {
-  const cls = 'w-4 h-4 shrink-0';
-  switch (id) {
-    case 'dashboard':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-        </svg>
-      );
-    case 'history':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 8v4l2.5 2.5" />
-          <path d="M3.05 11a9 9 0 1 0 .5-3M3 4v4h4" />
-        </svg>
-      );
-    case 'wishlist':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-      );
-    case 'absence':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-          <path d="M9 15h.01M12 15h.01M15 15h.01" />
-        </svg>
-      );
-    case 'assignments':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-          <rect x="9" y="3" width="6" height="4" rx="1" />
-          <path d="M9 12h6M9 16h4" />
-        </svg>
-      );
-    case 'council':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" />
-        </svg>
-      );
-    case 'admin':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
-        </svg>
-      );
-  }
-}
-
-export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut, sidebarOpen = false, onCloseSidebar }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange, role, settings, username, onSignOut, onCloseSidebar }: NavigationProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isPrivileged = canEdit(role) || role === 'admin';
   const isPlanner = canEditAssignments(role);
 
@@ -111,93 +48,140 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
     return true;
   });
 
+  function handleTabChange(tab: NavTab) {
+    onTabChange(tab);
+    setMobileOpen(false);
+    onCloseSidebar?.();
+  }
+
   const roleKey = role ?? 'raider';
 
   return (
-    <aside
-      className={[
-        'fixed inset-y-0 left-0 z-50 flex flex-col w-56 border-r border-[var(--color-lw-border)] bg-[var(--color-lw-surface)] transition-transform duration-300 ease-in-out',
-        'lg:translate-x-0',
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-      ].join(' ')}
-      style={{ boxShadow: '4px 0 32px rgba(124, 77, 255, 0.08)' }}
-    >
+    <>
+      {/* Top navigation bar */}
+      <header className="fixed top-0 inset-x-0 z-50 h-14 border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-6">
 
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--color-lw-border-sub)]">
-        <CrossedSwordsLogo className="w-6 h-6 shrink-0 text-[var(--color-lw-gold-400)]" />
-        <span
-          className="text-base font-semibold tracking-wide text-[var(--color-lw-gold-300)] flex-1"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          LootWatch
-        </span>
-        {onCloseSidebar && (
-          <button
-            onClick={onCloseSidebar}
-            className="lg:hidden p-1 rounded text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] transition-colors"
-            aria-label="Close menu"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6"  y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]">
-        {visibleTabs.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={[
-                'group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                active
-                  ? 'bg-[var(--color-lw-purple-500)]/15 text-white'
-                  : 'text-[var(--color-lw-text-sub)] hover:bg-[var(--color-lw-elevated)] hover:text-[var(--color-lw-text)]',
-              ].join(' ')}
+          {/* Logo */}
+          <div className="flex items-center gap-2 shrink-0">
+            <CrossedSwordsLogo className="w-5 h-5 text-[var(--color-lw-purple-400)]" />
+            <span
+              className="text-sm font-semibold tracking-wide text-[var(--color-lw-text)]"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              {active && (
-                <span className="absolute left-0 inset-y-1.5 w-0.5 rounded-full bg-[var(--color-lw-purple-400)]" />
-              )}
-              <span className={active ? 'text-[var(--color-lw-purple-400)]' : 'text-[var(--color-lw-text-muted)] group-hover:text-[var(--color-lw-text-sub)]'}>
-                <NavIcon id={tab.id} />
-              </span>
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* User section */}
-      <div className="px-3 py-4 border-t border-[var(--color-lw-border-sub)] space-y-2">
-        <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border ${roleBg[roleKey] ?? roleBg.raider}`}>
-          <div className="w-7 h-7 rounded-full bg-[var(--color-lw-border)] flex items-center justify-center shrink-0">
-            <span className="text-xs font-semibold text-[var(--color-lw-text-sub)] uppercase">
-              {(username ?? '?')[0]}
+              LootWatch
             </span>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-[var(--color-lw-text)] truncate leading-tight">{username}</p>
-            <p className={`text-xs capitalize font-semibold leading-tight ${roleColor[roleKey] ?? roleColor.raider}`}>{role}</p>
+
+          {/* Desktop nav links */}
+          <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+            {visibleTabs.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={[
+                    'relative px-3 py-2 text-sm font-medium transition-colors rounded-md',
+                    active
+                      ? 'text-[var(--color-lw-text)]'
+                      : 'text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]/60',
+                  ].join(' ')}
+                >
+                  {tab.label}
+                  {active && (
+                    <span className="absolute bottom-0 inset-x-3 h-0.5 rounded-full bg-[var(--color-lw-purple-400)]" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right: user info + sign out */}
+          <div className="hidden lg:flex items-center gap-3 ml-auto shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[var(--color-lw-border)] flex items-center justify-center">
+                <span className="text-[10px] font-bold text-[var(--color-lw-text-sub)] uppercase">
+                  {(username ?? '?')[0]}
+                </span>
+              </div>
+              <div className="leading-none">
+                <p className="text-xs font-medium text-[var(--color-lw-text)]">{username}</p>
+                <p className={`text-[10px] capitalize font-semibold ${roleColor[roleKey]}`}>{role}</p>
+              </div>
+            </div>
+            <button
+              onClick={onSignOut}
+              className="text-xs px-3 py-1.5 rounded-md border border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:border-[var(--color-lw-border)] transition-colors"
+            >
+              Sign out
+            </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className="lg:hidden ml-auto p-2 rounded-md text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)] transition-colors"
+            aria-label="Open menu"
+          >
+            {mobileOpen ? (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
+          </button>
         </div>
-        <button
-          onClick={onSignOut}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] hover:bg-[var(--color-lw-elevated)] transition-colors"
-        >
-          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          Sign Out
-        </button>
-      </div>
-    </aside>
+      </header>
+
+      {/* Mobile dropdown menu */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="fixed top-14 inset-x-0 z-40 bg-[var(--color-lw-surface)] border-b border-[var(--color-lw-border)] lg:hidden">
+            <nav className="max-w-7xl mx-auto px-4 py-2 space-y-0.5">
+              {visibleTabs.map((tab) => {
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={[
+                      'w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
+                      active
+                        ? 'bg-[var(--color-lw-purple-500)]/15 text-[var(--color-lw-purple-400)]'
+                        : 'text-[var(--color-lw-text-sub)] hover:bg-[var(--color-lw-elevated)] hover:text-[var(--color-lw-text)]',
+                    ].join(' ')}
+                  >
+                    {active && <span className="w-1 h-4 rounded-full bg-[var(--color-lw-purple-400)]" />}
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="max-w-7xl mx-auto px-4 py-3 border-t border-[var(--color-lw-border)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[var(--color-lw-border)] flex items-center justify-center">
+                  <span className="text-xs font-bold text-[var(--color-lw-text-sub)] uppercase">{(username ?? '?')[0]}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-lw-text)]">{username}</p>
+                  <p className={`text-xs capitalize font-semibold ${roleColor[roleKey]}`}>{role}</p>
+                </div>
+              </div>
+              <button onClick={onSignOut} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] transition-colors">
+                Sign out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
