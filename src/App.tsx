@@ -72,15 +72,18 @@ function App() {
       />
 
       <main key={effectiveTab} className="pt-14 animate-fade-in">
-        <div className="max-w-7xl mx-auto">
-          {effectiveTab === 'dashboard'   && <DashboardView />}
-          {effectiveTab === 'history'     && <HistoryView role={role} />}
-          {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
-          {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
-          {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
-          {effectiveTab === 'council'     && canEdit(role) && <CouncilView />}
-          {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
-        </div>
+        {effectiveTab === 'assignments' ? (
+          <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />
+        ) : (
+          <div className="max-w-7xl mx-auto">
+            {effectiveTab === 'dashboard'   && <DashboardView />}
+            {effectiveTab === 'history'     && <HistoryView role={role} />}
+            {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
+            {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
+            {effectiveTab === 'council'     && canEdit(role) && <CouncilView />}
+            {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
+          </div>
+        )}
       </main>
     </div>
   );

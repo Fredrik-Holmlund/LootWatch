@@ -530,7 +530,7 @@ export function AssignmentSheetView({ role, username }: Props) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="max-w-[1900px] mx-auto px-4 py-6 space-y-4">
+      <div className="w-full px-4 py-6 space-y-4">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
