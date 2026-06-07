@@ -287,8 +287,9 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                 </div>
               </CardHeader>
               <CardBody className="p-3">
-                {/* Day headers */}
-                <div className="grid grid-cols-7 mb-1">
+                {/* Day headers — week-nr col + 7 day cols */}
+                <div className="grid grid-cols-[2rem_repeat(7,1fr)] mb-1">
+                  <div className="text-center text-[10px] font-semibold text-[var(--color-lw-text-muted)] py-1 opacity-50">W</div>
                   {DAY_HEADERS.map((h) => (
                     <div key={h} className="text-center text-xs font-semibold text-[var(--color-lw-text-muted)] py-1">
                       {h}
@@ -298,8 +299,19 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
 
                 {/* Week rows */}
                 <div className="space-y-1">
-                  {calendarGrid.map((week, wi) => (
-                    <div key={wi} className="grid grid-cols-7 gap-1">
+                  {calendarGrid.map((week, wi) => {
+                    // ISO week number for the Monday of this week
+                    const monday = week[0];
+                    const jan4   = new Date(monday.getFullYear(), 0, 4);
+                    const weekNum = Math.ceil(((monday.getTime() - jan4.getTime()) / 86400000 + jan4.getDay() + 6) / 7);
+
+                    return (
+                    <div key={wi} className="grid grid-cols-[2rem_repeat(7,1fr)] gap-1 items-center">
+                      {/* Week number */}
+                      <div className="text-center text-[10px] text-[var(--color-lw-text-muted)] opacity-50 select-none font-medium">
+                        {weekNum}
+                      </div>
+
                       {week.map((day) => {
                         const dateStr   = toLocalDateStr(day);
                         const isToday   = dateStr === today;
@@ -308,17 +320,15 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                         const count     = raidMissing[dateStr]?.length ?? 0;
                         const colors    = absenceCountColor(count);
                         const dayNum    = day.getDate();
-
-                        // First day of month — show month abbrev
                         const showMonth = dayNum === 1;
 
                         if (!isRaidDay) {
                           return (
                             <div
                               key={dateStr}
-                              className={`rounded-lg p-1.5 text-center min-h-[52px] flex flex-col items-center justify-center ${isPast ? 'opacity-25' : 'opacity-50'}`}
+                              className={`rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center ${isPast ? 'opacity-25' : 'opacity-50'}`}
                             >
-                              {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
+                              {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
                               <span className="text-xs text-[var(--color-lw-text-muted)]">{dayNum}</span>
                             </div>
                           );
@@ -330,23 +340,26 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                             key={dateStr}
                             onClick={() => count > 0 && scrollToRaid(dateStr)}
                             className={[
-                              'rounded-lg p-1.5 text-center min-h-[52px] flex flex-col items-center justify-center gap-0.5 border transition-all',
+                              'rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center gap-0.5 border transition-all',
                               isPast ? 'opacity-40' : '',
                               count > 0 ? `${colors.bg} ${colors.border} cursor-pointer hover:opacity-90` : 'border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60',
                               isToday ? 'ring-2 ring-[var(--color-lw-purple-400)]/60 ring-offset-1 ring-offset-[var(--color-lw-elevated)]' : '',
                             ].join(' ')}
                           >
                             {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
-                            <span className={`text-sm font-semibold leading-none ${isToday ? 'text-[var(--color-lw-purple-400)]' : count > 0 ? colors.text : 'text-[var(--color-lw-text-sub)]'}`}>
+                            <span className={`text-xs font-semibold leading-none ${isToday ? 'text-[var(--color-lw-purple-400)]' : count > 0 ? colors.text : 'text-[var(--color-lw-text-sub)]'}`}>
                               {dayNum}
                             </span>
                             <span className={`text-[10px] font-bold leading-none ${count > 0 ? colors.text : 'text-[var(--color-lw-text-muted)]'}`}>
-                              {count > 0 ? `${count} out` : '—'}
+                              {count > 0 ? `${count} missing` : '—'}
                             </span>
                           </button>
                         );
                       })}
                     </div>
+                    );
+                  })}
+                </div>
                   ))}
                 </div>
               </CardBody>
