@@ -65,20 +65,20 @@ interface RankRowProps {
   right: string;
   pct: number;
   color: string;
-  nameColor?: string;
 }
 
-function RankRow({ rank, name, right, pct, color, nameColor }: RankRowProps) {
+function RankRow({ rank, name, right, pct, color }: RankRowProps) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-[var(--color-lw-text-muted)] w-4 text-right tabular-nums">{rank}</span>
-      <div className="flex-1 space-y-1">
-        <div className="flex justify-between text-xs">
-          <span className="font-medium truncate" style={{ color: nameColor ?? 'var(--color-lw-text)' }}>{name}</span>
-          <span className="text-[var(--color-lw-text-muted)] tabular-nums ml-2 shrink-0">{right}</span>
-        </div>
-        <div className="h-1 bg-[var(--color-lw-border)] rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.75 }} />
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-[var(--color-lw-text-muted)] w-4 text-right tabular-nums shrink-0">{rank}</span>
+      <div className="flex-1 relative h-7 bg-[var(--color-lw-border)] rounded overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 rounded transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }}
+        />
+        <div className="absolute inset-0 flex items-center justify-between px-2.5">
+          <span className="text-xs font-semibold text-white drop-shadow truncate">{name}</span>
+          <span className="text-xs font-medium text-white/70 tabular-nums ml-2 shrink-0">{right}</span>
         </div>
       </div>
     </div>
@@ -239,7 +239,6 @@ export function DashboardView() {
                 right={String(count)}
                 pct={Math.round((count / stats.topPlayers[0][1].count) * 100)}
                 color={getClassColor(cls)}
-                nameColor={getClassColor(cls)}
               />
             )) : <p className="text-xs text-[var(--color-lw-text-muted)]">No data</p>}
           </CardBody>
