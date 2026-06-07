@@ -20,10 +20,12 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center space-y-3">
-          <div className="text-4xl animate-pulse">⚔️</div>
-          <p className="text-gray-600 text-sm">Loading LootWatch…</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-lw-base)]">
+        <div className="text-center space-y-4">
+          <img src="/favicon.svg" alt="" className="w-10 h-10 mx-auto animate-pulse" />
+          <p className="text-[var(--color-lw-text-muted)] text-sm tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+            Loading LootWatch…
+          </p>
         </div>
       </div>
     );
@@ -62,7 +64,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="flex min-h-screen bg-[var(--color-lw-base)]">
       <Navigation
         activeTab={effectiveTab}
         onTabChange={handleTabChange}
@@ -72,7 +74,7 @@ function App() {
         onSignOut={signOut}
       />
 
-      <main>
+      <main className="flex-1 ml-56 min-h-screen">
         {effectiveTab === 'dashboard' && <DashboardView />}
         {effectiveTab === 'history' && <HistoryView role={role} />}
         {effectiveTab === 'wishlist' && <WishlistView profile={profile} role={role} />}
