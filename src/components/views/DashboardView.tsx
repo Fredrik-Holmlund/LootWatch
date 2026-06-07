@@ -72,13 +72,17 @@ function RankRow({ rank, name, right, pct, color }: RankRowProps) {
     <div className="flex items-center gap-2">
       <span className="text-xs text-[var(--color-lw-text-muted)] w-4 text-right tabular-nums shrink-0">{rank}</span>
       <div className="flex-1 relative h-7 bg-[var(--color-lw-border)] rounded overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 rounded transition-all duration-500"
-          style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }}
-        />
-        <div className="absolute inset-0 flex items-center justify-between px-2.5">
-          <span className="text-xs font-semibold truncate" style={{ color: 'rgba(0,0,0,0.75)' }}>{name}</span>
+        {/* Fill */}
+        <div className="absolute inset-y-0 left-0 rounded transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.85 }} />
+        {/* Dark text — clipped to filled area */}
+        <div className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none" style={{ clipPath: `inset(0 ${100 - pct}% 0 0 round 4px)` }}>
+          <span className="text-xs font-semibold truncate" style={{ color: 'rgba(0,0,0,0.78)' }}>{name}</span>
           <span className="text-xs font-medium tabular-nums ml-2 shrink-0" style={{ color: 'rgba(0,0,0,0.55)' }}>{right}</span>
+        </div>
+        {/* Light text — clipped to unfilled area */}
+        <div className="absolute inset-0 flex items-center justify-between px-2.5 pointer-events-none" style={{ clipPath: `inset(0 0 0 ${pct}% round 4px)` }}>
+          <span className="text-xs font-semibold truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{name}</span>
+          <span className="text-xs font-medium tabular-nums ml-2 shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>{right}</span>
         </div>
       </div>
     </div>

@@ -67,8 +67,11 @@ export function WishlistPanel({ entries }: WishlistPanelProps) {
                     className="absolute inset-y-0 left-0 rounded transition-all duration-500 bg-gradient-to-r from-[var(--color-lw-gold-500)] to-[var(--color-lw-gold-400)]"
                     style={{ width: `${pct}%`, opacity: 0.85 }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-between px-2">
+                  <div className="absolute inset-0 flex items-center px-2 pointer-events-none" style={{ clipPath: `inset(0 ${100 - pct}% 0 0 round 4px)` }}>
                     <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.75)' }}>{s.total} items</span>
+                  </div>
+                  <div className="absolute inset-0 flex items-center px-2 pointer-events-none" style={{ clipPath: `inset(0 0 0 ${pct}% round 4px)` }}>
+                    <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{s.total} items</span>
                   </div>
                 </div>
                 {s.lastLoot && (

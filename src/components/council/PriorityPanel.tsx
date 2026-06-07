@@ -4,9 +4,12 @@ import type { PlayerPriority } from '../../hooks/usePriorityScore';
 function ScoreBar({ value, color }: { value: number; color: string }) {
   return (
     <div className="relative h-5 bg-[var(--color-lw-border)] rounded overflow-hidden">
-      <div className="absolute inset-y-0 left-0 rounded transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color, opacity: 0.8 }} />
-      <div className="absolute inset-0 flex items-center justify-between px-1.5">
-        <span className="text-[10px] font-semibold" style={{ color: 'rgba(0,0,0,0.7)' }}>{value}%</span>
+      <div className="absolute inset-y-0 left-0 rounded transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color, opacity: 0.85 }} />
+      <div className="absolute inset-0 px-1.5 flex items-center pointer-events-none" style={{ clipPath: `inset(0 ${100 - value}% 0 0 round 4px)` }}>
+        <span className="text-[10px] font-semibold" style={{ color: 'rgba(0,0,0,0.75)' }}>{value}%</span>
+      </div>
+      <div className="absolute inset-0 px-1.5 flex items-center pointer-events-none" style={{ clipPath: `inset(0 0 0 ${value}% round 4px)` }}>
+        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>{value}%</span>
       </div>
     </div>
   );
