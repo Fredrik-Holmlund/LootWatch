@@ -174,9 +174,11 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                 key={item.id}
                                 onClick={() => profile && toggleWish(item, null)}
                                 className={[
-                                  'w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors group',
+                                  'relative w-full text-left px-4 py-3 flex items-center gap-3 transition-all group',
                                   profile ? 'cursor-pointer' : 'cursor-default',
-                                  wished ? 'bg-[var(--color-lw-gold-400)]/5 hover:bg-[var(--color-lw-gold-400)]/10' : 'hover:bg-[var(--color-lw-surface)]/40',
+                                  wished
+                                    ? 'bg-[var(--color-lw-gold-400)]/5 hover:bg-[var(--color-lw-gold-400)]/10 border-l-2 border-l-[var(--color-lw-gold-500)]/50'
+                                    : 'border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/50 hover:border-l-[var(--color-lw-border)]',
                                 ].join(' ')}
                               >
                                 {/* Heart */}

@@ -28,6 +28,8 @@
 @layer base {
   body {
     background-color: var(--color-lw-base);
+    background-image: radial-gradient(ellipse at 60% 0%, #0e1628 0%, var(--color-lw-base) 65%);
+    background-attachment: fixed;
     color: var(--color-lw-text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;

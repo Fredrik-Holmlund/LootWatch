@@ -126,7 +126,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 [mask-image:linear-gradient(to_bottom,black_85%,transparent_100%)]">
         {visibleTabs.map((tab) => {
           const active = activeTab === tab.id;
           return (
