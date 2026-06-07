@@ -6,42 +6,24 @@ export function CrossedSwordsLogo({ className = 'w-7 h-7' }: { className?: strin
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* ── Sword 2 (NE tip → SW handle) — drawn behind ── */}
+      {/* Top-left blade — sweeps from center to upper-left tip */}
+      <path d="M14,13 C8,6 2,2 2,2 C4,6 8,10 11,12 Z" fill="currentColor" />
 
-      {/* Blade: tapered triangle, tip at (28,3), base at guard */}
-      <polygon points="28,3 7,24 13,18" fill="currentColor" opacity="0.85" />
+      {/* Top-right blade — mirror of top-left */}
+      <path d="M18,13 C24,6 30,2 30,2 C28,6 24,10 21,12 Z" fill="currentColor" />
 
-      {/* Crossguard: perpendicular bar */}
-      <line x1="8.0" y1="17.0" x2="14.0" y2="23.0"
-            stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      {/* Bottom-left blade — hooks downward */}
+      <path d="M11,20 C5,24 2,30 2,30 C6,28 10,24 13,20 Z" fill="currentColor" opacity="0.8" />
 
-      {/* Grip: wrapped handle */}
-      <line x1="10.5" y1="22.5" x2="6" y2="27"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.75" />
+      {/* Bottom-right blade — mirror of bottom-left */}
+      <path d="M21,20 C27,24 30,30 30,30 C26,28 22,24 19,20 Z" fill="currentColor" opacity="0.8" />
 
-      {/* Pommel: round knob */}
-      <circle cx="4.8" cy="28.2" r="2.2" fill="currentColor" />
-
-
-      {/* ── Sword 1 (NW tip → SE handle) — drawn in front ── */}
-
-      {/* Blade: tapered triangle, tip at (4,3) */}
-      <polygon points="4,3 23.4,19.6 20.6,22.4" fill="currentColor" />
-
-      {/* Fuller (ridge reflection) for metallic depth */}
-      <line x1="5" y1="4.5" x2="19.5" y2="19"
-            stroke="white" strokeWidth="0.7" strokeLinecap="round" opacity="0.18" />
-
-      {/* Crossguard */}
-      <line x1="24.0" y1="17.0" x2="18.0" y2="23.0"
-            stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-
-      {/* Grip */}
-      <line x1="21.5" y1="22.5" x2="26" y2="27"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.75" />
-
-      {/* Pommel */}
-      <circle cx="27.2" cy="28.2" r="2.2" fill="currentColor" />
+      {/* Center medallion */}
+      <circle cx="16" cy="16" r="5.5" fill="currentColor" />
+      {/* Inner ring detail */}
+      <circle cx="16" cy="16" r="2.8" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="1.5" />
+      {/* Center dot */}
+      <circle cx="16" cy="16" r="1" fill="rgba(0,0,0,0.25)" />
     </svg>
   );
 }
