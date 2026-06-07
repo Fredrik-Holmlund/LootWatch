@@ -179,7 +179,7 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
           <span
             onClick={canWrite ? openPicker : undefined}
             style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
-            className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
+            className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 text-center truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
           >
             {row.player_name}
           </span>
@@ -407,7 +407,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row`}>
-      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] whitespace-nowrap`}>
+      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] whitespace-nowrap w-[100px] min-w-[100px]`}>
         <div className="flex items-center gap-1.5">
           {canWrite && (
             <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
@@ -416,7 +416,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
           {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-text-muted)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
         </div>
       </td>
-      <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-[var(--color-lw-border-sub)]`}>
+      <td className={`sticky left-[100px] z-10 ${rowBg} px-2 py-1 border-r border-[var(--color-lw-border-sub)] w-[160px] min-w-[160px]`}>
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
@@ -530,7 +530,7 @@ export function AssignmentSheetView({ role, username }: Props) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-[1900px] mx-auto px-4 py-6 space-y-4">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -604,10 +604,10 @@ export function AssignmentSheetView({ role, username }: Props) {
           <table className="border-collapse text-sm w-full">
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
-                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[90px] min-w-[90px] border-b border-r border-[var(--color-lw-border)]">Role</th>
-                <th className="sticky left-[90px] z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-[var(--color-lw-border)]">Player</th>
+                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[100px] min-w-[100px] border-b border-r border-[var(--color-lw-border)]">Role</th>
+                <th className="sticky left-[100px] z-10 bg-[var(--color-lw-surface)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[160px] min-w-[160px] border-b border-r border-[var(--color-lw-border)]">Player</th>
                 {columns.map((col, colIdx) => (
-                  <th key={col.id} className={`text-center px-2 py-2 border-b border-r border-[var(--color-lw-border)] min-w-[80px] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
+                  <th key={col.id} className={`text-center px-2 py-2 border-b border-r border-[var(--color-lw-border)] min-w-[120px] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
                     <BossColumnHeader
                       col={col} canWrite={canWrite}
                       onUpload={f => uploadImage(col.id, f)}
@@ -630,10 +630,13 @@ export function AssignmentSheetView({ role, username }: Props) {
                       <tr>
                         <td
                           colSpan={2 + columns.length}
-                          style={{ borderLeftColor: accent }}
-                          className="px-4 py-1.5 bg-[var(--color-lw-surface)]/60 border-y border-[var(--color-lw-border-sub)] border-l-2"
+                          style={{ borderLeftColor: accent, backgroundImage: `linear-gradient(to right, ${accent}12, transparent 40%)` }}
+                          className="px-4 py-2.5 border-y border-[var(--color-lw-border-sub)] border-l-[3px]"
                         >
-                          <span style={{ color: accent }} className="text-[10px] font-bold uppercase tracking-widest opacity-90">{section}</span>
+                          <div className="flex items-center gap-2.5">
+                            <span style={{ color: accent }} className="text-xs font-bold uppercase tracking-widest">{section}</span>
+                            <span className="text-[10px] text-[var(--color-lw-text-muted)] tabular-nums">{sectionRows.length} {sectionRows.length === 1 ? 'role' : 'roles'}</span>
+                          </div>
                         </td>
                       </tr>
 
