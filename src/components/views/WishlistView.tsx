@@ -153,7 +153,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             <div className="space-y-6">
               {Object.entries(grouped).map(([instance, bosses]) => (
                 <div key={instance}>
-                  <h3 className="text-xs font-bold text-[var(--color-lw-gold-300)] uppercase tracking-widest mb-3">
+                  <h3 className="text-sm font-bold text-[var(--color-lw-text)] uppercase tracking-wider mb-3 flex items-center gap-3 before:content-[''] before:flex-1 before:h-px before:bg-[var(--color-lw-border)] after:content-[''] after:flex-1 after:h-px after:bg-[var(--color-lw-border)]">
                     {instance}
                   </h3>
                   <div className="space-y-2">
@@ -180,8 +180,11 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                 ].join(' ')}
                               >
                                 {/* Heart */}
-                                <span className={`text-base shrink-0 transition-transform group-hover:scale-110 ${wished ? 'text-[var(--color-lw-gold-300)]' : 'text-[var(--color-lw-text-muted)]'}`}>
-                                  {wished ? '♥' : '♡'}
+                                <span
+                                  className="text-base shrink-0 transition-all group-hover:scale-110"
+                                  style={{ color: wished ? 'var(--color-lw-gold-300)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
+                                >
+                                  ♥
                                 </span>
 
                                 {item.icon_url && (
