@@ -28,7 +28,9 @@
 @layer base {
   body {
     background-color: var(--color-lw-base);
-    background-image: radial-gradient(ellipse at 60% 0%, #0e1628 0%, var(--color-lw-base) 65%);
+    background-image:
+      radial-gradient(ellipse at 70% -10%, #1a1040 0%, transparent 55%),
+      radial-gradient(ellipse at 10% 80%, #0a1828 0%, transparent 50%);
     background-attachment: fixed;
     color: var(--color-lw-text);
     font-family: var(--font-body);

@@ -112,7 +112,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
   const roleKey = role ?? 'raider';
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-56 border-r border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]">
+    <aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-56 border-r border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]" style={{ boxShadow: '4px 0 32px rgba(124, 77, 255, 0.08)' }}>
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--color-lw-border-sub)]">

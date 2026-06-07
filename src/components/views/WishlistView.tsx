@@ -177,14 +177,14 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   'relative w-full text-left px-4 py-3 flex items-center gap-3 transition-all group',
                                   profile ? 'cursor-pointer' : 'cursor-default',
                                   wished
-                                    ? 'bg-[var(--color-lw-gold-400)]/5 hover:bg-[var(--color-lw-gold-400)]/10 border-l-2 border-l-[var(--color-lw-gold-500)]/50'
-                                    : 'border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/50 hover:border-l-[var(--color-lw-border)]',
+                                    ? 'bg-[#a335ee]/5 hover:bg-[#a335ee]/10 border-l-2 border-l-[#a335ee]/50'
+                                    : 'border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/50 hover:border-l-[#a335ee]/30',
                                 ].join(' ')}
                               >
                                 {/* Heart */}
                                 <span
                                   className="text-base shrink-0 transition-all group-hover:scale-110"
-                                  style={{ color: wished ? 'var(--color-lw-gold-300)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
+                                  style={{ color: wished ? '#a335ee' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
                                 >
                                   ♥
                                 </span>
@@ -199,12 +199,13 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="text-sm text-[var(--color-lw-gold-300)]/90 hover:text-[var(--color-lw-gold-300)] hover:underline"
+                                    className="text-sm font-medium hover:underline"
+                                  style={{ color: '#a335ee' }}
                                   >
                                     {item.item_name}
                                   </a>
                                 ) : (
-                                  <span className="text-sm text-[var(--color-lw-gold-300)]/90">{item.item_name}</span>
+                                  <span className="text-sm font-medium" style={{ color: '#a335ee' }}>{item.item_name}</span>
                                 )}
 
                                 {wished && profile && myWish && !item.stars_disabled && (
