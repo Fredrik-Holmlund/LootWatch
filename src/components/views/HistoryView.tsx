@@ -7,117 +7,72 @@ import { AddLootEntry } from '../history/AddLootEntry';
 import { LootTable } from '../history/LootTable';
 import { PlayerSummary } from '../history/PlayerSummary';
 import { WarningsPanel } from '../history/WarningsPanel';
+import { PageHeader } from '../ui/PageHeader';
+import { SubTabs } from '../ui/SubTabs';
+import { Button } from '../ui/Button';
+import { PageSpinner } from '../ui/Spinner';
 
 interface HistoryViewProps {
   role: UserRole | null;
 }
 
 type SubTab = 'table' | 'players' | 'warnings';
-type Panel = 'none' | 'import' | 'add';
+type Panel  = 'none'  | 'import' | 'add';
 
 export function HistoryView({ role }: HistoryViewProps) {
   const { entries, loading, error, importEntries, deleteEntry, bulkDeleteEntries, updateNote, updateRaid, updateBoss, updateResponse } = useLootHistory();
   const [subTab, setSubTab] = useState<SubTab>('table');
-  const [panel, setPanel] = useState<Panel>('none');
+  const [panel,  setPanel]  = useState<Panel>('none');
 
   function togglePanel(p: Panel) {
     setPanel((cur) => (cur === p ? 'none' : p));
   }
 
+  const tabs = [
+    { id: 'table'    as SubTab, label: 'Loot Table' },
+    { id: 'players'  as SubTab, label: 'Player Summary' },
+    { id: 'warnings' as SubTab, label: '⚠ Warnings' },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white">Loot History</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{entries.length} entries recorded</p>
-        </div>
-        {canEdit(role) && (
-          <div className="flex items-center gap-2">
-            <button
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+
+      <PageHeader
+        title="Loot History"
+        subtitle={`${entries.length} entries recorded`}
+        actions={canEdit(role) ? (
+          <>
+            <Button
+              variant={panel === 'add' ? 'active' : 'default'}
               onClick={() => togglePanel('add')}
-              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-                panel === 'add'
-                  ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10'
-                  : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
             >
               {panel === 'add' ? 'Cancel' : '+ Add Entry'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={panel === 'import' ? 'active' : 'default'}
               onClick={() => togglePanel('import')}
-              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-                panel === 'import'
-                  ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10'
-                  : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
             >
               {panel === 'import' ? 'Hide Import' : '+ Import CSV'}
-            </button>
-          </div>
-        )}
-      </div>
+            </Button>
+          </>
+        ) : undefined}
+      />
 
-      {panel === 'add' && canEdit(role) && (
-        <AddLootEntry
-          onAdd={importEntries}
-          onClose={() => setPanel('none')}
-        />
-      )}
+      {panel === 'add'    && canEdit(role) && <AddLootEntry onAdd={importEntries} onClose={() => setPanel('none')} />}
+      {panel === 'import' && canEdit(role) && <CSVImport existingEntries={entries} onImport={importEntries} />}
 
-      {panel === 'import' && canEdit(role) && (
-        <CSVImport existingEntries={entries} onImport={importEntries} />
-      )}
-
-      {/* Sub-tabs */}
-      <div className="flex gap-1 border-b border-gray-800">
-        {([
-          ['table', 'Loot Table'],
-          ['players', 'Player Summary'],
-          ['warnings', '⚠️ Warnings'],
-        ] as [SubTab, string][]).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setSubTab(id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              subTab === id
-                ? 'border-yellow-500 text-yellow-400'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SubTabs tabs={tabs} active={subTab} onChange={setSubTab} />
 
       {error && (
-        <div className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
-          Error: {error}
+        <div className="text-red-400 text-sm bg-red-950/40 border border-red-900/40 rounded-lg px-4 py-3">
+          {error}
         </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16 text-gray-600">
-          <div className="flex items-center gap-2">
-            <span className="animate-spin">⏳</span>
-            <span className="text-sm">Loading…</span>
-          </div>
-        </div>
-      ) : (
+      {loading ? <PageSpinner /> : (
         <>
-          {subTab === 'table' && (
-            <LootTable
-              entries={entries}
-              role={role}
-              onDelete={deleteEntry}
-              onBulkDelete={bulkDeleteEntries}
-              onUpdateNote={updateNote}
-              onUpdateRaid={updateRaid}
-              onUpdateBoss={updateBoss}
-              onUpdateResponse={updateResponse}
-            />
-          )}
-          {subTab === 'players' && <PlayerSummary entries={entries} />}
+          {subTab === 'table'    && <LootTable entries={entries} role={role} onDelete={deleteEntry} onBulkDelete={bulkDeleteEntries} onUpdateNote={updateNote} onUpdateRaid={updateRaid} onUpdateBoss={updateBoss} onUpdateResponse={updateResponse} />}
+          {subTab === 'players'  && <PlayerSummary entries={entries} />}
           {subTab === 'warnings' && <WarningsPanel entries={entries} />}
         </>
       )}
