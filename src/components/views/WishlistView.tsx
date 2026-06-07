@@ -177,14 +177,14 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   'relative w-full text-left px-4 py-3 flex items-center gap-3 transition-all group',
                                   profile ? 'cursor-pointer' : 'cursor-default',
                                   wished
-                                    ? 'bg-[#a335ee]/5 hover:bg-[#a335ee]/10 border-l-2 border-l-[#a335ee]/50'
-                                    : 'odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/60 hover:border-l-[#a335ee]/30',
+                                    ? 'bg-[var(--color-lw-purple-500)]/8 hover:bg-[var(--color-lw-purple-500)]/12 border-l-2 border-l-[var(--color-lw-purple-400)]/60'
+                                    : 'odd:bg-[var(--color-lw-surface)]/25 even:bg-transparent border-l-2 border-l-transparent hover:bg-[var(--color-lw-surface)]/60 hover:border-l-[var(--color-lw-purple-400)]/30',
                                 ].join(' ')}
                               >
                                 {/* Heart */}
                                 <span
                                   className="text-base shrink-0 transition-all group-hover:scale-110"
-                                  style={{ color: wished ? '#a335ee' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
+                                  style={{ color: wished ? 'var(--color-lw-purple-400)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
                                 >
                                   ♥
                                 </span>
@@ -244,7 +244,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
 
                                 {count > 0 && canSeeOthers && (
                                   <span className="relative group/wishers shrink-0 ml-auto" onClick={(e) => e.stopPropagation()}>
-                                    <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 cursor-default">
+                                    <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 cursor-default font-medium">
                                       ♥ {count}
                                     </span>
                                     <div className="absolute right-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">

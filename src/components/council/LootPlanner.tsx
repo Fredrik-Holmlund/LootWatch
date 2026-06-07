@@ -339,7 +339,7 @@ function ItemRow({
         {/* Wish count badge */}
         {wishers.length > 0 && (
           <span className="relative group/wishers">
-            <span className="text-xs text-purple-400 bg-purple-400/10 border border-purple-400/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default">
+            <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default font-medium">
               ♥ {wishers.length}
             </span>
             <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
