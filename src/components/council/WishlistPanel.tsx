@@ -15,34 +15,19 @@ interface PlayerLootSummary {
   responses: Record<string, number>;
 }
 
-/**
- * Shows a per-player summary of awarded loot to help council
- * plan upcoming raid distribution.
- */
 export function WishlistPanel({ entries }: WishlistPanelProps) {
   const summaries = useMemo<PlayerLootSummary[]>(() => {
     const map = new Map<string, PlayerLootSummary>();
-
     const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-
     for (const e of sorted) {
       const name = stripRealm(e.player_name);
-      if (!map.has(name)) {
-        map.set(name, {
-          name,
-          playerClass: e.player_class,
-          total: 0,
-          lastLoot: null,
-          responses: {},
-        });
-      }
+      if (!map.has(name)) map.set(name, { name, playerClass: e.player_class, total: 0, lastLoot: null, responses: {} });
       const s = map.get(name)!;
       s.total++;
       s.lastLoot = e.item_name;
       const resp = e.response || 'Other';
       s.responses[resp] = (s.responses[resp] ?? 0) + 1;
     }
-
     return Array.from(map.values()).sort((a, b) => a.total - b.total);
   }, [entries]);
 
@@ -50,7 +35,7 @@ export function WishlistPanel({ entries }: WishlistPanelProps) {
 
   if (summaries.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600 text-sm">
+      <div className="text-center py-12 text-[var(--color-lw-text-muted)] text-sm">
         No loot history available. Import CSV data in the History tab first.
       </div>
     );
@@ -58,46 +43,44 @@ export function WishlistPanel({ entries }: WishlistPanelProps) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-gray-600 mb-4">
+      <p className="text-xs text-[var(--color-lw-text-muted)] mb-4">
         Players sorted by fewest items received — useful for prioritizing distributions.
       </p>
       {summaries.map((s) => {
         const topResponse = Object.entries(s.responses).sort((a, b) => b[1] - a[1])[0];
+        const pct = (s.total / maxTotal) * 100;
         return (
-          <div
-            key={s.name}
-            className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors"
-          >
+          <div key={s.name} className="lw-card p-4 hover:shadow-[var(--shadow-card-hover)] transition-shadow">
             <div className="flex items-center gap-4">
               {/* Name + class */}
               <div className="w-36 flex-shrink-0">
                 <p className="font-medium text-sm truncate" style={{ color: getClassColor(s.playerClass) }}>
                   {s.name}
                 </p>
-                <p className="text-xs text-gray-600 truncate">{s.playerClass ?? 'Unknown'}</p>
+                <p className="text-xs text-[var(--color-lw-text-muted)] truncate">{s.playerClass ?? 'Unknown'}</p>
               </div>
 
-              {/* Progress bar */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-yellow-600 to-yellow-400"
-                      style={{ width: `${(s.total / maxTotal) * 100}%` }}
-                    />
+              {/* Bar with text inside */}
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="relative h-6 bg-[var(--color-lw-border)] rounded overflow-hidden">
+                  <div
+                    className="absolute inset-y-0 left-0 rounded transition-all duration-500 bg-gradient-to-r from-[var(--color-lw-gold-500)] to-[var(--color-lw-gold-400)]"
+                    style={{ width: `${pct}%`, opacity: 0.85 }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-between px-2">
+                    <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.75)' }}>{s.total} items</span>
                   </div>
-                  <span className="text-xs font-bold text-gray-300 w-8 text-right">{s.total}</span>
                 </div>
                 {s.lastLoot && (
-                  <p className="text-xs text-gray-600 truncate">Last: {s.lastLoot}</p>
+                  <p className="text-xs text-[var(--color-lw-text-muted)] truncate">Last: {s.lastLoot}</p>
                 )}
               </div>
 
               {/* Top response */}
               {topResponse && (
                 <div className="text-right flex-shrink-0 hidden sm:block">
-                  <p className="text-xs text-gray-500">{topResponse[0]}</p>
-                  <p className="text-xs text-gray-700">×{topResponse[1]}</p>
+                  <p className="text-xs text-[var(--color-lw-text-sub)]">{topResponse[0]}</p>
+                  <p className="text-xs text-[var(--color-lw-text-muted)]">×{topResponse[1]}</p>
                 </div>
               )}
             </div>

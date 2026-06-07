@@ -3,11 +3,11 @@ import type { PlayerPriority } from '../../hooks/usePriorityScore';
 
 function ScoreBar({ value, color }: { value: number; color: string }) {
   return (
-    <div className="flex items-center gap-1.5 w-full">
-      <div className="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${value}%`, backgroundColor: color }} />
+    <div className="relative h-5 bg-[var(--color-lw-border)] rounded overflow-hidden">
+      <div className="absolute inset-y-0 left-0 rounded transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color, opacity: 0.8 }} />
+      <div className="absolute inset-0 flex items-center justify-between px-1.5">
+        <span className="text-[10px] font-semibold" style={{ color: 'rgba(0,0,0,0.7)' }}>{value}%</span>
       </div>
-      <span className="text-xs text-gray-500 w-7 text-right">{value}</span>
     </div>
   );
 }
@@ -20,9 +20,9 @@ function scoreColor(score: number): string {
 }
 
 function DroughtLabel({ days }: { days: number }) {
-  if (days >= 999) return <span className="text-xs text-gray-500">Never received</span>;
-  if (days === 0) return <span className="text-xs text-gray-500">Today</span>;
-  return <span className="text-xs text-gray-500">{days}d ago</span>;
+  if (days >= 999) return <span className="text-xs text-[var(--color-lw-text-muted)]">Never received</span>;
+  if (days === 0) return <span className="text-xs text-[var(--color-lw-text-muted)]">Today</span>;
+  return <span className="text-xs text-[var(--color-lw-text-muted)]">{days}d ago</span>;
 }
 
 export function PriorityPanel() {
@@ -30,12 +30,12 @@ export function PriorityPanel() {
   const totalRaids = priorities[0]?.allTimeTotal ?? 0;
 
   if (loading) {
-    return <div className="text-center py-10 text-gray-600 text-sm">Computing priority scores…</div>;
+    return <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Computing priority scores…</div>;
   }
 
   if (priorities.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600 text-sm">
+      <div className="text-center py-12 text-[var(--color-lw-text-muted)] text-sm">
         No data yet. Import loot history and attendance sessions first.
       </div>
     );
@@ -45,27 +45,27 @@ export function PriorityPanel() {
     <div className="space-y-4">
       {/* Weights summary */}
       <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-3 text-xs text-gray-500 bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
+        <div className="flex items-center gap-3 text-xs text-[var(--color-lw-text-muted)] bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg px-4 py-2">
           <span>Weights:</span>
-          <span className="text-blue-400">Rolling att. {weights.attendance}%</span>
+          <span className="text-[#60a5fa]">Rolling att. {weights.attendance}%</span>
           <span className="text-green-400">Streak {weights.streak}%</span>
-          <span className="text-purple-400">Drought {weights.drought}%</span>
-          <span className="text-yellow-400">Loot {weights.loot}%</span>
-          <span className="text-gray-600">· Window: last {attWindow} raids</span>
+          <span className="text-[#a78bfa]">Drought {weights.drought}%</span>
+          <span className="text-[var(--color-lw-gold-300)]">Loot {weights.loot}%</span>
+          <span className="text-[var(--color-lw-text-muted)]">· Window: last {attWindow} raids</span>
         </div>
         <button
           onClick={refresh}
-          className="text-xs px-3 py-1.5 bg-gray-900 border border-gray-800 text-gray-500 hover:text-gray-300 rounded-lg transition-colors"
+          className="text-xs px-3 py-1.5 bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] rounded-lg transition-colors"
         >
           ↻ Refresh
         </button>
-        <p className="text-xs text-gray-700">Adjust weights in Admin → Settings.</p>
+        <p className="text-xs text-[var(--color-lw-text-muted)]">Adjust weights in Admin → Settings.</p>
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 px-4 py-2 border-b border-gray-800 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <div className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 px-4 py-2 border-b border-[var(--color-lw-border)] text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">
           <span>#</span>
           <span>Player</span>
           <span className="text-center">Score</span>
@@ -78,13 +78,13 @@ export function PriorityPanel() {
         {priorities.map((p: PlayerPriority, i) => (
           <div
             key={p.name}
-            className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 items-center px-4 py-2.5 border-b border-gray-800/60 last:border-0 hover:bg-gray-800/20 transition-colors"
+            className="grid grid-cols-[2rem_minmax(120px,1fr)_80px_1fr_1fr_1fr_1fr] gap-3 items-center px-4 py-2.5 border-b border-[var(--color-lw-border)]/60 last:border-0 hover:bg-[var(--color-lw-elevated)]/20 transition-colors"
           >
             {/* Rank */}
-            <span className="text-xs text-gray-600 font-mono">{i + 1}</span>
+            <span className="text-xs text-[var(--color-lw-text-muted)] font-mono">{i + 1}</span>
 
             {/* Name */}
-            <span className="text-sm font-medium text-gray-200 truncate">{p.name}</span>
+            <span className="text-sm font-medium text-[var(--color-lw-text)] truncate">{p.name}</span>
 
             {/* Total score badge */}
             <div className="flex justify-center">
@@ -103,7 +103,7 @@ export function PriorityPanel() {
             {/* Rolling attendance */}
             <div className="space-y-0.5">
               <ScoreBar value={p.attendanceScore} color="#60a5fa" />
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-[var(--color-lw-text-muted)]">
                 {p.rollingAttended}/{p.rollingTotal} last {attWindow} · {p.allTimeAttended}/{p.allTimeTotal} all-time
               </p>
             </div>
@@ -111,7 +111,7 @@ export function PriorityPanel() {
             {/* Streak */}
             <div className="space-y-0.5">
               <ScoreBar value={p.streakScore} color="#4ade80" />
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-[var(--color-lw-text-muted)]">
                 Best: {p.bestStreak} · Now: {p.currentStreak}
               </p>
             </div>
@@ -125,7 +125,7 @@ export function PriorityPanel() {
             {/* Recent loot */}
             <div className="space-y-0.5">
               <ScoreBar value={p.lootScore} color="#fbbf24" />
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-[var(--color-lw-text-muted)]">
                 {p.recentBisCount === 0 ? 'No recent items' : `${p.recentBisCount} item${p.recentBisCount > 1 ? 's' : ''} (6 wks)`}
               </p>
             </div>
@@ -133,7 +133,7 @@ export function PriorityPanel() {
         ))}
       </div>
 
-      <p className="text-xs text-gray-700">
+      <p className="text-xs text-[var(--color-lw-text-muted)]">
         Rolling att. = last {attWindow} raids. Streak scored vs. total raids ({totalRaids}) — a {totalRaids}-raid streak = 100%. Streak counts from first appearance; bench = present.
       </p>
     </div>
