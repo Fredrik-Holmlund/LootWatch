@@ -11,6 +11,9 @@ const INSTANCES = [
 
 const BLANK_FORM = { instance_name: '', boss_name: '', item_name: '', item_id: '', icon_name: '' };
 
+const filterCls = 'bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
+const inputCls  = 'bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-[var(--color-lw-text)] text-xs focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-full transition-colors';
+
 export function RaidLootManager() {
   const [items, setItems] = useState<RaidLoot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +63,6 @@ export function RaidLootManager() {
       } catch (e) {
         console.error(`[fix-icons] Fetch failed for item ${item.item_id}:`, e);
         failed++;
-        // If the first 3 all fail it's likely a network/CORS issue — abort early
         if (i < 3 && failed > i) {
           setError('Icon fetch failed — check browser console (F12) for the error. Likely a network or CORS issue.');
           setFixingIcons(false);
@@ -164,8 +166,6 @@ export function RaidLootManager() {
     setSaving(false);
   }
 
-  const inputCls = 'bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-yellow-500/50 w-full';
-
   return (
     <div className="space-y-4">
       {/* Controls */}
@@ -174,12 +174,12 @@ export function RaidLootManager() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search items…"
-          className="flex-1 min-w-40 bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+          className={`flex-1 min-w-40 ${filterCls}`}
         />
         <select
           value={filterInstance}
           onChange={(e) => { setFilterInstance(e.target.value); setFilterBoss(''); }}
-          className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-yellow-500/50"
+          className={filterCls}
         >
           <option value="">All Raids</option>
           {instances.map((i) => <option key={i} value={i}>{i}</option>)}
@@ -187,12 +187,12 @@ export function RaidLootManager() {
         <select
           value={filterBoss}
           onChange={(e) => setFilterBoss(e.target.value)}
-          className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-yellow-500/50"
+          className={filterCls}
         >
           <option value="">All Bosses</option>
           {bosses.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <span className="text-xs text-gray-600">{filtered.length} items</span>
+        <span className="text-xs text-[var(--color-lw-text-muted)]">{filtered.length} items</span>
         {brokenIconCount > 0 && (
           <button
             onClick={fixBrokenIcons}
@@ -201,54 +201,56 @@ export function RaidLootManager() {
           >
             {fixingIcons && fixProgress
               ? `Fixing icons… ${fixProgress.done}/${fixProgress.total}`
-              : `🔧 Fix icons (${brokenIconCount})`}
+              : `Fix icons (${brokenIconCount})`}
           </button>
         )}
         <button
           onClick={() => setShowAdd((v) => !v)}
           className={`ml-auto text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-            showAdd ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' : 'border-gray-700 text-gray-400 hover:text-white hover:border-gray-600'
+            showAdd
+              ? 'border-[var(--color-lw-purple-500)]/50 text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10'
+              : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)]'
           }`}
         >
           {showAdd ? 'Cancel' : '+ Add Item'}
         </button>
       </div>
 
-      {error && <div className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{error}</div>}
+      {error && <div className="text-red-400 text-xs bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{error}</div>}
 
       {/* Add form */}
       {showAdd && (
-        <div className="bg-gray-900 border border-yellow-500/20 rounded-xl p-4 space-y-3">
-          <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider">New Item</p>
+        <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-purple-500)]/20 rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-[var(--color-lw-purple-400)] uppercase tracking-wider">New Item</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Raid *</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)] mb-1 block">Raid *</label>
               <select value={addForm.instance_name} onChange={(e) => setAddForm((f) => ({ ...f, instance_name: e.target.value }))} className={inputCls}>
                 <option value="">Select raid…</option>
                 {INSTANCES.map((i) => <option key={i} value={i}>{i}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Boss *</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)] mb-1 block">Boss *</label>
               <input value={addForm.boss_name} onChange={(e) => setAddForm((f) => ({ ...f, boss_name: e.target.value }))} placeholder="Boss name" className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Item Name *</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)] mb-1 block">Item Name *</label>
               <input value={addForm.item_name} onChange={(e) => setAddForm((f) => ({ ...f, item_name: e.target.value }))} placeholder="Item name" className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Wowhead Item ID</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)] mb-1 block">Wowhead Item ID</label>
               <input value={addForm.item_id} onChange={(e) => setAddForm((f) => ({ ...f, item_id: e.target.value }))} placeholder="e.g. 28615" type="number" className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Icon Name</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)] mb-1 block">Icon Name</label>
               <input value={addForm.icon_name} onChange={(e) => setAddForm((f) => ({ ...f, icon_name: e.target.value }))} placeholder="e.g. inv_sword_01" className={inputCls} />
             </div>
           </div>
           <button
             onClick={addItem}
             disabled={saving || !addForm.item_name.trim() || !addForm.instance_name || !addForm.boss_name.trim()}
-            className="text-xs px-4 py-1.5 bg-yellow-500 text-gray-950 font-semibold rounded-lg disabled:opacity-40 transition-opacity"
+            className="text-xs px-4 py-1.5 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold rounded-lg disabled:opacity-40 transition-colors"
           >
             {saving ? 'Saving…' : 'Add Item'}
           </button>
@@ -257,27 +259,27 @@ export function RaidLootManager() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>
+        <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>
       ) : (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-800 bg-gray-900/80">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Boss</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Raid</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Item ID</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Whether players can star this item">Stars</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider" title="Hide from wishlist without deleting">Visible</th>
+                <tr className="border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Item</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider hidden sm:table-cell">Boss</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider hidden md:table-cell">Raid</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider hidden lg:table-cell">Item ID</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider" title="Whether players can star this item">Stars</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider" title="Hide from wishlist without deleting">Visible</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/50">
+              <tbody className="divide-y divide-[var(--color-lw-border-sub)]">
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-600 text-sm">No items found</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-10 text-center text-[var(--color-lw-text-muted)] text-sm">No items found</td></tr>
                 ) : filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-800/20 transition-colors group">
+                  <tr key={item.id} className="hover:bg-[var(--color-lw-surface)]/40 transition-colors group">
                     {editingId === item.id ? (
                       <>
                         <td className="px-4 py-2">
@@ -298,7 +300,7 @@ export function RaidLootManager() {
                           <button
                             onClick={() => toggleStarsDisabled(item)}
                             title={item.stars_disabled ? 'Stars disabled — click to enable' : 'Stars enabled — click to disable'}
-                            className={`text-base transition-colors ${item.stars_disabled ? 'text-gray-700 hover:text-gray-500' : 'text-yellow-400 hover:text-yellow-300'}`}
+                            className={`text-base transition-colors ${item.stars_disabled ? 'text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]' : 'text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)]'}`}
                           >
                             ★
                           </button>
@@ -307,30 +309,30 @@ export function RaidLootManager() {
                           <button
                             onClick={() => toggleHidden(item)}
                             title={item.hidden ? 'Hidden from wishlist — click to show' : 'Visible in wishlist — click to hide'}
-                            className={`text-sm transition-colors ${item.hidden ? 'text-gray-700 hover:text-gray-500' : 'text-green-400 hover:text-green-300'}`}
+                            className={`text-sm transition-colors ${item.hidden ? 'text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]' : 'text-green-400 hover:text-green-300'}`}
                           >
                             {item.hidden ? '✕' : '✓'}
                           </button>
                         </td>
                         <td className="px-4 py-2 flex gap-1">
                           <button onClick={() => saveEdit(item.id)} disabled={saving} className="text-xs text-green-400 hover:text-green-300 px-2 py-1 border border-green-500/30 rounded disabled:opacity-40">✓ Save</button>
-                          <button onClick={() => setEditingId(null)} className="text-xs text-gray-500 hover:text-gray-300 px-2 py-1 border border-gray-700 rounded">✕</button>
+                          <button onClick={() => setEditingId(null)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-2 py-1 border border-[var(--color-lw-border)] rounded">✕</button>
                         </td>
                       </>
                     ) : (
                       <>
-                        <td className="px-4 py-2.5 text-gray-200 flex items-center gap-2">
+                        <td className="px-4 py-2.5 text-[var(--color-lw-text)] flex items-center gap-2">
                           {item.icon_url && <img src={item.icon_url} alt="" className="w-5 h-5 rounded flex-shrink-0" />}
                           {item.item_name}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-500 text-xs hidden sm:table-cell">{item.boss_name}</td>
-                        <td className="px-4 py-2.5 text-gray-500 text-xs hidden md:table-cell">{item.instance_name}</td>
-                        <td className="px-4 py-2.5 text-gray-600 text-xs hidden lg:table-cell">{item.item_id ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-lw-text-sub)] text-xs hidden sm:table-cell">{item.boss_name}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-lw-text-muted)] text-xs hidden md:table-cell">{item.instance_name}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-lw-text-muted)] text-xs hidden lg:table-cell">{item.item_id ?? '—'}</td>
                         <td className="px-4 py-2.5 text-center">
                           <button
                             onClick={() => toggleStarsDisabled(item)}
                             title={item.stars_disabled ? 'Stars disabled — click to enable' : 'Stars enabled — click to disable'}
-                            className={`text-base transition-colors ${item.stars_disabled ? 'text-gray-700 hover:text-gray-500' : 'text-yellow-400 hover:text-yellow-300'}`}
+                            className={`text-base transition-colors ${item.stars_disabled ? 'text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]' : 'text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-400)]'}`}
                           >
                             ★
                           </button>
@@ -339,14 +341,14 @@ export function RaidLootManager() {
                           <button
                             onClick={() => toggleHidden(item)}
                             title={item.hidden ? 'Hidden from wishlist — click to show' : 'Visible in wishlist — click to hide'}
-                            className={`text-sm transition-colors ${item.hidden ? 'text-gray-700 hover:text-gray-500' : 'text-green-400 hover:text-green-300'}`}
+                            className={`text-sm transition-colors ${item.hidden ? 'text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]' : 'text-green-400 hover:text-green-300'}`}
                           >
                             {item.hidden ? '✕' : '✓'}
                           </button>
                         </td>
                         <td className="px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="flex gap-2 justify-end">
-                            <button onClick={() => startEdit(item)} className="text-xs text-gray-400 hover:text-white">Edit</button>
+                            <button onClick={() => startEdit(item)} className="text-xs text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)]">Edit</button>
                             <button onClick={() => deleteItem(item.id)} className="text-xs text-red-500 hover:text-red-400">✕</button>
                           </div>
                         </td>

@@ -12,6 +12,8 @@ interface AddLootEntryProps {
   onClose: () => void;
 }
 
+const inputCls = 'w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
+
 export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
   const { players } = usePlayers();
   const { loot: raidLoot } = useRaidLoot();
@@ -110,26 +112,23 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
     };
 
     const err = await onAdd([entry]);
-    if (err) {
-      setError(err);
-    } else {
-      onClose();
-    }
+    if (err) setError(err);
+    else onClose();
     setSaving(false);
   }
 
-  const nameColor = getClassColor(selectedClass);
+  const dropdownCls = 'absolute left-0 top-full mt-1 w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-xl z-20 overflow-hidden';
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-300">Add Loot Entry</h3>
+    <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl p-5 space-y-4">
+      <p className="text-sm font-semibold text-[var(--color-lw-text)]">Add Loot Entry</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
           {/* Player */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Player <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Player <span className="text-red-400">*</span></label>
             <div className="relative">
               <input
                 ref={playerRef}
@@ -139,21 +138,21 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
                 onKeyDown={handlePlayerKey}
                 placeholder="Type to search roster…"
                 required
-                style={playerName && selectedClass ? { color: nameColor } : undefined}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
+                style={playerName && selectedClass ? { color: getClassColor(selectedClass) } : undefined}
+                className={inputCls}
               />
               {playerSuggestions.length > 0 && (
-                <ul className="absolute left-0 top-full mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-20 overflow-hidden">
+                <ul className={dropdownCls}>
                   {playerSuggestions.map((p, i) => (
                     <li
                       key={p.id}
                       onMouseDown={() => selectPlayer(p)}
-                      className={`px-3 py-2 text-sm cursor-pointer flex items-center gap-2 ${i === playerHiIdx ? 'bg-gray-700' : 'hover:bg-gray-700/60'}`}
+                      className={`px-3 py-2 text-sm cursor-pointer flex items-center gap-2 ${i === playerHiIdx ? 'bg-[var(--color-lw-border)]' : 'hover:bg-[var(--color-lw-border)]/60'}`}
                     >
                       <span style={{ color: getClassColor(p.player_class) }} className="font-medium">
                         {stripRealm(p.name)}
                       </span>
-                      {p.player_class && <span className="text-xs text-gray-500">{p.player_class}</span>}
+                      {p.player_class && <span className="text-xs text-[var(--color-lw-text-muted)]">{p.player_class}</span>}
                     </li>
                   ))}
                 </ul>
@@ -163,7 +162,7 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
 
           {/* Item */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Item <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Item <span className="text-red-400">*</span></label>
             <div className="relative">
               <input
                 ref={itemRef}
@@ -173,18 +172,18 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
                 onKeyDown={handleItemKey}
                 placeholder="Type to search items…"
                 required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
+                className={inputCls}
               />
               {itemSuggestions.length > 0 && (
-                <ul className="absolute left-0 top-full mt-1 w-full min-w-72 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-20 overflow-hidden">
+                <ul className={`${dropdownCls} min-w-72`}>
                   {itemSuggestions.map((item, i) => (
                     <li
                       key={item.id}
                       onMouseDown={() => selectItem(item)}
-                      className={`px-3 py-2 cursor-pointer ${i === itemHiIdx ? 'bg-gray-700' : 'hover:bg-gray-700/60'}`}
+                      className={`px-3 py-2 cursor-pointer ${i === itemHiIdx ? 'bg-[var(--color-lw-border)]' : 'hover:bg-[var(--color-lw-border)]/60'}`}
                     >
-                      <p className="text-sm text-yellow-300/90">{item.item_name}</p>
-                      <p className="text-xs text-gray-500">{item.boss_name} — {item.instance_name}</p>
+                      <p className="text-sm" style={{ color: '#a335ee' }}>{item.item_name}</p>
+                      <p className="text-xs text-[var(--color-lw-text-muted)]">{item.boss_name} — {item.instance_name}</p>
                     </li>
                   ))}
                 </ul>
@@ -194,74 +193,40 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
 
           {/* Response */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Response</label>
-            <select
-              value={response}
-              onChange={(e) => setResponse(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500"
-            >
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Response</label>
+            <select value={response} onChange={(e) => setResponse(e.target.value)} className={inputCls}>
               {RESPONSES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
 
-          {/* Boss — auto-filled from item */}
+          {/* Boss */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Boss</label>
-            <input
-              type="text"
-              value={boss}
-              onChange={(e) => setBoss(e.target.value)}
-              placeholder="Auto-filled from item"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
-            />
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Boss</label>
+            <input type="text" value={boss} onChange={(e) => setBoss(e.target.value)} placeholder="Auto-filled from item" className={inputCls} />
           </div>
 
-          {/* Raid — auto-filled from item */}
+          {/* Raid */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Raid</label>
-            <input
-              type="text"
-              value={raid}
-              onChange={(e) => setRaid(e.target.value)}
-              placeholder="Auto-filled from item"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
-            />
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Raid</label>
+            <input type="text" value={raid} onChange={(e) => setRaid(e.target.value)} placeholder="Auto-filled from item" className={inputCls} />
           </div>
 
           {/* Date */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500"
-            />
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Date</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
           </div>
 
           {/* Votes */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Votes</label>
-            <input
-              type="number"
-              value={votes}
-              onChange={(e) => setVotes(e.target.value)}
-              placeholder="0"
-              min="0"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
-            />
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Votes</label>
+            <input type="number" value={votes} onChange={(e) => setVotes(e.target.value)} placeholder="0" min="0" className={inputCls} />
           </div>
 
           {/* Notes */}
           <div className="flex flex-col gap-1 sm:col-span-2">
-            <label className="text-xs text-gray-500">Notes</label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional note…"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
-            />
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Notes</label>
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional note…" className={inputCls} />
           </div>
         </div>
 
@@ -271,14 +236,14 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-4 py-1.5 text-gray-400 hover:text-white border border-gray-700 rounded-lg transition-colors"
+            className="text-sm px-4 py-1.5 text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] border border-[var(--color-lw-border)] rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || !playerName.trim() || !itemName.trim()}
-            className="text-sm px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-semibold rounded-lg transition-colors disabled:opacity-50"
+            className="text-sm px-4 py-1.5 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Add Entry'}
           </button>

@@ -19,14 +19,14 @@ interface NavigationProps {
 const roleColor: Record<string, string> = {
   admin:   'text-red-400',
   council: 'text-[var(--color-lw-gold-300)]',
-  planner: 'text-blue-400',
+  planner: 'text-[var(--color-lw-purple-400)]',
   raider:  'text-[var(--color-lw-text-sub)]',
 };
 
 const roleBg: Record<string, string> = {
-  admin:   'bg-red-950/60 border-red-900/40',
-  council: 'bg-yellow-950/40 border-yellow-900/30',
-  planner: 'bg-blue-950/50 border-blue-900/30',
+  admin:   'bg-red-950/40 border-red-900/40',
+  council: 'bg-[var(--color-lw-gold-400)]/5 border-[var(--color-lw-gold-500)]/20',
+  planner: 'bg-[var(--color-lw-purple-500)]/10 border-[var(--color-lw-purple-500)]/25',
   raider:  'bg-[var(--color-lw-elevated)] border-[var(--color-lw-border)]',
 };
 
