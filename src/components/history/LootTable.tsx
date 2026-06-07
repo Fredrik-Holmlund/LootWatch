@@ -144,7 +144,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
   async function saveBoss(id: string) { onUpdateBoss?.(id, bossValue.trim()); setEditingBoss(null); }
   async function saveResponse(id: string, response: string) { onUpdateResponse?.(id, response); setEditingResponse(null); }
 
-  const filterCls = 'bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
+  const filterCls = 'lw-card rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
 
   return (
     <div className="space-y-3">
@@ -194,7 +194,7 @@ export function LootTable({ entries, role, onDelete, onBulkDelete, onUpdateNote,
       </div>
 
       {/* Table */}
-      <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+      <div className="lw-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

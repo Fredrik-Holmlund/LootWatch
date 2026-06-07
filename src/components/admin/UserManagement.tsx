@@ -140,7 +140,7 @@ export function UserManagement({ currentUserId }: UserManagementProps) {
       ) : profiles.length === 0 ? (
         <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">No users registered yet.</div>
       ) : (
-        <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+        <div className="lw-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60">

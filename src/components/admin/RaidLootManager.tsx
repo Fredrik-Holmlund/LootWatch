@@ -11,7 +11,7 @@ const INSTANCES = [
 
 const BLANK_FORM = { instance_name: '', boss_name: '', item_name: '', item_id: '', icon_name: '' };
 
-const filterCls = 'bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
+const filterCls = 'lw-card rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors';
 const inputCls  = 'bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-[var(--color-lw-text)] text-xs focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-full transition-colors';
 
 export function RaidLootManager() {
@@ -261,7 +261,7 @@ export function RaidLootManager() {
       {loading ? (
         <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>
       ) : (
-        <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+        <div className="lw-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -117,10 +117,10 @@ export function AddLootEntry({ onAdd, onClose }: AddLootEntryProps) {
     setSaving(false);
   }
 
-  const dropdownCls = 'absolute left-0 top-full mt-1 w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-xl z-20 overflow-hidden';
+  const dropdownCls = 'absolute left-0 top-full mt-1 w-full lw-card rounded-lg shadow-xl z-20 overflow-hidden';
 
   return (
-    <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl p-5 space-y-4">
+    <div className="lw-card p-5 space-y-4">
       <p className="text-sm font-semibold text-[var(--color-lw-text)]">Add Loot Entry</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">

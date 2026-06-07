@@ -99,7 +99,7 @@ export function CSVImport({ existingEntries, onImport }: CSVImportProps) {
   const dropZoneCls = 'flex-1 flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-lw-border)] rounded-xl p-6 cursor-pointer hover:border-[var(--color-lw-purple-500)]/50 hover:bg-[var(--color-lw-purple-500)]/5 transition-colors group';
 
   return (
-    <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl p-5 space-y-4">
+    <div className="lw-card p-5 space-y-4">
       <p className="text-sm font-semibold text-[var(--color-lw-text)]">Import RCLootCouncil CSV</p>
 
       {mode === 'idle' && (

@@ -2,21 +2,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lw-base:       #13151f;
-  --color-lw-surface:    #1b1e2d;
-  --color-lw-elevated:   #22263a;
-  --color-lw-card:       #272b3e;
-  --color-lw-border:     #363a52;
-  --color-lw-border-sub: #2a2e42;
+  --color-lw-base:       #14161f;
+  --color-lw-surface:    #1a1d28;
+  --color-lw-elevated:   #1e2130;
+  --color-lw-card:       #232638;
+  --color-lw-border:     rgba(255,255,255,0.07);
+  --color-lw-border-sub: rgba(255,255,255,0.04);
 
   --color-lw-gold-300: #e4bf6a;
   --color-lw-gold-400: #c9a227;
   --color-lw-gold-500: #a8841f;
 
-  /* Cyan accent — replaces purple everywhere automatically */
-  --color-lw-purple-400: #4dd0e1;
-  --color-lw-purple-500: #00b8d4;
-  --color-lw-purple-600: #0097b2;
+  /* Green accent — matches wowtbc.gg exactly */
+  --color-lw-purple-400: #44cf6c;
+  --color-lw-purple-500: #28a74e;
+  --color-lw-purple-600: #1d8a3c;
 
   --color-lw-text:       #dde3ed;
   --color-lw-text-sub:   #8890a4;
@@ -24,14 +24,18 @@
 
   --font-display: 'Cinzel', serif;
   --font-body:    'Inter', sans-serif;
+
+  /* Shadow tokens */
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-card-hover: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.09);
 }
 
 @layer base {
   body {
     background-color: var(--color-lw-base);
     background-image:
-      radial-gradient(ellipse at 75% 0%, rgba(0, 184, 212, 0.06) 0%, transparent 45%),
-      radial-gradient(ellipse at 15% 90%, rgba(77, 208, 225, 0.04) 0%, transparent 40%);
+      radial-gradient(ellipse at 80% 10%, rgba(68,207,108,0.06) 0%, transparent 40%),
+      radial-gradient(ellipse at 5%  85%, rgba(68,207,108,0.04) 0%, transparent 35%);
     color: var(--color-lw-text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
@@ -40,16 +44,24 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #363a52 #1b1e2d;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
   }
 
   *::-webkit-scrollbar { width: 5px; height: 5px; }
-  *::-webkit-scrollbar-track { background: #1b1e2d; }
-  *::-webkit-scrollbar-thumb { background: #363a52; border-radius: 4px; }
-  *::-webkit-scrollbar-thumb:hover { background: #4a4f6a; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 }
 
 @layer utilities {
+  .lw-card {
+    background: var(--color-lw-elevated);
+    box-shadow: var(--shadow-card);
+    border-radius: 0.75rem;
+  }
+  .lw-card-hover:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
   .animate-fade-in {
     animation: fadeIn 0.18s ease-out both;
   }

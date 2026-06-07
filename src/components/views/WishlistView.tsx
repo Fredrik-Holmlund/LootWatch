@@ -158,7 +158,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                   </h3>
                   <div className="space-y-2">
                     {sortBosses(instance, Object.keys(bosses)).map((boss) => (
-                      <div key={boss} className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+                      <div key={boss} className="lw-card overflow-hidden">
                         <div className="px-4 py-2.5 bg-[var(--color-lw-surface)]/60 border-b border-[var(--color-lw-border-sub)]">
                           <p className="text-sm font-semibold text-[var(--color-lw-text)]">{boss}</p>
                         </div>
@@ -287,7 +287,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                 key={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/50"
+                className="lw-card rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/50"
               >
                 <option value="">{placeholder}</option>
                 {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -299,7 +299,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
           {allWishes.length === 0 ? (
             <div className="text-center py-12 text-[var(--color-lw-text-muted)] text-sm">No wishes yet.</div>
           ) : (
-            <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+            <div className="lw-card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60">

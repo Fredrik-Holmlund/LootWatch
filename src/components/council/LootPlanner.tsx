@@ -159,7 +159,7 @@ function BossSection({ boss, items, players, priorityDataMap, attWindow, getAwar
   updateItemNote: (id: number, note: string) => Promise<string | null>;
 }) {
   return (
-    <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg">
+    <div className="lw-card rounded-lg">
       <div className="px-4 py-2 bg-[var(--color-lw-surface)]/60 border-b border-[var(--color-lw-border)] rounded-t-lg">
         <p className="text-sm font-semibold text-[var(--color-lw-text-sub)]">{boss}</p>
       </div>
@@ -405,7 +405,7 @@ function ItemRow({
                   className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-44 transition-colors"
                 />
                 {suggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full mt-1 w-52 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-lg z-20 overflow-hidden">
+                  <ul className="absolute left-0 top-full mt-1 w-52 lw-card rounded-lg shadow-lg z-20 overflow-hidden">
                     {suggestions.map((p, i) => (
                       <li
                         key={p.id}
@@ -667,7 +667,7 @@ function CandidatePill({
 
       {/* Candidate note editor */}
       {editingNote && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 w-56">
+        <div className="absolute left-0 top-full mt-1 z-50 lw-card rounded-lg shadow-xl p-2 w-56">
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}

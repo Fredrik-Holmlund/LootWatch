@@ -50,7 +50,7 @@ function StatCard({ label, value, accent = 'gold' }: StatCardProps) {
 
   return (
     <div
-      className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl p-4 border-l-2"
+      className="lw-card p-4 border-l-2"
       style={{ borderLeftColor: accentColor }}
     >
       <p className="text-2xl font-bold tabular-nums" style={{ color: accentColor }}>{value}</p>
