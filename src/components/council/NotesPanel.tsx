@@ -10,7 +10,7 @@ interface NotesPanelProps {
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   high:   'text-red-400 bg-red-400/10 border-red-400/20',
-  medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  medium: 'text-[var(--color-lw-gold-300)] bg-yellow-400/10 border-[var(--color-lw-gold-300)]/20',
   low:    'text-green-400 bg-green-400/10 border-green-400/20',
 };
 
@@ -55,14 +55,14 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-300">Loot Priority Notes</h3>
-          <span className="text-xs text-gray-600">({notes.length})</span>
+          <h3 className="text-sm font-semibold text-[var(--color-lw-text-sub)]">Loot Priority Notes</h3>
+          <span className="text-xs text-[var(--color-lw-text-muted)]">({notes.length})</span>
         </div>
         <div className="flex items-center gap-2">
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value as Priority | '')}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none"
+            className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-2 py-1 text-xs text-[var(--color-lw-text-sub)] focus:outline-none"
           >
             <option value="">All Priorities</option>
             <option value="high">High</option>
@@ -73,8 +73,8 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
             onClick={() => setShowForm((s) => !s)}
             className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
               showForm
-                ? 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10'
-                : 'border-gray-700 text-gray-400 hover:text-white'
+                ? 'border-[var(--color-lw-gold-400)]/50 text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10'
+                : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)]'
             }`}
           >
             {showForm ? 'Cancel' : '+ Add Note'}
@@ -84,36 +84,36 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
 
       {/* Add form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
+        <form onSubmit={handleSubmit} className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Player Name</label>
+              <label className="block text-xs text-[var(--color-lw-text-muted)] mb-1">Player Name</label>
               <input
                 value={form.player_name}
                 onChange={(e) => setForm((f) => ({ ...f, player_name: e.target.value }))}
                 placeholder="CharacterName"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-gold-400)]/50"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Item Name</label>
+              <label className="block text-xs text-[var(--color-lw-text-muted)] mb-1">Item Name</label>
               <input
                 value={form.item_name}
                 onChange={(e) => setForm((f) => ({ ...f, item_name: e.target.value }))}
                 placeholder="Item name…"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-gold-400)]/50"
                 required
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Priority</label>
+              <label className="block text-xs text-[var(--color-lw-text-muted)] mb-1">Priority</label>
               <select
                 value={form.priority}
                 onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as Priority }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-lw-text-sub)] focus:outline-none"
               >
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -121,12 +121,12 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Notes</label>
+              <label className="block text-xs text-[var(--color-lw-text-muted)] mb-1">Notes</label>
               <input
                 value={form.notes}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 placeholder="Optional notes…"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-gold-400)]/50"
               />
             </div>
           </div>
@@ -135,7 +135,7 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
             <button
               type="submit"
               disabled={submitting}
-              className="text-xs px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="text-xs px-4 py-1.5 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Add Note'}
             </button>
@@ -146,14 +146,14 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
       {/* Notes list */}
       <div className="space-y-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-10 text-gray-600 text-sm">
+          <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">
             No loot priority notes yet.
           </div>
         ) : (
           filtered.map((note) => (
             <div
               key={note.id}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-start gap-3 group hover:border-gray-700 transition-colors"
+              className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-4 flex items-start gap-3 group hover:border-[var(--color-lw-border)] transition-colors"
             >
               <span className={`text-xs px-2 py-1 rounded-full border font-medium whitespace-nowrap mt-0.5 ${PRIORITY_STYLES[note.priority]}`}>
                 {PRIORITY_LABELS[note.priority]}
@@ -161,8 +161,8 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-medium text-white text-sm">{note.player_name}</span>
-                  <span className="text-gray-600 text-xs">→</span>
-                  <span className="text-gray-300 text-sm">{note.item_name}</span>
+                  <span className="text-[var(--color-lw-text-muted)] text-xs">→</span>
+                  <span className="text-[var(--color-lw-text-sub)] text-sm">{note.item_name}</span>
                 </div>
                 {editingId === note.id ? (
                   <div className="flex gap-2 mt-2">
@@ -174,21 +174,21 @@ export function NotesPanel({ notes, onAdd, onUpdate, onDelete }: NotesPanelProps
                         if (e.key === 'Enter') { onUpdate(note.id, { notes: editNotes }); setEditingId(null); }
                         if (e.key === 'Escape') setEditingId(null);
                       }}
-                      className="flex-1 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+                      className="flex-1 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-gold-400)]/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
                     />
                     <button onClick={() => { onUpdate(note.id, { notes: editNotes }); setEditingId(null); }} className="text-green-400 text-xs">✓</button>
-                    <button onClick={() => setEditingId(null)} className="text-gray-500 text-xs">✕</button>
+                    <button onClick={() => setEditingId(null)} className="text-[var(--color-lw-text-muted)] text-xs">✕</button>
                   </div>
                 ) : note.notes ? (
                   <p
-                    className="text-xs text-gray-500 mt-1 cursor-pointer hover:text-gray-400"
+                    className="text-xs text-[var(--color-lw-text-muted)] mt-1 cursor-pointer hover:text-[var(--color-lw-text-muted)]"
                     onClick={() => { setEditingId(note.id); setEditNotes(note.notes ?? ''); }}
                   >
                     {note.notes}
                   </p>
                 ) : (
                   <p
-                    className="text-xs text-gray-700 mt-1 italic cursor-pointer hover:text-gray-500"
+                    className="text-xs text-[var(--color-lw-text-muted)] mt-1 italic cursor-pointer hover:text-[var(--color-lw-text-muted)]"
                     onClick={() => { setEditingId(note.id); setEditNotes(''); }}
                   >
                     add notes…

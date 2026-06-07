@@ -62,20 +62,20 @@ function formatSubmitted(createdAt: string) {
 function absenceCountColor(count: number): { bg: string; text: string; border: string } {
   if (count >= 5) return { bg: 'bg-red-500/15',    text: 'text-red-400',    border: 'border-red-500/40'    };
   if (count >= 3) return { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/40' };
-  if (count >= 1) return { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/40' };
+  if (count >= 1) return { bg: 'bg-[var(--color-lw-gold-400)]/15', text: 'text-[var(--color-lw-gold-300)]', border: 'border-[var(--color-lw-gold-400)]/40' };
   return           { bg: '',                        text: '',                border: ''                     };
 }
 
 function cardAccentClass(count: number): string {
   if (count >= 5) return 'border-l-red-500/80';
   if (count >= 3) return 'border-l-orange-500/70';
-  return 'border-l-yellow-500/60';
+  return 'border-l-[var(--color-lw-gold-400)]/60';
 }
 
 function missingBadgeClass(count: number): string {
   if (count >= 5) return 'text-red-400 bg-red-950/60 border-red-900/40';
   if (count >= 3) return 'text-orange-400 bg-orange-950/60 border-orange-900/40';
-  return 'text-yellow-400 bg-yellow-950/60 border-yellow-900/40';
+  return 'text-[var(--color-lw-gold-300)] bg-[var(--color-lw-base)] border-[var(--color-lw-border)]';
 }
 
 // ─── Calendar helpers ──────────────────────────────────────────────────────
@@ -280,7 +280,7 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                 <div className="flex items-center justify-between">
                   <CardTitle>{monthLabel}</CardTitle>
                   <div className="flex items-center gap-3 text-xs text-[var(--color-lw-text-muted)]">
-                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500/70 inline-block" />1–2</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-lw-gold-400)]/70 inline-block" />1–2</span>
                     <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500/70 inline-block" />3–4</span>
                     <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70 inline-block" />5+</span>
                   </div>
@@ -383,7 +383,7 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                   <div
                     key={raidDate}
                     ref={(el) => { cardRefs.current[raidDate] = el; }}
-                    className={`bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] border-l-4 ${cardAccentClass(missing.length)} rounded-xl overflow-hidden`}
+                    className={`bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] border-l-4 ${cardAccentClass(missing.length)} rounded-lg overflow-hidden`}
                   >
                     <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-lw-surface)]/50 border-b border-[var(--color-lw-border-sub)]">
                       <div className="flex items-center gap-3">

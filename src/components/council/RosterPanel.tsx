@@ -65,14 +65,14 @@ export function RosterPanel({ historyEntries }: RosterPanelProps) {
   return (
     <div className="space-y-5">
       {missingFromRoster.length > 0 && (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
-          <p className="text-sm text-yellow-300">
+        <div className="bg-[var(--color-lw-gold-400)]/10 border border-[var(--color-lw-gold-400)]/20 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
+          <p className="text-sm text-[var(--color-lw-gold-300)]">
             <span className="font-semibold">{missingFromRoster.length} player{missingFromRoster.length !== 1 ? 's' : ''}</span> in loot history are not in the roster.
           </p>
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex-shrink-0 bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+            className="flex-shrink-0 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
           >
             {syncing ? 'Syncing…' : 'Sync from History'}
           </button>
@@ -80,44 +80,44 @@ export function RosterPanel({ historyEntries }: RosterPanelProps) {
       )}
       {syncResult && <p className="text-xs text-green-400">{syncResult}</p>}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-gray-300 mb-4">Add Guild Member</h3>
+      <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-[var(--color-lw-text-sub)] mb-4">Add Guild Member</h3>
         <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Name</label>
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Playername"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 w-48"
+              className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-gold-400)] w-48"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Class</label>
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Class</label>
             <select
               value={cls}
               onChange={(e) => setCls(e.target.value as WoWClass | '')}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500"
+              className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-[var(--color-lw-gold-400)]"
             >
               <option value="">— any —</option>
               {WOW_CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Rank</label>
+            <label className="text-xs text-[var(--color-lw-text-muted)]">Rank</label>
             <input
               type="text"
               value={rank}
               onChange={(e) => setRank(e.target.value)}
               placeholder="e.g. Raider"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 w-32"
+              className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-sm text-white placeholder-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-gold-400)] w-32"
             />
           </div>
           <button
             type="submit"
             disabled={saving || !name.trim()}
-            className="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+            className="bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
           >
             {saving ? 'Adding…' : 'Add'}
           </button>
@@ -125,27 +125,27 @@ export function RosterPanel({ historyEntries }: RosterPanelProps) {
         {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
       </div>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-800">
-          <p className="text-sm font-semibold text-gray-300">
-            Roster <span className="text-gray-600 font-normal">({players.length})</span>
+      <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--color-lw-border)]">
+          <p className="text-sm font-semibold text-[var(--color-lw-text-sub)]">
+            Roster <span className="text-[var(--color-lw-text-muted)] font-normal">({players.length})</span>
           </p>
         </div>
         {loading ? (
-          <div className="text-center py-10 text-gray-600 text-sm">Loading…</div>
+          <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>
         ) : players.length === 0 ? (
-          <div className="text-center py-10 text-gray-600 text-sm">No members yet.</div>
+          <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">No members yet.</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Class</th>
-                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rank</th>
+              <tr className="border-b border-[var(--color-lw-border)]">
+                <th className="text-left px-4 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Name</th>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Class</th>
+                <th className="text-left px-4 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Rank</th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-[var(--color-lw-border-sub)]">
               {players.map((player) => (
                 <PlayerRow key={player.id} player={player} onDelete={deletePlayer} onUpdate={updatePlayer} />
               ))}
@@ -184,12 +184,12 @@ function PlayerRow({
   }
 
   return (
-    <tr className="hover:bg-gray-800/20 transition-colors">
+    <tr className="hover:bg-[var(--color-lw-elevated)]/20 transition-colors">
       <td className="px-4 py-2.5 font-medium text-white">{stripRealm(player.name)}</td>
       <td className="px-4 py-2.5">
         {player.player_class
           ? <span className="text-sm font-medium" style={{ color }}>{player.player_class}</span>
-          : <span className="text-sm text-gray-600">—</span>}
+          : <span className="text-sm text-[var(--color-lw-text-muted)]">—</span>}
       </td>
       <td className="px-4 py-2.5">
         {editingRank ? (
@@ -199,18 +199,18 @@ function PlayerRow({
               value={rankValue}
               onChange={(e) => setRankValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') saveRank(); if (e.key === 'Escape') setEditingRank(false); }}
-              className="w-28 bg-gray-800 border border-yellow-500/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
+              className="w-28 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-gold-400)]/50 rounded px-2 py-0.5 text-white text-xs focus:outline-none"
             />
             <button onClick={saveRank} className="text-green-400 hover:text-green-300 text-xs px-1">✓</button>
-            <button onClick={() => setEditingRank(false)} className="text-gray-500 hover:text-gray-300 text-xs px-1">✕</button>
+            <button onClick={() => setEditingRank(false)} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-xs px-1">✕</button>
           </div>
         ) : (
           <span
             onClick={() => { setRankValue(player.rank ?? ''); setEditingRank(true); }}
-            className="text-gray-400 text-sm cursor-pointer hover:text-gray-200"
+            className="text-[var(--color-lw-text-muted)] text-sm cursor-pointer hover:text-[var(--color-lw-text)]"
             title="Click to edit rank"
           >
-            {player.rank || <span className="text-gray-700 italic text-xs">add rank…</span>}
+            {player.rank || <span className="text-[var(--color-lw-text-muted)] italic text-xs">add rank…</span>}
           </span>
         )}
       </td>
@@ -218,7 +218,7 @@ function PlayerRow({
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="text-xs text-gray-600 hover:text-red-400 transition-colors disabled:opacity-40"
+          className="text-xs text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors disabled:opacity-40"
         >
           {deleting ? '…' : 'Remove'}
         </button>

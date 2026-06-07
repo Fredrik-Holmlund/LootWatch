@@ -23,47 +23,47 @@ export function SetPasswordForm({ onSetPassword }: SetPasswordFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--color-lw-base)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-1">
           <span className="text-4xl">⚔️</span>
-          <h1 className="text-xl font-bold text-yellow-400 tracking-tight">LootWatch</h1>
-          <p className="text-sm text-gray-500">Set a new password</p>
+          <h1 className="text-xl font-bold text-[var(--color-lw-gold-300)] tracking-tight">LootWatch</h1>
+          <p className="text-sm text-[var(--color-lw-text-muted)]">Set a new password</p>
         </div>
 
         {done ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center space-y-2">
+          <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-6 text-center space-y-2">
             <p className="text-sm text-green-400 font-medium">Password updated!</p>
-            <p className="text-xs text-gray-500">You're now signed in. The app will load shortly.</p>
+            <p className="text-xs text-[var(--color-lw-text-muted)]">You're now signed in. The app will load shortly.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-6 space-y-4">
             <div className="space-y-1">
-              <label className="text-xs text-gray-500">New password</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)]">New password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
                 required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-lw-gold-400)]/50"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-gray-500">Confirm password</label>
+              <label className="text-xs text-[var(--color-lw-text-muted)]">Confirm password</label>
               <input
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--color-lw-gold-400)]/50"
               />
             </div>
             {error && <p className="text-xs text-red-400">{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 bg-yellow-500 text-gray-950 text-sm font-semibold rounded-lg hover:bg-yellow-400 disabled:opacity-40 transition-colors"
+              className="w-full px-4 py-2 bg-[var(--color-lw-purple-500)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-lw-purple-400)] disabled:opacity-40 transition-colors"
             >
               {loading ? 'Saving…' : 'Set password'}
             </button>

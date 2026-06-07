@@ -98,7 +98,7 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
 
   if (stats.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600 text-sm">
+      <div className="text-center py-12 text-[var(--color-lw-text-muted)] text-sm">
         No player data yet. Import a CSV to get started.
       </div>
     );
@@ -107,15 +107,15 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
   return (
     <div className="space-y-4">
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-gray-500">Sort by</span>
+      <span className="text-xs text-[var(--color-lw-text-muted)]">Sort by</span>
       {SORT_OPTIONS.map((opt) => (
         <button
           key={opt.key}
           onClick={() => setSortKey(opt.key)}
           className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
             sortKey === opt.key
-              ? 'bg-gray-700 border-gray-600 text-white'
-              : 'bg-gray-900 border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700'
+              ? 'bg-[var(--color-lw-card)] border-[var(--color-lw-border)] text-white'
+              : 'bg-[var(--color-lw-surface)] border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] hover:border-[var(--color-lw-border)]'
           }`}
           style={sortKey === opt.key ? { color: opt.color } : {}}
         >
@@ -127,18 +127,18 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
       {stats.map((s) => (
         <div
           key={s.name}
-          className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-colors"
+          className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-4 hover:border-[var(--color-lw-border)] transition-colors"
         >
           <div className="flex items-start justify-between mb-3">
             <div>
               <p className="font-semibold" style={{ color: getClassColor(s.playerClass) }}>
                 {s.name}
               </p>
-              <p className="text-xs text-gray-600">{s.playerClass ?? 'Unknown class'}</p>
+              <p className="text-xs text-[var(--color-lw-text-muted)]">{s.playerClass ?? 'Unknown class'}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-white">{s.total}</p>
-              <p className="text-xs text-gray-600">items</p>
+              <p className="text-xs text-[var(--color-lw-text-muted)]">items</p>
             </div>
           </div>
 
@@ -148,7 +148,7 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
               .sort((a, b) => b[1] - a[1])
               .map(([response, count]) => (
                 <div key={response} className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                  <div className="flex-1 bg-[var(--color-lw-elevated)] rounded-full h-1.5 overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -165,17 +165,17 @@ export function PlayerSummary({ entries }: PlayerSummaryProps) {
                   >
                     {shortResponse(response)}
                   </span>
-                  <span className="text-xs text-gray-400 w-4 text-right">{count}</span>
+                  <span className="text-xs text-[var(--color-lw-text-muted)] w-4 text-right">{count}</span>
                 </div>
               ))}
           </div>
 
           {/* Recent items */}
           {s.recentItems.length > 0 && (
-            <div className="border-t border-gray-800 pt-2">
-              <p className="text-xs text-gray-600 mb-1">Recent loot</p>
+            <div className="border-t border-[var(--color-lw-border)] pt-2">
+              <p className="text-xs text-[var(--color-lw-text-muted)] mb-1">Recent loot</p>
               {s.recentItems.map((item, i) => (
-                <p key={i} className="text-xs text-gray-500 truncate" title={item}>• {item}</p>
+                <p key={i} className="text-xs text-[var(--color-lw-text-muted)] truncate" title={item}>• {item}</p>
               ))}
             </div>
           )}
