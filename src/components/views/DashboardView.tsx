@@ -48,14 +48,16 @@ function daysUntil(dateStr: string) {
 
 // ── Attendance bar row ────────────────────────────────────────────────────────
 
-function AttRow({ rank, name, rollingPct, totalPct, total, rolling, isMe }: {
+function AttRow({ rank, name, rollingPct, totalPct, total, rolling, isMe, isPerfect }: {
   rank: number; name: string; rollingPct: number; totalPct: number;
-  total: number; rolling: number; isMe: boolean;
+  total: number; rolling: number; isMe: boolean; isPerfect: boolean;
 }) {
   const color = rollingPct >= 80 ? '#4ade80' : rollingPct >= 60 ? '#facc15' : rollingPct >= 40 ? '#fb923c' : '#f87171';
   return (
     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${isMe ? 'bg-[var(--color-lw-fel-500)]/8 ring-1 ring-[var(--color-lw-fel-500)]/25' : 'hover:bg-[var(--color-lw-base)]/40'}`}>
-      <span className="text-xs text-[var(--color-lw-text-muted)] w-5 text-right shrink-0">{rank}</span>
+      <span className="text-xs w-5 text-right shrink-0">
+        {isPerfect ? <span title="100% attendance">👑</span> : <span className="text-[var(--color-lw-text-muted)]">{rank}</span>}
+      </span>
       <div className="flex-1 relative h-6 bg-[var(--color-lw-border)] rounded overflow-hidden min-w-0">
         <div className="absolute inset-y-0 left-0 rounded transition-all duration-500" style={{ width: `${rollingPct}%`, backgroundColor: color, opacity: 0.8 }} />
         <div className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none" style={{ clipPath: `inset(0 ${100 - rollingPct}% 0 0 round 4px)` }}>
@@ -75,6 +77,13 @@ function AttRow({ rank, name, rollingPct, totalPct, total, rolling, isMe }: {
       </span>
     </div>
   );
+}
+
+function pinnedFirst<T extends [string, { rollingPct: number; pct: number }]>(list: T[], myName: string | null): T[] {
+  if (!myName) return list;
+  const idx = list.findIndex(([n]) => n === myName);
+  if (idx <= 0) return list;
+  return [list[idx], ...list.slice(0, idx), ...list.slice(idx + 1)];
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
@@ -288,16 +297,17 @@ export function DashboardView({ username }: DashboardViewProps) {
             </div>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
-            {hasAttendance ? sortedByRolling.slice(0, 10).map(([name, s], i) => (
+            {hasAttendance ? pinnedFirst(sortedByRolling, myName).slice(0, 10).map(([name, s]) => (
               <AttRow
                 key={name}
-                rank={i + 1}
+                rank={sortedByRolling.findIndex(([n]) => n === name) + 1}
                 name={stripRealm(name)}
                 rollingPct={s.rollingPct}
                 totalPct={s.pct}
                 total={s.rollingTotal}
                 rolling={s.rollingAttended}
                 isMe={name === myName}
+                isPerfect={s.rollingPct === 100}
               />
             )) : <p className="text-xs text-[var(--color-lw-text-muted)]">No attendance data yet</p>}
           </CardBody>
@@ -314,16 +324,17 @@ export function DashboardView({ username }: DashboardViewProps) {
             </div>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
-            {hasAttendance ? sortedByAll.slice(0, 10).map(([name, s], i) => (
+            {hasAttendance ? pinnedFirst(sortedByAll, myName).slice(0, 10).map(([name, s]) => (
               <AttRow
                 key={name}
-                rank={i + 1}
+                rank={sortedByAll.findIndex(([n]) => n === name) + 1}
                 name={stripRealm(name)}
                 rollingPct={s.pct}
                 totalPct={s.pct}
                 total={s.total}
                 rolling={s.attended + s.benched}
                 isMe={name === myName}
+                isPerfect={s.pct === 100}
               />
             )) : <p className="text-xs text-[var(--color-lw-text-muted)]">No attendance data yet</p>}
           </CardBody>
