@@ -61,7 +61,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-lw-base)]">
+    <div className="min-h-screen bg-[var(--color-lw-base)] flex flex-col">
       <Navigation
         activeTab={effectiveTab}
         onTabChange={handleTabChange}
@@ -71,7 +71,7 @@ function App() {
         onSignOut={signOut}
       />
 
-      <main key={effectiveTab} className="animate-fade-in pb-10 px-5 pt-[calc(3.5rem+20px)]">
+      <main key={effectiveTab} className="animate-fade-in pb-10 px-5 pt-[calc(3.5rem+20px)] flex-1">
         <div className={[
           'mx-auto rounded-lg border border-white/[0.05] bg-[var(--color-lw-surface)]',
           'shadow-[0_2px_24px_rgba(0,0,0,0.6)]',
