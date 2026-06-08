@@ -71,19 +71,20 @@ function App() {
         onSignOut={signOut}
       />
 
-      <main key={effectiveTab} className="pt-14 animate-fade-in">
-        {effectiveTab === 'assignments' ? (
-          <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />
-        ) : (
-          <div className="max-w-7xl mx-auto">
-            {effectiveTab === 'dashboard'   && <DashboardView />}
-            {effectiveTab === 'history'     && <HistoryView role={role} />}
-            {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
-            {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
-            {effectiveTab === 'council'     && canEdit(role) && <CouncilView />}
-            {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
-          </div>
-        )}
+      <main key={effectiveTab} className="pt-14 animate-fade-in py-6 px-4">
+        <div className={[
+          'mx-auto rounded-xl border border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]',
+          'shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_4px_32px_rgba(0,0,0,0.5)]',
+          effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
+        ].join(' ')}>
+          {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
+          {effectiveTab === 'dashboard'   && <DashboardView />}
+          {effectiveTab === 'history'     && <HistoryView role={role} />}
+          {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
+          {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
+          {effectiveTab === 'council'     && canEdit(role) && <CouncilView />}
+          {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
+        </div>
       </main>
     </div>
   );
