@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { UserManagement } from '../admin/UserManagement';
 import { RaidLootManager } from '../admin/RaidLootManager';
 import { useAppSettings } from '../../hooks/useAppSettings';
+import { useGuildNotice } from '../../hooks/useGuildNotice';
 import { supabase } from '../../utils/supabase';
 import type { Profile } from '../../types';
 import { PageHeader } from '../ui/PageHeader';
@@ -56,6 +57,21 @@ export function AdminView({ profile }: AdminViewProps) {
   const [pSaving, setPSaving] = useState(false);
   const [pSaved,  setPSaved]  = useState(false);
   const pSum = Object.values(pWeights).reduce((a, b) => a + b, 0);
+
+  const { notice, saveNotice } = useGuildNotice();
+  const [noticeMsg, setNoticeMsg] = useState('');
+  const [noticeActive, setNoticeActive] = useState(false);
+  const [noticeSaving, setNoticeSaving] = useState(false);
+  const [noticeSaved, setNoticeSaved] = useState(false);
+  useEffect(() => {
+    if (notice) { setNoticeMsg(notice.message); setNoticeActive(notice.is_active); }
+  }, [notice]);
+  async function handleSaveNotice() {
+    setNoticeSaving(true);
+    await saveNotice(noticeMsg, noticeActive);
+    setNoticeSaving(false); setNoticeSaved(true);
+    setTimeout(() => setNoticeSaved(false), 2000);
+  }
 
   useEffect(() => {
     supabase.from('app_settings').select('key, value')
@@ -275,6 +291,40 @@ export function AdminView({ profile }: AdminViewProps) {
               </div>
               <div className="pt-1">
                 {saveBtn(wclSaving, wclSaved, saveWclConfig)}
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Guild Notice */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Guild Notice</CardTitle>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
+                Pinned message shown at the top of the Overview page for all users.
+              </p>
+            </CardHeader>
+            <CardBody className="space-y-3">
+              <textarea
+                rows={3}
+                value={noticeMsg}
+                onChange={e => setNoticeMsg(e.target.value)}
+                placeholder="e.g. Progression week — SSC Thursday 20:00. Bring flasks and consumables!"
+                className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] placeholder:text-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/60 transition-colors resize-none"
+              />
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <button
+                    type="button"
+                    onClick={() => setNoticeActive(v => !v)}
+                    role="switch"
+                    aria-checked={noticeActive}
+                    className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${noticeActive ? 'bg-[var(--color-lw-fel-500)]' : 'bg-[var(--color-lw-border)]'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform duration-200 ${noticeActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                  <span className="text-xs text-[var(--color-lw-text-sub)]">{noticeActive ? 'Visible to all users' : 'Hidden'}</span>
+                </label>
+                {saveBtn(noticeSaving, noticeSaved, handleSaveNotice)}
               </div>
             </CardBody>
           </Card>

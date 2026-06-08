@@ -78,7 +78,7 @@ function App() {
           effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
         ].join(' ')}>
           {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
-          {effectiveTab === 'dashboard'   && <DashboardView />}
+          {effectiveTab === 'dashboard'   && <DashboardView profile={profile} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
           {effectiveTab === 'history'     && <HistoryView role={role} />}
           {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
           {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
