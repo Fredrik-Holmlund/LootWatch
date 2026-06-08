@@ -160,7 +160,6 @@ export function DashboardView({ username }: DashboardViewProps) {
   if (loading) return <PageSpinner />;
 
   const hasAttendance = sessions.length > 0;
-  const rollingWindow = Math.min(12, sessions.length);
 
   return (
     <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
