@@ -195,11 +195,17 @@ export function useAssignmentSheet() {
     await Promise.all(updated.map(r => supabase.from('sheet_rows').update({ sort_order: r.sort_order }).eq('id', r.id)));
   }, [selectedSheetId, allRows]);
 
+  const renameRow = useCallback(async (rowId: number, label: string) => {
+    if (!label.trim()) return;
+    setAllRows(prev => prev.map(r => r.id === rowId ? { ...r, label: label.trim() } : r));
+    await supabase.from('sheet_rows').update({ label: label.trim() }).eq('id', rowId);
+  }, []);
+
   return {
     sheets, columns, rows, cells, loading, profiles, sections,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,
-    addRow, deleteRow, reorderRows,
+    addRow, deleteRow, reorderRows, renameRow,
   };
 }

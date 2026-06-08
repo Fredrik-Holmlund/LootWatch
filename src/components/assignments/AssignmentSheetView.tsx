@@ -395,28 +395,46 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
 
 // ─── Sortable table row ───────────────────────────────────────────────────────
 
-function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onDelete, onSave }: {
+function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onDelete, onSave, onRename }: {
   row: SheetRow; rowBg: string; columns: SheetColumn[];
   cellMap: Map<string, SheetCell>; allRows: SheetRow[];
   compPool: CompPlayer[]; profiles: string[];
   canWrite: boolean; onAssign: (name: string, cls: string | null) => void;
   onClear: () => void; onDelete: () => void;
+  onRename: (label: string) => void;
   onSave: (colId: number, val: { ref_row_ids?: number[] | null; text_value?: string | null } | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState(row.label);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row`}>
-      <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] whitespace-nowrap w-[72px] min-w-[72px]`}>
-        <div className="flex items-center gap-1.5">
+      <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] w-[130px] min-w-[130px]`}>
+        <div className="flex items-center gap-1">
           {canWrite && (
-            <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
+            <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none shrink-0" title="Drag to reorder">⠿</span>
           )}
-          <span>{row.label}</span>
-          {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-text-muted)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
+          {editingLabel ? (
+            <input
+              autoFocus
+              value={labelDraft}
+              onChange={e => setLabelDraft(e.target.value)}
+              onBlur={() => { onRename(labelDraft); setEditingLabel(false); }}
+              onKeyDown={e => { if (e.key === 'Enter') { onRename(labelDraft); setEditingLabel(false); } if (e.key === 'Escape') { setLabelDraft(row.label); setEditingLabel(false); } }}
+              className="flex-1 min-w-0 bg-[var(--color-lw-base)] border border-[var(--color-lw-fel-500)]/50 rounded px-1.5 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none w-full"
+            />
+          ) : (
+            <span
+              className={`flex-1 truncate ${canWrite ? 'cursor-text' : ''}`}
+              onDoubleClick={() => canWrite && setEditingLabel(true)}
+              title={canWrite ? 'Double-click to rename' : row.label}
+            >{row.label}</span>
+          )}
+          {canWrite && !editingLabel && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-text-muted)] hover:text-red-500 transition-opacity shrink-0 ml-auto" title="Delete row">✕</button>}
         </div>
       </td>
-      <td className={`sticky left-[72px] z-10 ${rowBg} px-1.5 py-1 border-r border-[var(--color-lw-border-sub)] w-[110px] min-w-[110px]`}>
+      <td className={`sticky left-[130px] z-10 ${rowBg} px-1.5 py-1 border-r border-[var(--color-lw-border-sub)] w-[140px] min-w-[140px]`}>
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
@@ -433,7 +451,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 interface Props { role: UserRole | null; username: string; }
 
 export function AssignmentSheetView({ role, username }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -604,8 +622,8 @@ export function AssignmentSheetView({ role, username }: Props) {
           <table className="border-collapse text-sm w-full table-fixed">
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
-                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[72px] min-w-[72px] border-b border-r border-[var(--color-lw-border)]">Role</th>
-                <th className="sticky left-[72px] z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[110px] min-w-[110px] border-b border-r border-[var(--color-lw-border)]">Player</th>
+                <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[130px] min-w-[130px] border-b border-r border-[var(--color-lw-border)]">Role</th>
+                <th className="sticky left-[130px] z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-[var(--color-lw-border)]">Player</th>
                 {columns.map((col, colIdx) => (
                   <th key={col.id} className={`text-center px-1.5 py-1.5 border-b border-r border-[var(--color-lw-border)] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
                     <BossColumnHeader
@@ -658,6 +676,7 @@ export function AssignmentSheetView({ role, username }: Props) {
                               onAssign={(name, cls) => assignPlayer(row.id, name, cls)}
                               onClear={() => clearPlayer(row.id)}
                               onDelete={() => deleteRow(row.id)}
+                              onRename={(label) => renameRow(row.id, label)}
                               onSave={(colId, val) => setCell(row.id, colId, val)}
                             />
                           );
