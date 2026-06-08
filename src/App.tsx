@@ -100,7 +100,7 @@ function App() {
             loot history, attendance, priorities and raid assignments.
           </p>
           <p className="text-xs text-[var(--color-lw-text-muted)] shrink-0">
-            &copy; <a href="https://lazsarus.com" className="hover:text-[var(--color-lw-fel-400)] transition-colors">Lazsarus.com</a> 2026
+            &copy; 2026 <a href="https://lazsarus.com" className="hover:text-[var(--color-lw-fel-400)] transition-colors">Lazsarus.com</a>
           </p>
         </div>
       </footer>
