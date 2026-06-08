@@ -105,13 +105,21 @@ export function DashboardView({ username }: DashboardViewProps) {
     return map;
   }, [absences, today]);
 
-  // Attendance stats (rolling 6 sessions)
-  const stats = useMemo(() => attendanceStats(6), [attendanceStats]);
-  const sortedPlayers = useMemo(() =>
-    Object.entries(stats)
-      .sort((a, b) => b[1].rollingPct - a[1].rollingPct || b[1].pct - a[1].pct),
-    [stats]
+  // Attendance stats — rolling 6 and all-time
+  const stats6 = useMemo(() => attendanceStats(6), [attendanceStats]);
+  const statsAll = useMemo(() => attendanceStats(9999), [attendanceStats]);
+
+  const sortedByRolling = useMemo(() =>
+    Object.entries(stats6).sort((a, b) => b[1].rollingPct - a[1].rollingPct || b[1].pct - a[1].pct),
+    [stats6]
   );
+  const sortedByAll = useMemo(() =>
+    Object.entries(statsAll).sort((a, b) => b[1].pct - a[1].pct),
+    [statsAll]
+  );
+
+  // Keep stats as the rolling one for personal stats
+  const stats = stats6;
 
   // Find current user in attendance
   const myName = useMemo(() => {
@@ -121,7 +129,7 @@ export function DashboardView({ username }: DashboardViewProps) {
   }, [stats, username]);
 
   const myStats = myName ? stats[myName] : null;
-  const myRank  = myName ? sortedPlayers.findIndex(([n]) => n === myName) + 1 : null;
+  const myRank  = myName ? sortedByRolling.findIndex(([n]) => n === myName) + 1 : null;
 
   // Personal loot count (all time)
   const myLootCount = useMemo(() => {
@@ -158,6 +166,29 @@ export function DashboardView({ username }: DashboardViewProps) {
         </div>
       )}
 
+      {/* Guild-wide stat cards */}
+      {entries.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { label: 'Items Distributed', value: entries.length,                                          color: '#c9a227' },
+            { label: 'Unique Recipients',  value: new Set(entries.map(e => stripRealm(e.player_name).toLowerCase())).size, color: '#c9a227' },
+            { label: 'Unique Items',       value: new Set(entries.map(e => e.item_name.toLowerCase())).size,              color: '#c9a227' },
+            { label: 'Raids Tracked',      value: new Set(entries.map(e => e.raid).filter(Boolean)).size,                 color: '#c9a227' },
+            { label: 'Sessions Tracked',   value: sessions.length,                                         color: 'var(--color-lw-fel-400)' },
+            { label: 'Avg Attendance',     value: hasAttendance
+                ? `${Math.round(Object.values(statsAll).reduce((s, r) => s + r.pct, 0) / Math.max(Object.values(statsAll).length, 1))}%`
+                : '—',                                                                                      color: 'var(--color-lw-fel-400)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--color-lw-elevated)] px-4 py-4">
+              {/* Subtle glow blob */}
+              <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-20" style={{ background: color }} />
+              <p className="text-2xl font-bold tabular-nums leading-none" style={{ color }}>{value}</p>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-2 leading-tight">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Personal stats row */}
       {hasAttendance && (
         myStats ? (
@@ -178,7 +209,7 @@ export function DashboardView({ username }: DashboardViewProps) {
               {
                 label: 'Attendance rank',
                 value: myRank ? `#${myRank}` : '—',
-                sub: `of ${sortedPlayers.length} raiders`,
+                sub: `of ${sortedByRolling.length} raiders`,
                 accent: myRank && myRank <= 3 ? '#facc15' : 'var(--color-lw-text-sub)',
               },
               {
@@ -208,8 +239,8 @@ export function DashboardView({ username }: DashboardViewProps) {
         )
       )}
 
-      {/* Mid row: next raids + attendance leaderboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+      {/* Mid row: next raids + two attendance leaderboards */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_1fr] gap-4">
 
         {/* Next raids */}
         <Card>
@@ -246,28 +277,52 @@ export function DashboardView({ username }: DashboardViewProps) {
           </div>
         </Card>
 
-        {/* Attendance leaderboard */}
+        {/* Attendance — Last 6 raids */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Attendance</CardTitle>
-              <div className="flex items-center gap-3 text-[10px] text-[var(--color-lw-text-muted)]">
-                <span>Last {rollingWindow} raids</span>
-                <span className="hidden sm:inline text-[var(--color-lw-border)]">|</span>
-                <span className="hidden sm:inline">All time</span>
-              </div>
+              <span className="text-[10px] text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/25 rounded-full px-2 py-0.5 font-medium">
+                Last {rollingWindow} raids
+              </span>
             </div>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
-            {hasAttendance ? sortedPlayers.map(([name, s], i) => (
+            {hasAttendance ? sortedByRolling.slice(0, 10).map(([name, s], i) => (
               <AttRow
                 key={name}
                 rank={i + 1}
                 name={stripRealm(name)}
                 rollingPct={s.rollingPct}
                 totalPct={s.pct}
-                total={s.total}
+                total={s.rollingTotal}
                 rolling={s.rollingAttended}
+                isMe={name === myName}
+              />
+            )) : <p className="text-xs text-[var(--color-lw-text-muted)]">No attendance data yet</p>}
+          </CardBody>
+        </Card>
+
+        {/* Attendance — All time */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Attendance</CardTitle>
+              <span className="text-[10px] text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5 font-medium">
+                All time
+              </span>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-0.5 px-2 pb-3">
+            {hasAttendance ? sortedByAll.slice(0, 10).map(([name, s], i) => (
+              <AttRow
+                key={name}
+                rank={i + 1}
+                name={stripRealm(name)}
+                rollingPct={s.pct}
+                totalPct={s.pct}
+                total={s.total}
+                rolling={s.attended + s.benched}
                 isMe={name === myName}
               />
             )) : <p className="text-xs text-[var(--color-lw-text-muted)]">No attendance data yet</p>}
