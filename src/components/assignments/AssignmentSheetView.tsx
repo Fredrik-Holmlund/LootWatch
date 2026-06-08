@@ -173,29 +173,26 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   };
 
   return (
-    <div ref={setNodeRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-[var(--color-lw-fel-400)]/50 bg-[var(--color-lw-fel-500)]/10' : ''}`}>
+    <div
+      ref={setNodeRef}
+      className={`min-h-[28px] flex items-center gap-1 px-2 transition-colors w-full ${isOver ? 'ring-inset ring-1 ring-[var(--color-lw-fel-400)]/50' : ''}`}
+    >
       {row.player_name ? (
         <div className="flex items-center gap-1 w-full">
           <span
             onClick={canWrite ? openPicker : undefined}
-            style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
-            className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 text-center truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
+            style={{ color }}
+            className={`text-xs font-semibold flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
           >
             {row.player_name}
           </span>
-          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-[10px] flex-shrink-0">✕</button>}
+          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-[10px] flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">✕</button>}
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
           <span className="text-[11px] text-[var(--color-lw-text-muted)] italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
           {canWrite && (
-            <button
-              onClick={openPicker}
-              className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors"
-              title="Pick player"
-            >
-              ⌄
-            </button>
+            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⌄</button>
           )}
         </div>
       )}
@@ -436,7 +433,10 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
           </div>
         </td>
       )}
-      <td className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 ${rowBg} px-1.5 py-1 border-r border-[var(--color-lw-border-sub)] w-[140px] min-w-[140px]`}>
+      <td
+        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)] w-[140px] min-w-[140px]`}
+        style={{ backgroundColor: row.player_name ? resolveColor(row.player_class) + '22' : undefined }}
+      >
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
