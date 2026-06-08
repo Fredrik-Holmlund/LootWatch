@@ -115,7 +115,7 @@ export function DashboardView({ username }: DashboardViewProps) {
   }, [absences, today]);
 
   // Attendance stats — rolling 6 and all-time
-  const stats6 = useMemo(() => attendanceStats(6), [attendanceStats]);
+  const stats6 = useMemo(() => attendanceStats(12), [attendanceStats]);
   const statsAll = useMemo(() => attendanceStats(9999), [attendanceStats]);
 
   const sortedByRolling = useMemo(() =>
@@ -160,7 +160,7 @@ export function DashboardView({ username }: DashboardViewProps) {
   if (loading) return <PageSpinner />;
 
   const hasAttendance = sessions.length > 0;
-  const rollingWindow = Math.min(6, sessions.length);
+  const rollingWindow = Math.min(12, sessions.length);
 
   return (
     <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
@@ -204,7 +204,7 @@ export function DashboardView({ username }: DashboardViewProps) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               {
-                label: `Last ${rollingWindow} raids`,
+                label: 'Last 6 weeks',
                 value: `${myStats.rollingPct}%`,
                 sub: `${myStats.rollingAttended} / ${myStats.rollingTotal} attended`,
                 accent: myStats.rollingPct >= 80 ? '#4ade80' : myStats.rollingPct >= 60 ? '#facc15' : '#fb923c',
@@ -286,13 +286,13 @@ export function DashboardView({ username }: DashboardViewProps) {
           </div>
         </Card>
 
-        {/* Attendance — Last 6 raids */}
+        {/* Attendance — Last 6 weeks */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Attendance</CardTitle>
               <span className="text-[10px] text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/25 rounded-full px-2 py-0.5 font-medium">
-                Last {rollingWindow} raids
+                Last 6 weeks
               </span>
             </div>
           </CardHeader>
