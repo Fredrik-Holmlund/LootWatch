@@ -263,6 +263,45 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
         )}
       </div>
 
+      {/* My upcoming missed raids — visible to everyone */}
+      {!loading && myAbsences.filter(a => a.to_date >= today).length > 0 && (() => {
+        const myUpcoming = myAbsences.filter(a => a.to_date >= today);
+        const myMissedRaids: { date: string; note: string | null }[] = [];
+        for (const a of myUpcoming) {
+          const effectiveFrom = a.from_date < today ? today : a.from_date;
+          for (const rd of getRaidDaysBetween(effectiveFrom, a.to_date)) {
+            if (!myMissedRaids.find(r => r.date === rd))
+              myMissedRaids.push({ date: rd, note: a.note });
+          }
+        }
+        myMissedRaids.sort((a, b) => a.date.localeCompare(b.date));
+        if (myMissedRaids.length === 0) return null;
+        return (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">Raids I'll Miss</h3>
+            <div className="flex flex-wrap gap-2">
+              {myMissedRaids.map(({ date, note }) => {
+                const d = new Date(date + 'T00:00:00');
+                const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' });
+                const dateFmt = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                const away = daysUntil(date);
+                return (
+                  <div key={date} className="flex items-center gap-2 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-lw-text)]">{dayName} {dateFmt}</p>
+                      <p className="text-[10px] text-[var(--color-lw-text-muted)]">
+                        {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
+                        {note ? ` · ${note}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Council: calendar + raid cards */}
       {isCouncil && (
         <div className="space-y-6">
@@ -308,8 +347,10 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                     return (
                     <div key={wi} className="grid grid-cols-[2rem_repeat(7,1fr)] gap-1 items-center">
                       {/* Week number */}
-                      <div className="text-center text-[10px] text-[var(--color-lw-text-muted)] opacity-50 select-none font-medium">
-                        {weekNum}
+                      <div className="flex items-center justify-center select-none">
+                        <span className="text-[9px] font-bold text-[var(--color-lw-text-muted)] bg-[var(--color-lw-base)] border border-[var(--color-lw-border-sub)] rounded px-1 py-0.5 leading-none opacity-60">
+                          W{weekNum}
+                        </span>
                       </div>
 
                       {week.map((day) => {

@@ -59,6 +59,16 @@
   *::-webkit-scrollbar-track { background: transparent; }
   *::-webkit-scrollbar-thumb { background: rgba(68,207,108,0.15); border-radius: 4px; }
   *::-webkit-scrollbar-thumb:hover { background: rgba(68,207,108,0.28); }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(65%) sepia(60%) saturate(400%) hue-rotate(95deg) brightness(1.1);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
 }
 
 @layer utilities {
