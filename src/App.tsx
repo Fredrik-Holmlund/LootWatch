@@ -71,7 +71,7 @@ function App() {
         onSignOut={signOut}
       />
 
-      <main key={effectiveTab} className="pt-14 animate-fade-in pb-8 px-4 pt-[calc(3.5rem+12px)]">
+      <main key={effectiveTab} className="animate-fade-in pb-10 px-5 pt-[calc(3.5rem+20px)]">
         <div className={[
           'mx-auto rounded-lg border border-white/[0.05] bg-[var(--color-lw-surface)]',
           'shadow-[0_2px_24px_rgba(0,0,0,0.6)]',
@@ -86,6 +86,26 @@ function App() {
           {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
         </div>
       </main>
+      <footer className="px-5 pb-6 mt-2">
+        <div className={[
+          'mx-auto rounded-lg border border-white/[0.05] bg-[var(--color-lw-surface)]',
+          'px-6 py-4 flex items-center justify-between gap-4',
+          effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
+        ].join(' ')}>
+          <div className="flex items-center gap-2">
+            <CrossedSwordsLogo className="w-4 h-4 text-[var(--color-lw-fel-400)] opacity-60" />
+            <span className="text-xs text-[var(--color-lw-text-muted)]" style={{ fontFamily: 'var(--font-display)' }}>
+              LootWatch
+            </span>
+          </div>
+          <p className="text-xs text-[var(--color-lw-text-muted)] opacity-50">
+            TBC Classic · Guild Loot Tracker
+          </p>
+          <p className="text-xs text-[var(--color-lw-text-muted)] opacity-40">
+            &copy; {new Date().getFullYear()}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

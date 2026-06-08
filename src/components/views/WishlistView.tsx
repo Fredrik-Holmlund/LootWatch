@@ -90,7 +90,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
   if (lootLoading || wishLoading) return <PageSpinner />;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
 
       <PageHeader
         title="Wishlist"
@@ -183,7 +183,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                               >
                                 {/* Heart */}
                                 <span
-                                  className="text-base shrink-0 transition-all group-hover:scale-110"
+                                  className="text-xl shrink-0 transition-all group-hover:scale-110"
                                   style={{ color: wished ? 'var(--color-lw-purple-400)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
                                 >
                                   ♥
@@ -199,13 +199,13 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="text-sm font-medium hover:underline"
+                                    className="text-base font-medium hover:underline"
                                   style={{ color: '#a335ee' }}
                                   >
                                     {item.item_name}
                                   </a>
                                 ) : (
-                                  <span className="text-sm font-medium" style={{ color: '#a335ee' }}>{item.item_name}</span>
+                                  <span className="text-base font-medium" style={{ color: '#a335ee' }}>{item.item_name}</span>
                                 )}
 
                                 {wished && profile && myWish && !item.stars_disabled && (

@@ -175,7 +175,7 @@ export function DashboardView() {
   if (loading) return <PageSpinner />;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-8">
 
       <PageHeader
         title="Dashboard"

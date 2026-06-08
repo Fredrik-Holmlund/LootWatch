@@ -35,7 +35,7 @@ export function HistoryView({ role }: HistoryViewProps) {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
 
       <PageHeader
         title="Loot History"

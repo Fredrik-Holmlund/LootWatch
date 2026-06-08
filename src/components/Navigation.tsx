@@ -64,7 +64,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
 
           {/* Logo */}
           <div className="flex items-center gap-2 shrink-0">
-            <CrossedSwordsLogo className="w-5 h-5 text-[var(--color-lw-purple-400)]" />
+            <CrossedSwordsLogo className="w-7 h-7 text-[var(--color-lw-purple-400)]" />
             <span
               className="text-sm font-semibold tracking-wide text-[var(--color-lw-text)]"
               style={{ fontFamily: 'var(--font-display)' }}
