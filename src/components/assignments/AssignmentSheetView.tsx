@@ -623,6 +623,13 @@ export function AssignmentSheetView({ role, username }: Props) {
         {/* Grid */}
         <div className="lw-card w-full overflow-hidden">
           <table className="border-collapse text-sm w-full table-fixed">
+            <colgroup>
+              {showRole && <col style={{ width: '130px' }} />}
+              <col style={{ width: '140px' }} />
+              {columns.map(col => (
+                <col key={col.id} style={{ width: `calc((100% - ${showRole ? 270 : 140}px) / ${columns.length})` }} />
+              ))}
+            </colgroup>
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
                 {showRole && <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[130px] min-w-[130px] border-b border-r border-[var(--color-lw-border)]">Role</th>}
