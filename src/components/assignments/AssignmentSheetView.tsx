@@ -408,7 +408,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row`}>
       {showRole && (
-        <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] w-[130px] min-w-[130px]`}>
+        <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)]`}>
           <div className="flex items-center gap-1">
             {canWrite && (
               <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none shrink-0" title="Drag to reorder">⠿</span>
@@ -434,7 +434,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
         </td>
       )}
       <td
-        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)] w-[140px] min-w-[140px]`}
+        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)]`}
         style={{ backgroundColor: row.player_name ? resolveColor(row.player_class) + '22' : undefined }}
       >
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
@@ -657,7 +657,7 @@ export function AssignmentSheetView({ role, username }: Props) {
                     <React.Fragment key={section}>
                       <tr>
                         <td
-                          colSpan={2 + columns.length}
+                          colSpan={(showRole ? 2 : 1) + columns.length}
                           style={{ borderLeftColor: accent, backgroundImage: `linear-gradient(to right, ${accent}12, transparent 40%)` }}
                           className="px-4 py-2.5 border-y border-[var(--color-lw-border-sub)] border-l-[3px]"
                         >
@@ -696,7 +696,7 @@ export function AssignmentSheetView({ role, username }: Props) {
 
                       {canWrite && (
                         <tr key={`add-${section}`} className="border-b border-[var(--color-lw-border-sub)]">
-                          <td className={`sticky left-0 z-10 bg-[var(--color-lw-base)] px-3 py-1 border-r border-[var(--color-lw-border-sub)]`} colSpan={2}>
+                          <td className={`sticky left-0 z-10 bg-[var(--color-lw-base)] px-3 py-1 border-r border-[var(--color-lw-border-sub)]`} colSpan={showRole ? 2 : 1}>
                             {addingRowSection === section ? (
                               <div className="flex items-center gap-1.5">
                                 <input autoFocus value={newRowLabel} onChange={e => setNewRowLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAddRow(); if (e.key === 'Escape') { setAddingRowSection(null); setNewRowLabel(''); } }} onBlur={() => { if (!newRowLabel.trim()) setAddingRowSection(null); }} className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-32" placeholder="Role name…" />
