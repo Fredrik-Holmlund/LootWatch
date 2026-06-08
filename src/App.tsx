@@ -71,10 +71,10 @@ function App() {
         onSignOut={signOut}
       />
 
-      <main key={effectiveTab} className="pt-14 animate-fade-in py-6 px-4">
+      <main key={effectiveTab} className="pt-14 animate-fade-in pb-8 px-4 pt-[calc(3.5rem+12px)]">
         <div className={[
-          'mx-auto rounded-xl border border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]',
-          'shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_4px_32px_rgba(0,0,0,0.5)]',
+          'mx-auto rounded-lg border border-white/[0.05] bg-[var(--color-lw-surface)]',
+          'shadow-[0_2px_24px_rgba(0,0,0,0.6)]',
           effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
         ].join(' ')}>
           {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}

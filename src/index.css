@@ -2,10 +2,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lw-base:       #0b0d17;
-  --color-lw-surface:    #0f1120;
-  --color-lw-elevated:   #141728;
-  --color-lw-card:       #191d2e;
+  --color-lw-base:       #080a12;
+  --color-lw-surface:    #0e1018;
+  --color-lw-elevated:   #131622;
+  --color-lw-card:       #161a28;
   --color-lw-border:     rgba(255,255,255,0.08);
   --color-lw-border-sub: rgba(255,255,255,0.05);
 
