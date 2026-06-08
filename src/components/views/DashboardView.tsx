@@ -18,13 +18,16 @@ interface DashboardViewProps {
 
 // Next N upcoming raid dates (Wed=3, Sun=0)
 const RAID_DAYS = [0, 3];
+function localDateStr(d: Date): string {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
 function getNextRaidDates(count = 3): string[] {
   const dates: string[] = [];
   const d = new Date(); d.setHours(0, 0, 0, 0);
   for (let i = 0; i < 90 && dates.length < count; i++) {
-    if (RAID_DAYS.includes(d.getDay())) {
-      dates.push(d.toISOString().slice(0, 10));
-    }
+    if (RAID_DAYS.includes(d.getDay())) dates.push(localDateStr(d));
     d.setDate(d.getDate() + 1);
   }
   return dates;
@@ -34,9 +37,7 @@ function getRaidDaysBetween(from: string, to: string): string[] {
   const cur = new Date(from + 'T00:00:00');
   const end = new Date(to   + 'T00:00:00');
   while (cur <= end) {
-    if (RAID_DAYS.includes(cur.getDay())) {
-      result.push(cur.toISOString().slice(0, 10));
-    }
+    if (RAID_DAYS.includes(cur.getDay())) result.push(localDateStr(cur));
     cur.setDate(cur.getDate() + 1);
   }
   return result;
