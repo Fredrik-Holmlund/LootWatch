@@ -186,7 +186,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                   className="text-xl shrink-0 transition-all group-hover:scale-110"
                                   style={{ color: wished ? 'var(--color-lw-purple-400)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
                                 >
-                                  ♥
+                                  ❤
                                 </span>
 
                                 {item.icon_url && (
@@ -245,7 +245,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                                 {count > 0 && canSeeOthers && (
                                   <span className="relative group/wishers shrink-0 ml-auto" onClick={(e) => e.stopPropagation()}>
                                     <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 cursor-default font-medium">
-                                      ♥ {count}
+                                      ❤ {count}
                                     </span>
                                     <div className="absolute right-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
                                       <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-xl shadow-xl p-2 space-y-1">

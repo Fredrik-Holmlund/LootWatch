@@ -86,23 +86,21 @@ function App() {
           {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
         </div>
       </main>
-      <footer className="px-5 pb-6 mt-2">
-        <div className={[
-          'mx-auto rounded-lg border border-white/[0.05] bg-[var(--color-lw-surface)]',
-          'px-6 py-4 flex items-center justify-between gap-4',
-          effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
-        ].join(' ')}>
-          <div className="flex items-center gap-2">
-            <CrossedSwordsLogo className="w-4 h-4 text-[var(--color-lw-fel-400)] opacity-60" />
-            <span className="text-xs text-[var(--color-lw-text-muted)]" style={{ fontFamily: 'var(--font-display)' }}>
+      <footer className="mt-4 border-t border-white/[0.05] bg-[var(--color-lw-surface)]">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <CrossedSwordsLogo className="w-5 h-5 text-[var(--color-lw-fel-400)]" />
+            <span className="text-sm font-semibold text-[var(--color-lw-text)]" style={{ fontFamily: 'var(--font-display)' }}>
               LootWatch
             </span>
           </div>
-          <p className="text-xs text-[var(--color-lw-text-muted)] opacity-50">
-            TBC Classic · Guild Loot Tracker
+          <p className="text-xs text-[var(--color-lw-text-muted)] max-w-xl leading-relaxed">
+            LootWatch is an independently developed guild tool for TBC Anniversary. With the ability to import data from
+            RC Loot Council, Raid Helper and Warcraft Logs — LootWatch gives your guild management full visibility into
+            loot history, attendance, priorities and raid assignments.
           </p>
-          <p className="text-xs text-[var(--color-lw-text-muted)] opacity-40">
-            &copy; {new Date().getFullYear()}
+          <p className="text-xs text-[var(--color-lw-text-muted)] shrink-0">
+            &copy; <a href="https://lazsarus.com" className="hover:text-[var(--color-lw-fel-400)] transition-colors">Lazsarus.com</a> 2026
           </p>
         </div>
       </footer>

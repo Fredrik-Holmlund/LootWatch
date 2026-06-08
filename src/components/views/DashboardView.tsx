@@ -262,7 +262,7 @@ export function DashboardView() {
                 key={name}
                 rank={i + 1}
                 name={name}
-                right={`♥ ${count}`}
+                right={`❤ ${count}`}
                 pct={Math.round((count / wishStats[0][1]) * 100)}
                 color="var(--color-lw-purple-400)"
               />

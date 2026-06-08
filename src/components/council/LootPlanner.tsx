@@ -340,7 +340,7 @@ function ItemRow({
         {wishers.length > 0 && (
           <span className="relative group/wishers">
             <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default font-medium">
-              ♥ {wishers.length}
+              ❤ {wishers.length}
             </span>
             <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
               <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 space-y-1">
