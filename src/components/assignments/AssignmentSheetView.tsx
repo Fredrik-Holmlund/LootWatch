@@ -600,7 +600,7 @@ export function AssignmentSheetView({ role, username }: Props) {
         </div>
 
         {/* Grid */}
-        <div className="lw-card w-full">
+        <div className="lw-card w-full overflow-hidden">
           <table className="border-collapse text-sm w-full table-fixed">
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">

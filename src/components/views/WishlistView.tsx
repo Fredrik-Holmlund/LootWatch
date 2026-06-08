@@ -183,8 +183,8 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
                               >
                                 {/* Heart */}
                                 <span
-                                  className="text-xl shrink-0 transition-all group-hover:scale-110"
-                                  style={{ color: wished ? 'var(--color-lw-purple-400)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.35 }}
+                                  className="text-sm shrink-0 transition-all group-hover:scale-110"
+                                  style={{ color: wished ? 'var(--color-lw-purple-400)' : 'var(--color-lw-text-muted)', opacity: wished ? 1 : 0.18 }}
                                 >
                                   ❤
                                 </span>
