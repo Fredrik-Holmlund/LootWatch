@@ -632,8 +632,8 @@ export function AssignmentSheetView({ role, username }: Props) {
             </colgroup>
             <thead>
               <tr className="bg-[var(--color-lw-surface)]">
-                {showRole && <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[130px] min-w-[130px] border-b border-r border-[var(--color-lw-border)]">Role</th>}
-                <th className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-[var(--color-lw-border)]`}>Player</th>
+                {showRole && <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider border-b border-r border-[var(--color-lw-border)]">Role</th>}
+                <th className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider border-b border-r border-[var(--color-lw-border)]`}>Player</th>
                 {columns.map((col, colIdx) => (
                   <th key={col.id} className={`text-center px-1.5 py-1.5 border-b border-r border-[var(--color-lw-border)] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
                     <BossColumnHeader
