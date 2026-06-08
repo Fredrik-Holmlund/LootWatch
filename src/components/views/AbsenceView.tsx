@@ -80,9 +80,8 @@ function missingBadgeClass(count: number): string {
 
 // ─── Calendar helpers ──────────────────────────────────────────────────────
 
-/** Monday of the week containing `d` */
 function getMondayOf(d: Date): Date {
-  const day = d.getDay(); // 0=Sun … 6=Sat
+  const day = d.getDay();
   const diff = (day === 0 ? -6 : 1 - day);
   const m = new Date(d);
   m.setDate(d.getDate() + diff);
@@ -90,7 +89,6 @@ function getMondayOf(d: Date): Date {
   return m;
 }
 
-/** Build a 6-week grid starting from this Monday, returning Date objects */
 function buildCalendarGrid(startMonday: Date): Date[][] {
   const weeks: Date[][] = [];
   const cur = new Date(startMonday);
@@ -124,10 +122,22 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   const isCouncil  = canEdit(role) || role === 'admin';
   const playerName = profile?.username ?? '';
 
-  const myAbsences = absences.filter((a) => a.user_id === userId);
-  const upcomingAll = absences.filter((a) => a.to_date >= today);
+  const myAbsences   = absences.filter((a) => a.user_id === userId);
+  const upcomingAll  = absences.filter((a) => a.to_date >= today);
+  const myUpcoming   = myAbsences.filter((a) => a.to_date >= today);
 
-  // Build raid-grouped absence map
+  // My upcoming missed raids
+  const myMissedRaids: { date: string; note: string | null }[] = [];
+  for (const a of myUpcoming) {
+    const effectiveFrom = a.from_date < today ? today : a.from_date;
+    for (const rd of getRaidDaysBetween(effectiveFrom, a.to_date)) {
+      if (!myMissedRaids.find(r => r.date === rd))
+        myMissedRaids.push({ date: rd, note: a.note });
+    }
+  }
+  myMissedRaids.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Council: raid-grouped absence map
   const raidMissing: Record<string, { player_name: string; note: string | null; absence_id: string; created_at: string }[]> = {};
   for (const a of upcomingAll) {
     const effectiveFrom = a.from_date < today ? today : a.from_date;
@@ -138,11 +148,9 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
   }
   const sortedRaidDays = Object.keys(raidMissing).sort();
 
-  // Calendar grid — 6 weeks from current Monday
+  // Calendar grid
   const startMonday  = getMondayOf(new Date());
   const calendarGrid = buildCalendarGrid(startMonday);
-
-  // Month label(s) shown in calendar header
   const firstDay = calendarGrid[0][0];
   const lastDay  = calendarGrid[5][6];
   const monthLabel = firstDay.getMonth() === lastDay.getMonth()
@@ -164,20 +172,16 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
     cardRefs.current[dateStr]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+  // ── Left column ──────────────────────────────────────────────────────────
 
-      <PageHeader
-        title="Absence"
-        subtitle="Report upcoming absences so the council can plan ahead."
-      />
-
+  const leftColumn = (
+    <div className="space-y-6">
       {/* Report form */}
       <Card>
         <CardHeader><CardTitle>Report Absence</CardTitle></CardHeader>
         <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex flex-wrap gap-3 items-end">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'From', value: fromDate, min: today,    onChange: (v: string) => { setFromDate(v); if (v > toDate) setToDate(v); } },
                 { label: 'To',   value: toDate,   min: fromDate, onChange: (v: string) => setToDate(v) },
@@ -189,36 +193,64 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                     value={value}
                     min={min}
                     onChange={(e) => onChange(e.target.value)}
-                    className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors"
+                    className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/60 transition-colors"
                   />
                 </div>
               ))}
-              <div className="space-y-1.5 flex-1 min-w-[160px]">
-                <label className="block text-xs font-medium text-[var(--color-lw-text-sub)]">Note (optional)</label>
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. Holiday, work trip…"
-                  className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] placeholder:text-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 transition-colors"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={saving || !playerName}
-                className="px-4 py-2 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white text-sm font-semibold rounded-lg disabled:opacity-40 transition-colors"
-              >
-                {saving ? '…' : 'Report'}
-              </button>
             </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-[var(--color-lw-text-sub)]">Note (optional)</label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. Holiday, work trip…"
+                className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] placeholder:text-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/60 transition-colors"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={saving || !playerName}
+              className="w-full py-2 bg-[var(--color-lw-fel-500)] hover:bg-[var(--color-lw-fel-400)] text-white text-sm font-semibold rounded-lg disabled:opacity-40 transition-colors"
+            >
+              {saving ? '…' : 'Report Absence'}
+            </button>
             {saveError  && <p className="text-xs text-red-400">{saveError}</p>}
             {!playerName && <p className="text-xs text-[var(--color-lw-text-muted)]">Set a username in your profile to report absence.</p>}
           </form>
         </CardBody>
       </Card>
 
-      {/* My absences */}
-      <div className="space-y-3">
+      {/* My upcoming missed raids */}
+      {!loading && myMissedRaids.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Raids I'll Miss</CardTitle></CardHeader>
+          <div className="divide-y divide-[var(--color-lw-border-sub)]">
+            {myMissedRaids.map(({ date, note: n }) => {
+              const d = new Date(date + 'T00:00:00');
+              const dayName = d.toLocaleDateString('en-GB', { weekday: 'long' });
+              const dateFmt = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+              const away = daysUntil(date);
+              return (
+                <div key={date} className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-lw-text)]">{dayName}, {dateFmt}</p>
+                    {n && <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">{n}</p>}
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                    away <= 2 ? 'text-red-400 bg-red-500/10' : away <= 7 ? 'text-amber-400 bg-amber-500/10' : 'text-[var(--color-lw-text-muted)] bg-[var(--color-lw-base)]'
+                  }`}>
+                    {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* My all reports */}
+      <div className="space-y-2">
         <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">My Reports</h3>
         {loading ? <PageSpinner /> : myAbsences.length === 0 ? (
           <p className="text-sm text-[var(--color-lw-text-muted)]">No absence reports yet.</p>
@@ -262,221 +294,198 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
           </Card>
         )}
       </div>
+    </div>
+  );
 
-      {/* My upcoming missed raids — visible to everyone */}
-      {!loading && myAbsences.filter(a => a.to_date >= today).length > 0 && (() => {
-        const myUpcoming = myAbsences.filter(a => a.to_date >= today);
-        const myMissedRaids: { date: string; note: string | null }[] = [];
-        for (const a of myUpcoming) {
-          const effectiveFrom = a.from_date < today ? today : a.from_date;
-          for (const rd of getRaidDaysBetween(effectiveFrom, a.to_date)) {
-            if (!myMissedRaids.find(r => r.date === rd))
-              myMissedRaids.push({ date: rd, note: a.note });
-          }
-        }
-        myMissedRaids.sort((a, b) => a.date.localeCompare(b.date));
-        if (myMissedRaids.length === 0) return null;
-        return (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">Raids I'll Miss</h3>
-            <div className="flex flex-wrap gap-2">
-              {myMissedRaids.map(({ date, note }) => {
-                const d = new Date(date + 'T00:00:00');
-                const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' });
-                const dateFmt = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-                const away = daysUntil(date);
-                return (
-                  <div key={date} className="flex items-center gap-2 bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2">
-                    <div>
-                      <p className="text-xs font-semibold text-[var(--color-lw-text)]">{dayName} {dateFmt}</p>
-                      <p className="text-[10px] text-[var(--color-lw-text-muted)]">
-                        {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
-                        {note ? ` · ${note}` : ''}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+  // ── Right column ─────────────────────────────────────────────────────────
+
+  const calendarBlock = !loading && (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>{monthLabel}</CardTitle>
+          <div className="flex items-center gap-3 text-xs text-[var(--color-lw-text-muted)]">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-lw-gold-400)]/70 inline-block" />1–2</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500/70 inline-block" />3–4</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70 inline-block" />5+</span>
           </div>
-        );
-      })()}
-
-      {/* Council: calendar + raid cards */}
-      {isCouncil && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">Raid Calendar</h3>
-            <span className="text-xs text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5">
-              Wed &amp; Sun
-            </span>
-          </div>
-
-          {/* ── Calendar grid ── */}
-          {!loading && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{monthLabel}</CardTitle>
-                  <div className="flex items-center gap-3 text-xs text-[var(--color-lw-text-muted)]">
-                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-lw-gold-400)]/70 inline-block" />1–2</span>
-                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500/70 inline-block" />3–4</span>
-                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70 inline-block" />5+</span>
-                  </div>
+        </div>
+      </CardHeader>
+      <CardBody className="p-3">
+        <div className="grid grid-cols-[2rem_repeat(7,1fr)] mb-1">
+          <div className="text-center text-[10px] font-semibold text-[var(--color-lw-text-muted)] py-1 opacity-50">W</div>
+          {DAY_HEADERS.map((h) => (
+            <div key={h} className="text-center text-xs font-semibold text-[var(--color-lw-text-muted)] py-1">{h}</div>
+          ))}
+        </div>
+        <div className="space-y-1">
+          {calendarGrid.map((week, wi) => {
+            const monday = week[0];
+            const jan4   = new Date(monday.getFullYear(), 0, 4);
+            const weekNum = Math.ceil(((monday.getTime() - jan4.getTime()) / 86400000 + jan4.getDay() + 6) / 7);
+            return (
+              <div key={wi} className="grid grid-cols-[2rem_repeat(7,1fr)] gap-1 items-center">
+                <div className="flex items-center justify-center select-none">
+                  <span className="text-[9px] font-bold text-[var(--color-lw-text-muted)] bg-[var(--color-lw-base)] border border-[var(--color-lw-border-sub)] rounded px-1 py-0.5 leading-none opacity-60">
+                    W{weekNum}
+                  </span>
                 </div>
-              </CardHeader>
-              <CardBody className="p-3">
-                {/* Day headers — week-nr col + 7 day cols */}
-                <div className="grid grid-cols-[2rem_repeat(7,1fr)] mb-1">
-                  <div className="text-center text-[10px] font-semibold text-[var(--color-lw-text-muted)] py-1 opacity-50">W</div>
-                  {DAY_HEADERS.map((h) => (
-                    <div key={h} className="text-center text-xs font-semibold text-[var(--color-lw-text-muted)] py-1">
-                      {h}
-                    </div>
-                  ))}
-                </div>
+                {week.map((day) => {
+                  const dateStr   = toLocalDateStr(day);
+                  const isToday   = dateStr === today;
+                  const isPast    = dateStr < today;
+                  const isRaidDay = RAID_DAYS.includes(day.getDay());
+                  const count     = raidMissing[dateStr]?.length ?? 0;
+                  const colors    = absenceCountColor(count);
+                  const dayNum    = day.getDate();
+                  const showMonth = dayNum === 1;
 
-                {/* Week rows */}
-                <div className="space-y-1">
-                  {calendarGrid.map((week, wi) => {
-                    // ISO week number for the Monday of this week
-                    const monday = week[0];
-                    const jan4   = new Date(monday.getFullYear(), 0, 4);
-                    const weekNum = Math.ceil(((monday.getTime() - jan4.getTime()) / 86400000 + jan4.getDay() + 6) / 7);
+                  // Highlight my own absence on this day
+                  const isMine = myMissedRaids.some(r => r.date === dateStr);
 
+                  if (!isRaidDay) {
                     return (
-                    <div key={wi} className="grid grid-cols-[2rem_repeat(7,1fr)] gap-1 items-center">
-                      {/* Week number */}
-                      <div className="flex items-center justify-center select-none">
-                        <span className="text-[9px] font-bold text-[var(--color-lw-text-muted)] bg-[var(--color-lw-base)] border border-[var(--color-lw-border-sub)] rounded px-1 py-0.5 leading-none opacity-60">
-                          W{weekNum}
-                        </span>
+                      <div key={dateStr} className={`rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center ${isPast ? 'opacity-25' : 'opacity-50'}`}>
+                        {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
+                        <span className="text-xs text-[var(--color-lw-text-muted)]">{dayNum}</span>
                       </div>
-
-                      {week.map((day) => {
-                        const dateStr   = toLocalDateStr(day);
-                        const isToday   = dateStr === today;
-                        const isPast    = dateStr < today;
-                        const isRaidDay = RAID_DAYS.includes(day.getDay());
-                        const count     = raidMissing[dateStr]?.length ?? 0;
-                        const colors    = absenceCountColor(count);
-                        const dayNum    = day.getDate();
-                        const showMonth = dayNum === 1;
-
-                        if (!isRaidDay) {
-                          return (
-                            <div
-                              key={dateStr}
-                              className={`rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center ${isPast ? 'opacity-25' : 'opacity-50'}`}
-                            >
-                              {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
-                              <span className="text-xs text-[var(--color-lw-text-muted)]">{dayNum}</span>
-                            </div>
-                          );
-                        }
-
-                        // Raid day
-                        return (
-                          <button
-                            key={dateStr}
-                            onClick={() => count > 0 && scrollToRaid(dateStr)}
-                            className={[
-                              'rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center gap-0.5 border transition-all',
-                              isPast ? 'opacity-40' : '',
-                              count > 0 ? `${colors.bg} ${colors.border} cursor-pointer hover:opacity-90` : 'border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60',
-                              isToday ? 'ring-2 ring-[var(--color-lw-purple-400)]/60 ring-offset-1 ring-offset-[var(--color-lw-elevated)]' : '',
-                            ].join(' ')}
-                          >
-                            {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
-                            <span className={`text-xs font-semibold leading-none ${isToday ? 'text-[var(--color-lw-purple-400)]' : count > 0 ? colors.text : 'text-[var(--color-lw-text-sub)]'}`}>
-                              {dayNum}
-                            </span>
-                            <span className={`text-[10px] font-bold leading-none ${count > 0 ? colors.text : 'text-[var(--color-lw-text-muted)]'}`}>
-                              {count > 0 ? `${count} missing` : '—'}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
                     );
-                  })}
-                </div>
-              </CardBody>
-            </Card>
-          )}
+                  }
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => isCouncil && count > 0 && scrollToRaid(dateStr)}
+                      className={[
+                        'rounded-md p-1 text-center min-h-[44px] flex flex-col items-center justify-center gap-0.5 border transition-all',
+                        isPast ? 'opacity-40' : '',
+                        count > 0 ? `${colors.bg} ${colors.border} ${isCouncil ? 'cursor-pointer hover:opacity-90' : 'cursor-default'}` : 'border-[var(--color-lw-border)] bg-[var(--color-lw-surface)]/60',
+                        isToday ? 'ring-2 ring-[var(--color-lw-fel-400)]/60 ring-offset-1 ring-offset-[var(--color-lw-elevated)]' : '',
+                        isMine && !isCouncil ? 'ring-1 ring-[var(--color-lw-fel-500)]/40' : '',
+                      ].join(' ')}
+                    >
+                      {showMonth && <span className="text-[9px] text-[var(--color-lw-text-muted)] uppercase leading-none">{day.toLocaleDateString('en-GB', { month: 'short' })}</span>}
+                      <span className={`text-xs font-semibold leading-none ${isToday ? 'text-[var(--color-lw-fel-400)]' : count > 0 ? colors.text : 'text-[var(--color-lw-text-sub)]'}`}>
+                        {dayNum}
+                      </span>
+                      <span className={`text-[10px] font-bold leading-none ${count > 0 ? colors.text : isMine ? 'text-[var(--color-lw-fel-500)]' : 'text-[var(--color-lw-text-muted)]'}`}>
+                        {isCouncil
+                          ? (count > 0 ? `${count} missing` : '—')
+                          : (isMine ? 'absent' : '—')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </CardBody>
+    </Card>
+  );
 
-          {/* Raid absence cards */}
-          {loading ? <PageSpinner /> : sortedRaidDays.length === 0 ? (
-            <p className="text-sm text-[var(--color-lw-text-muted)]">No absences reported for upcoming raids.</p>
-          ) : (
-            <div className="space-y-3">
-              {sortedRaidDays.map((raidDate) => {
-                const missing   = raidMissing[raidDate];
-                const daysAway  = daysUntil(raidDate);
-                const d         = new Date(raidDate + 'T00:00:00');
-                const dayName   = d.toLocaleDateString('en-GB', { weekday: 'long' });
-                const dateFmt   = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-                const isCritical = missing.length >= 5;
+  const rightColumn = (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">Raid Calendar</h3>
+        <span className="text-xs text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5">
+          Wed &amp; Sun
+        </span>
+        {isCouncil && (
+          <span className="text-xs text-[var(--color-lw-gold-300)] bg-[var(--color-lw-gold-400)]/10 border border-[var(--color-lw-gold-500)]/30 rounded-full px-2 py-0.5">
+            Council view
+          </span>
+        )}
+      </div>
 
-                return (
-                  <div
-                    key={raidDate}
-                    ref={(el) => { cardRefs.current[raidDate] = el; }}
-                    className={`bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] border-l-4 ${cardAccentClass(missing.length)} rounded-lg overflow-hidden`}
-                  >
-                    <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-lw-surface)]/50 border-b border-[var(--color-lw-border-sub)]">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-[var(--color-lw-text)]">{dayName}</span>
-                        <span className="text-sm text-[var(--color-lw-text-muted)]">{dateFmt}</span>
-                        {daysAway >= 0 && daysAway <= 7 && (
-                          <span className="text-xs text-amber-400">
-                            {daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`}
-                          </span>
+      {calendarBlock}
+
+      {error && <p className="text-xs text-red-400">{error}</p>}
+
+      {/* Raid absence cards — council only */}
+      {isCouncil && (
+        loading ? <PageSpinner /> : sortedRaidDays.length === 0 ? (
+          <p className="text-sm text-[var(--color-lw-text-muted)]">No absences reported for upcoming raids.</p>
+        ) : (
+          <div className="space-y-3">
+            {sortedRaidDays.map((raidDate) => {
+              const missing   = raidMissing[raidDate];
+              const daysAway  = daysUntil(raidDate);
+              const d         = new Date(raidDate + 'T00:00:00');
+              const dayName   = d.toLocaleDateString('en-GB', { weekday: 'long' });
+              const dateFmt   = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+              const isCritical = missing.length >= 5;
+
+              return (
+                <div
+                  key={raidDate}
+                  ref={(el) => { cardRefs.current[raidDate] = el; }}
+                  className={`bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] border-l-4 ${cardAccentClass(missing.length)} rounded-lg overflow-hidden`}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-lw-surface)]/50 border-b border-[var(--color-lw-border-sub)]">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-[var(--color-lw-text)]">{dayName}</span>
+                      <span className="text-sm text-[var(--color-lw-text-muted)]">{dateFmt}</span>
+                      {daysAway >= 0 && daysAway <= 7 && (
+                        <span className="text-xs text-amber-400">
+                          {daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `In ${daysAway} days`}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${missingBadgeClass(missing.length)}`}>
+                      {missing.length} missing
+                    </span>
+                  </div>
+
+                  {isCritical && (
+                    <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
+                      <span className="text-red-400 text-xs">⚠</span>
+                      <span className="text-xs text-red-400 font-medium">Critical — {missing.length} players missing</span>
+                    </div>
+                  )}
+
+                  <div className="divide-y divide-[var(--color-lw-border-sub)]">
+                    {missing.map((m, i) => (
+                      <div key={i} className="flex items-center justify-between px-4 py-2.5 gap-3">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-sm text-[var(--color-lw-text)] font-medium">{m.player_name}</span>
+                          <p className="text-xs text-[var(--color-lw-text-muted)]">Submitted {formatSubmitted(m.created_at)}</p>
+                        </div>
+                        {m.note && <span className="text-xs text-[var(--color-lw-text-muted)] flex-1 truncate">{m.note}</span>}
+                        {confirmDelete === m.absence_id ? (
+                          <div className="flex items-center gap-2 shrink-0 ml-auto">
+                            <span className="text-xs text-[var(--color-lw-text-muted)]">Sure?</span>
+                            <button onClick={() => { deleteAbsence(m.absence_id); setConfirmDelete(null); }} className="text-xs text-red-400 hover:text-red-300 transition-colors">Yes</button>
+                            <button onClick={() => setConfirmDelete(null)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] transition-colors">No</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmDelete(m.absence_id)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors shrink-0 ml-auto">
+                            Delete
+                          </button>
                         )}
                       </div>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${missingBadgeClass(missing.length)}`}>
-                        {missing.length} missing
-                      </span>
-                    </div>
-
-                    {isCritical && (
-                      <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
-                        <span className="text-red-400 text-xs">⚠</span>
-                        <span className="text-xs text-red-400 font-medium">Critical — {missing.length} players missing</span>
-                      </div>
-                    )}
-
-                    <div className="divide-y divide-[var(--color-lw-border-sub)]">
-                      {missing.map((m, i) => (
-                        <div key={i} className="flex items-center justify-between px-4 py-2.5 gap-3">
-                          <div className="min-w-0 flex-1">
-                            <span className="text-sm text-[var(--color-lw-text)] font-medium">{m.player_name}</span>
-                            <p className="text-xs text-[var(--color-lw-text-muted)]">Submitted {formatSubmitted(m.created_at)}</p>
-                          </div>
-                          {m.note && <span className="text-xs text-[var(--color-lw-text-muted)] flex-1 truncate">{m.note}</span>}
-                          {confirmDelete === m.absence_id ? (
-                            <div className="flex items-center gap-2 shrink-0 ml-auto">
-                              <span className="text-xs text-[var(--color-lw-text-muted)]">Sure?</span>
-                              <button onClick={() => { deleteAbsence(m.absence_id); setConfirmDelete(null); }} className="text-xs text-red-400 hover:text-red-300 transition-colors">Yes</button>
-                              <button onClick={() => setConfirmDelete(null)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] transition-colors">No</button>
-                            </div>
-                          ) : (
-                            <button onClick={() => setConfirmDelete(m.absence_id)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors shrink-0 ml-auto">
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <PageHeader
+        title="Absence"
+        subtitle="Report upcoming absences so the council can plan ahead."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-6 items-start">
+        {leftColumn}
+        {rightColumn}
+      </div>
     </div>
   );
 }
