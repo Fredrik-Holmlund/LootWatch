@@ -1,25 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
   <rect width="100" height="100" rx="18" fill="#151008"/>
 
-  <!-- Crown (3 peaks, line art) -->
-  <path d="M36,40 L30,16 L40,26 L50,7 L60,26 L70,16 L64,40"
-    stroke="#C8A020" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Crown — floats above eye -->
+  <path d="M30,38 L24,14 L37,26 L50,6 L63,26 L76,14 L70,38"
+    stroke="#C8A020" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <!-- Outer eye (curved almond) -->
-  <path d="M5,58 Q50,22 95,58 Q50,84 5,58 Z"
+  <!-- Eye outline — single almond, asymmetric arcs -->
+  <path d="M5,62 Q50,26 95,62 Q50,88 5,62 Z"
     stroke="#C8A020" stroke-width="3" stroke-linejoin="round"/>
 
-  <!-- Inner eye (concentric, same tips) -->
-  <path d="M5,58 Q50,36 95,58 Q50,72 5,58 Z"
-    stroke="#C8A020" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Iris — filled dark circle with gold ring -->
+  <circle cx="50" cy="62" r="16" fill="#151008" stroke="#C8A020" stroke-width="2.5"/>
 
-  <!-- Iris ring -->
-  <circle cx="50" cy="55" r="12" stroke="#C8A020" stroke-width="2.5"/>
-
-  <!-- Upward triangle ▲ -->
-  <polygon points="50,47 43,62 57,62" fill="#C8A020"/>
-
-  <!-- Bottom accent (small downward V below lower tip) -->
-  <path d="M44,85 L50,92 L56,85"
-    stroke="#C8A020" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Pupil triangle ▲ -->
+  <polygon points="50,53 41,70 59,70" fill="#C8A020"/>
 </svg>
