@@ -251,14 +251,13 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
       )}
 
       {/* My all reports */}
-      <div className="space-y-2">
-        <SectionHeading>My Reports</SectionHeading>
-        {loading ? <PageSpinner /> : myAbsences.length === 0 ? (
-          <p className="text-sm text-[var(--color-lw-text-muted)]">No absence reports yet.</p>
-        ) : (
-          <Card>
-            <div className="divide-y divide-[var(--color-lw-border-sub)]">
-              {myAbsences.map((a) => {
+      {loading ? <PageSpinner /> : myAbsences.length === 0 ? (
+        <p className="text-sm text-[var(--color-lw-text-muted)]">No absence reports yet.</p>
+      ) : (
+        <Card>
+          <CardHeader><CardTitle>My Reports</CardTitle></CardHeader>
+          <div className="divide-y divide-[var(--color-lw-border-sub)]">
+            {myAbsences.map((a) => {
                 const days  = daysUntil(a.from_date);
                 const isPast = a.to_date < today;
                 return (
@@ -291,10 +290,9 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
                   </div>
                 );
               })}
-            </div>
-          </Card>
-        )}
-      </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 

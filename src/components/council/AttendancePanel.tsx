@@ -69,15 +69,28 @@ export function AttendancePanel() {
 
   const allPlayers = [...new Set(Object.values(attendance).flatMap((m) => Object.keys(m)))];
 
-  const [sortBy, setSortBy] = useState<'name' | 'pct'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'pct' | '6w'>('name');
   const [sessionPage, setSessionPage] = useState(0);
   const SESSIONS_PER_PAGE = 10;
+  const ROLLING_N = 12;
 
   const total = sessions.length;
   const attPct = (name: string) => {
     if (total === 0) return 0;
     return Math.round(
       (Object.values(attendance).filter((m) => m[name] === 'attended' || m[name] === 'bench').length / total) * 100
+    );
+  };
+
+  const sortedAllSessions = [...sessions].sort(
+    (a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
+  );
+  const rollingSessionIds = new Set(sortedAllSessions.slice(0, ROLLING_N).map(s => s.id));
+  const rolling6wPct = (name: string) => {
+    const n = rollingSessionIds.size;
+    if (n === 0) return 0;
+    return Math.round(
+      ([...rollingSessionIds].filter(id => attendance[id]?.[name] === 'attended' || attendance[id]?.[name] === 'bench').length / n) * 100
     );
   };
 
@@ -88,9 +101,9 @@ export function AttendancePanel() {
   const visibleSessions = sortedSessions.slice(sessionPage * SESSIONS_PER_PAGE, (sessionPage + 1) * SESSIONS_PER_PAGE);
 
   const sortedPlayers = [...allPlayers].sort((a, b) =>
-    sortBy === 'pct'
-      ? attPct(b) - attPct(a)
-      : a.localeCompare(b, undefined, { sensitivity: 'base' })
+    sortBy === 'pct' ? attPct(b) - attPct(a)
+    : sortBy === '6w' ? rolling6wPct(b) - rolling6wPct(a)
+    : a.localeCompare(b, undefined, { sensitivity: 'base' })
   );
 
   async function handleCreateSession() {
@@ -123,7 +136,7 @@ export function AttendancePanel() {
             onClick={() => setSubTab(id)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
               subTab === id
-                ? 'border-[var(--color-lw-gold-400)] text-[var(--color-lw-gold-300)]'
+                ? 'border-[var(--color-lw-fel-400)] text-[var(--color-lw-fel-400)]'
                 : 'border-transparent text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]'
             }`}
           >
@@ -339,10 +352,10 @@ export function AttendancePanel() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[var(--color-lw-text-muted)]">Sort:</span>
-                  {(['name', 'pct'] as const).map((s) => (
+                  {(['name', 'pct', '6w'] as const).map((s) => (
                     <button key={s} onClick={() => setSortBy(s)}
-                      className={`text-xs px-2 py-0.5 rounded transition-colors ${sortBy === s ? 'bg-[var(--color-lw-gold-400)]/20 text-[var(--color-lw-gold-300)]' : 'text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]'}`}>
-                      {s === 'name' ? 'Name' : 'Att.%'}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${sortBy === s ? 'bg-[var(--color-lw-fel-400)]/15 text-[var(--color-lw-fel-400)]' : 'text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]'}`}>
+                      {s === 'name' ? 'Name' : s === 'pct' ? 'Total%' : '6w%'}
                     </button>
                   ))}
                   <span className="text-[var(--color-lw-text-muted)]">|</span>
@@ -402,7 +415,10 @@ export function AttendancePanel() {
                         Name
                       </th>
                       <th className="px-2 py-2 text-[var(--color-lw-text-muted)] font-semibold text-center min-w-[48px] border-r border-[var(--color-lw-border)]">
-                        Att.%
+                        Total%
+                      </th>
+                      <th className="px-2 py-2 text-[var(--color-lw-fel-400)] font-semibold text-center min-w-[48px] border-r border-[var(--color-lw-border)]">
+                        6w%
                       </th>
                       {visibleSessions.map((s) => (
                         <th
@@ -441,6 +457,12 @@ export function AttendancePanel() {
                           >
                             {pct}%
                           </td>
+                          <td
+                            className="px-2 py-1 text-center border-r border-[var(--color-lw-border)] font-semibold"
+                            style={{ color: rolling6wPct(name) >= 75 ? '#4ade80' : rolling6wPct(name) >= 50 ? '#facc15' : rolling6wPct(name) >= 25 ? '#fb923c' : '#f87171' }}
+                          >
+                            {rolling6wPct(name)}%
+                          </td>
                           {visibleSessions.map((s) => {
                             const status = attendance[s.id]?.[name];
                             const bg = status === 'attended' ? '#16a34a' : status === 'bench' ? '#c2410c' : '#111';
@@ -466,7 +488,7 @@ export function AttendancePanel() {
 
                     {/* Add new player row */}
                     <tr className="border-t border-[var(--color-lw-border-sub)]">
-                      <td colSpan={3 + visibleSessions.length} className="px-3 py-2 sticky left-0">
+                      <td colSpan={4 + visibleSessions.length} className="px-3 py-2 sticky left-0">
                         {addingToSession === '__new__' ? (
                           <div className="flex gap-2 items-center">
                             <input

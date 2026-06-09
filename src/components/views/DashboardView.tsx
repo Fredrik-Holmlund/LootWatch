@@ -6,7 +6,7 @@ import { useAbsence } from '../../hooks/useAbsence';
 import { useGuildNotice } from '../../hooks/useGuildNotice';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
-import { Card, CardHeader, CardBody } from '../ui/Card';
+import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
 import { SectionHeading } from '../ui/SectionHeading';
 import { PageHeader } from '../ui/PageHeader';
 import { PageSpinner } from '../ui/Spinner';
@@ -166,24 +166,30 @@ export function DashboardView({ username }: DashboardViewProps) {
   return (
     <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
 
-      <PageHeader title="Overview" subtitle="Guild activity and your personal stats" />
+      <PageHeader title="Dashboard" subtitle="Guild activity and your personal stats" />
 
-      {/* Guild notice banner */}
+      {/* Guild notice */}
       {notice?.is_active && notice.message && (
-        <div className="flex items-start gap-3 bg-[var(--color-lw-fel-500)]/8 border border-[var(--color-lw-fel-500)]/25 rounded-lg px-4 py-3">
-          <span className="text-[var(--color-lw-fel-400)] text-base shrink-0 mt-0.5">📌</span>
-          <p className="text-sm text-[var(--color-lw-text)] leading-relaxed whitespace-pre-wrap">{notice.message}</p>
+        <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-xl overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-[var(--color-lw-border-sub)] bg-[var(--color-lw-surface)]">
+            <SectionHeading>Important Information</SectionHeading>
+          </div>
+          <div className="px-4 py-3 flex items-start gap-3">
+            <span className="text-[var(--color-lw-fel-400)] text-base shrink-0 mt-0.5">📌</span>
+            <p className="text-sm text-[var(--color-lw-text)] leading-relaxed whitespace-pre-wrap">{notice.message}</p>
+          </div>
         </div>
       )}
 
       {/* Guild-wide stat cards */}
       {entries.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <>
+        <SectionHeading>Statistics</SectionHeading>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             { label: 'Items Distributed', value: entries.length,                                          color: '#c9a227' },
             { label: 'Unique Recipients',  value: new Set(entries.map(e => stripRealm(e.player_name).toLowerCase())).size, color: '#c9a227' },
             { label: 'Unique Items',       value: new Set(entries.map(e => e.item_name.toLowerCase())).size,              color: '#c9a227' },
-            { label: 'Raids Tracked',      value: new Set(entries.map(e => e.raid).filter(Boolean)).size,                 color: '#c9a227' },
             { label: 'Sessions Tracked',   value: sessions.length,                                         color: 'var(--color-lw-fel-400)' },
             { label: 'Avg Attendance',     value: hasAttendance
                 ? `${Math.round(Object.values(statsAll).reduce((s, r) => s + r.pct, 0) / Math.max(Object.values(statsAll).length, 1))}%`
@@ -197,9 +203,11 @@ export function DashboardView({ username }: DashboardViewProps) {
             </div>
           ))}
         </div>
+        </>
       )}
 
       {/* Personal stats row */}
+      {hasAttendance && <SectionHeading>Personal Statistics</SectionHeading>}
       {hasAttendance && (
         myStats ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -249,6 +257,8 @@ export function DashboardView({ username }: DashboardViewProps) {
         )
       )}
 
+      <SectionHeading>Guild Statistics</SectionHeading>
+
       {/* Mid row: next raids + two attendance leaderboards */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_1fr] gap-4">
 
@@ -289,12 +299,7 @@ export function DashboardView({ username }: DashboardViewProps) {
         {/* Attendance — Last 6 weeks */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <SectionHeading className="flex-1">Attendance</SectionHeading>
-              <span className="text-[10px] text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/25 rounded-full px-2 py-0.5 font-medium shrink-0">
-                Last 6 weeks
-              </span>
-            </div>
+            <CardTitle>Attendance — Last 6 weeks</CardTitle>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
             {hasAttendance ? pinnedFirst(sortedByRolling, myName).slice(0, 10).map(([name, s]) => (
@@ -316,12 +321,7 @@ export function DashboardView({ username }: DashboardViewProps) {
         {/* Attendance — All time */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <SectionHeading className="flex-1">Attendance</SectionHeading>
-              <span className="text-[10px] text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5 font-medium shrink-0">
-                All time
-              </span>
-            </div>
+            <CardTitle>Attendance — <span style={{ color: 'var(--color-lw-gold-300)' }}>All time</span></CardTitle>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
             {hasAttendance ? pinnedFirst(sortedByAll, myName).slice(0, 10).map(([name, s]) => (
@@ -348,7 +348,7 @@ export function DashboardView({ username }: DashboardViewProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <SectionHeading className="flex-1">Most Wished Items</SectionHeading>
+              <CardTitle>Most Wished Items</CardTitle>
               <span className="text-[10px] text-[var(--color-lw-text-muted)] shrink-0">{wishes.length} total</span>
             </div>
           </CardHeader>
@@ -377,7 +377,7 @@ export function DashboardView({ username }: DashboardViewProps) {
 
         {/* Recent activity */}
         <Card>
-          <CardHeader><SectionHeading>Recent Loot</SectionHeading></CardHeader>
+          <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
           {recent.length > 0 ? (
             <div className="divide-y divide-[var(--color-lw-border-sub)]">
               {recent.map((e) => (
