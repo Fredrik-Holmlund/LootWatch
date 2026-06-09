@@ -8,7 +8,8 @@ import { supabase } from '../../utils/supabase';
 import type { Profile } from '../../types';
 import { PageHeader } from '../ui/PageHeader';
 import { SubTabs } from '../ui/SubTabs';
-import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
+import { Card, CardHeader, CardBody } from '../ui/Card';
+import { SectionHeading } from '../ui/SectionHeading';
 import { PageSpinner } from '../ui/Spinner';
 
 interface AdminViewProps { profile: Profile | null; }
@@ -181,7 +182,7 @@ export function AdminView({ profile }: AdminViewProps) {
             {/* Raider Visibility */}
             <Card>
               <CardHeader>
-                <CardTitle>Raider Visibility</CardTitle>
+                <SectionHeading>Raider Visibility</SectionHeading>
                 <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
                   Control which tabs raiders can see. Council and Admin always see everything.
                 </p>
@@ -216,7 +217,7 @@ export function AdminView({ profile }: AdminViewProps) {
             {/* WarcraftLogs */}
             <Card>
               <CardHeader>
-                <CardTitle>WarcraftLogs Guild</CardTitle>
+                <SectionHeading>WarcraftLogs Guild</SectionHeading>
                 <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">Used to sync raid attendance automatically.</p>
               </CardHeader>
               <CardBody className="space-y-3">
@@ -256,7 +257,7 @@ export function AdminView({ profile }: AdminViewProps) {
             {/* Guild Notice */}
             <Card>
               <CardHeader>
-                <CardTitle>Guild Notice</CardTitle>
+                <SectionHeading>Guild Notice</SectionHeading>
                 <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
                   Pinned message shown at the top of the Dashboard for all users.
                 </p>
@@ -312,7 +313,7 @@ export function AdminView({ profile }: AdminViewProps) {
             {/* Priority weights */}
             <Card>
               <CardHeader>
-                <CardTitle>Priority Score Weights</CardTitle>
+                <SectionHeading>Priority Score Weights</SectionHeading>
                 <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">Must sum to 100.</p>
               </CardHeader>
               <CardBody className="space-y-4">
@@ -368,7 +369,7 @@ export function AdminView({ profile }: AdminViewProps) {
             {/* Response Weights */}
             <Card>
               <CardHeader>
-                <CardTitle>Response Weights</CardTitle>
+                <SectionHeading>Response Weights</SectionHeading>
                 <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
                   Assign a weight (0.0–1.0) to each loot response found in your history. Used for both <strong className="text-[var(--color-lw-text-sub)]">Drought</strong> (items ≥ 0.3 break drought) and <strong className="text-[var(--color-lw-text-sub)]">Recent Loot</strong> score.
                 </p>

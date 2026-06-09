@@ -6,7 +6,8 @@ import { useAbsence } from '../../hooks/useAbsence';
 import { useGuildNotice } from '../../hooks/useGuildNotice';
 import { getClassColor } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
-import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
+import { Card, CardHeader, CardBody } from '../ui/Card';
+import { SectionHeading } from '../ui/SectionHeading';
 import { PageHeader } from '../ui/PageHeader';
 import { PageSpinner } from '../ui/Spinner';
 import type { Profile } from '../../types';
@@ -253,7 +254,6 @@ export function DashboardView({ username }: DashboardViewProps) {
 
         {/* Next raids */}
         <Card>
-          <CardHeader><CardTitle>Upcoming Raids</CardTitle></CardHeader>
           <div className="divide-y divide-[var(--color-lw-border-sub)]">
             {nextRaids.map(date => {
               const d = new Date(date + 'T00:00:00');
@@ -289,9 +289,9 @@ export function DashboardView({ username }: DashboardViewProps) {
         {/* Attendance — Last 6 weeks */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Attendance</CardTitle>
-              <span className="text-[10px] text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/25 rounded-full px-2 py-0.5 font-medium">
+            <div className="flex items-center justify-between gap-3">
+              <SectionHeading className="flex-1">Attendance</SectionHeading>
+              <span className="text-[10px] text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/25 rounded-full px-2 py-0.5 font-medium shrink-0">
                 Last 6 weeks
               </span>
             </div>
@@ -316,9 +316,9 @@ export function DashboardView({ username }: DashboardViewProps) {
         {/* Attendance — All time */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Attendance</CardTitle>
-              <span className="text-[10px] text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5 font-medium">
+            <div className="flex items-center justify-between gap-3">
+              <SectionHeading className="flex-1">Attendance</SectionHeading>
+              <span className="text-[10px] text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5 font-medium shrink-0">
                 All time
               </span>
             </div>
@@ -347,10 +347,10 @@ export function DashboardView({ username }: DashboardViewProps) {
         {/* Most wished items */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              Most Wished Items
-              <span className="text-[var(--color-lw-text-muted)] font-normal text-xs ml-2">({wishes.length} total)</span>
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <SectionHeading className="flex-1">Most Wished Items</SectionHeading>
+              <span className="text-[10px] text-[var(--color-lw-text-muted)] shrink-0">{wishes.length} total</span>
+            </div>
           </CardHeader>
           <CardBody className="space-y-2 pb-4">
             {wishStats.length ? wishStats.map(([name, count], i) => {
@@ -377,7 +377,7 @@ export function DashboardView({ username }: DashboardViewProps) {
 
         {/* Recent activity */}
         <Card>
-          <CardHeader><CardTitle>Recent Loot</CardTitle></CardHeader>
+          <CardHeader><SectionHeading>Recent Loot</SectionHeading></CardHeader>
           {recent.length > 0 ? (
             <div className="divide-y divide-[var(--color-lw-border-sub)]">
               {recent.map((e) => (

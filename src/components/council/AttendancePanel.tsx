@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAttendance } from '../../hooks/useAttendance';
+import { SectionHeading } from '../ui/SectionHeading';
 
 type SubTab = 'import' | 'edit';
 
@@ -155,7 +156,7 @@ export function AttendancePanel() {
 
           {/* Manual session creation */}
           <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-4 space-y-3">
-            <h3 className="text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Add Raid Manually</h3>
+            <SectionHeading>Add Raid Manually</SectionHeading>
             <div className="flex gap-2">
               <input
                 value={newInstance}
@@ -183,7 +184,7 @@ export function AttendancePanel() {
           {wclReports.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">WarcraftLogs Reports</h3>
+                <SectionHeading>WarcraftLogs Reports</SectionHeading>
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-[var(--color-lw-text-muted)]">Min. players</label>
                   <input
@@ -232,7 +233,7 @@ export function AttendancePanel() {
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider">Saved Sessions</h3>
+                <SectionHeading>Saved Sessions</SectionHeading>
                 <div className="flex items-center gap-2">
                   {selected.size > 0 ? (
                     <>

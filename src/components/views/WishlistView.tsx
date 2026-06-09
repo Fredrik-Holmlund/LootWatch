@@ -11,6 +11,7 @@ import type { Profile, RaidLoot, SoftReserve, UserRole } from '../../types';
 import { PageHeader } from '../ui/PageHeader';
 import { SubTabs } from '../ui/SubTabs';
 import { PageSpinner } from '../ui/Spinner';
+import { SectionHeading } from '../ui/SectionHeading';
 
 interface WishlistViewProps {
   profile: Profile | null;
@@ -153,9 +154,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
             <div className="space-y-6">
               {Object.entries(grouped).map(([instance, bosses]) => (
                 <div key={instance}>
-                  <h3 className="text-base font-bold text-[var(--color-lw-text)] uppercase tracking-wider mb-3 flex items-center gap-3 before:content-[''] before:flex-1 before:h-px before:bg-[var(--color-lw-border)] after:content-[''] after:flex-1 after:h-px after:bg-[var(--color-lw-border)]">
-                    {instance}
-                  </h3>
+                  <SectionHeading className="mb-3">{instance}</SectionHeading>
                   <div className="space-y-2">
                     {sortBosses(instance, Object.keys(bosses)).map((boss) => (
                       <div key={boss} className="lw-card overflow-hidden">

@@ -3,6 +3,7 @@ import { usePlayers } from '../../hooks/usePlayers';
 import { CLASS_COLORS } from '../../utils/classColors';
 import { stripRealm } from '../../utils/formatName';
 import type { LootEntry, WoWClass } from '../../types';
+import { SectionHeading } from '../ui/SectionHeading';
 
 const WOW_CLASSES: WoWClass[] = [
   'Warrior', 'Paladin', 'Hunter', 'Rogue', 'Priest',
@@ -81,7 +82,7 @@ export function RosterPanel({ historyEntries }: RosterPanelProps) {
       {syncResult && <p className="text-xs text-green-400">{syncResult}</p>}
 
       <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-lw-text-sub)] mb-4">Add Guild Member</h3>
+        <SectionHeading className="mb-4">Add Guild Member</SectionHeading>
         <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[var(--color-lw-text-muted)]">Name</label>
@@ -127,9 +128,10 @@ export function RosterPanel({ historyEntries }: RosterPanelProps) {
 
       <div className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--color-lw-border)]">
-          <p className="text-sm font-semibold text-[var(--color-lw-text-sub)]">
-            Roster <span className="text-[var(--color-lw-text-muted)] font-normal">({players.length})</span>
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <SectionHeading className="flex-1">Roster</SectionHeading>
+            <span className="text-[10px] text-[var(--color-lw-text-muted)] shrink-0">{players.length} members</span>
+          </div>
         </div>
         {loading ? (
           <div className="text-center py-10 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>

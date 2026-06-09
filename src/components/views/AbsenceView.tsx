@@ -4,6 +4,7 @@ import { canEdit } from '../../types';
 import type { Profile, UserRole } from '../../types';
 import { PageHeader } from '../ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
+import { SectionHeading } from '../ui/SectionHeading';
 import { PageSpinner } from '../ui/Spinner';
 
 interface AbsenceViewProps {
@@ -251,7 +252,7 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
 
       {/* My all reports */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">My Reports</h3>
+        <SectionHeading>My Reports</SectionHeading>
         {loading ? <PageSpinner /> : myAbsences.length === 0 ? (
           <p className="text-sm text-[var(--color-lw-text-muted)]">No absence reports yet.</p>
         ) : (
@@ -386,8 +387,9 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
 
   const rightColumn = (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-[var(--color-lw-text)]">Raid Calendar</h3>
+      <div className="space-y-1">
+        <SectionHeading>Raid Calendar</SectionHeading>
+        <div className="flex items-center gap-2">
         <span className="text-xs text-[var(--color-lw-text-muted)] bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-full px-2 py-0.5">
           Wed &amp; Sun
         </span>
@@ -396,6 +398,7 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
             Council view
           </span>
         )}
+        </div>
       </div>
 
       {calendarBlock}
