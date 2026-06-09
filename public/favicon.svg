@@ -1,72 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 222">
-  <rect width="200" height="222" fill="#1d1d1d"/>
-  <defs>
-    <clipPath id="fc">
-      <path d="M62,62 L66,48 L78,24 L90,48 L100,8 L110,48 L122,24 L134,48 L138,62 A70,70,0,1,1,62,62Z"/>
-    </clipPath>
-    <clipPath id="cc">
-      <circle cx="100" cy="128" r="70"/>
-    </clipPath>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" fill="none">
+  <rect width="120" height="90" fill="#1d1d1d"/>
 
-  <!-- Base gold -->
-  <path d="M62,62 L66,48 L78,24 L90,48 L100,8 L110,48 L122,24 L134,48 L138,62 A70,70,0,1,1,62,62Z" fill="#C09818"/>
+  <!-- Crown -->
+  <path d="M24,52 L24,37 L38,18 L50,30 L60,6 L70,30 L82,18 L96,37 L96,52 Q78,41 60,40 Q42,41 24,52Z"
+    fill="#C8A020" stroke="#1a1005" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <polygon points="50,30 60,6 70,30" fill="#F0D040" opacity="0.6"/>
 
-  <!-- Circle facets -->
-  <g clip-path="url(#cc)">
-    <polygon points="100,128 100,58 149,77"   fill="#EBC840"/>
-    <polygon points="100,128 149,77  170,128"  fill="#D0A020"/>
-    <polygon points="100,128 170,128 149,179" fill="#A87010"/>
-    <polygon points="100,128 149,179 100,198" fill="#886008"/>
-    <polygon points="100,128 100,198 51,179"  fill="#886008"/>
-    <polygon points="100,128 51,179  30,128"  fill="#A87010"/>
-    <polygon points="100,128 30,128  51,77"   fill="#D0A020"/>
-    <polygon points="100,128 51,77   100,58"  fill="#EBC840"/>
-  </g>
+  <!-- Eye outer (dark lids) -->
+  <path d="M4,56 Q60,20 116,56 Q60,92 4,56Z" fill="#1a1005"/>
 
-  <!-- Crown facets -->
-  <polygon clip-path="url(#fc)" points="62,62 66,48 78,24 90,48 100,66" fill="#D0A020"/>
-  <polygon clip-path="url(#fc)" points="90,48 100,8 110,48" fill="#F4DE48"/>
-  <polygon clip-path="url(#fc)" points="100,66 110,48 122,24 134,48 138,62" fill="#D0A020"/>
+  <!-- Eye inner (gold) -->
+  <path d="M14,56 Q60,28 106,56 Q60,84 14,56Z" fill="#C8A020"/>
 
-  <!-- Radial facet lines -->
-  <g clip-path="url(#cc)" stroke="#1C1208" stroke-width="1.5" stroke-linecap="round">
-    <line x1="100" y1="128" x2="100" y2="58"/>
-    <line x1="100" y1="128" x2="149" y2="77"/>
-    <line x1="100" y1="128" x2="170" y2="128"/>
-    <line x1="100" y1="128" x2="149" y2="179"/>
-    <line x1="100" y1="128" x2="100" y2="198"/>
-    <line x1="100" y1="128" x2="51"  y2="179"/>
-    <line x1="100" y1="128" x2="30"  y2="128"/>
-    <line x1="100" y1="128" x2="51"  y2="77"/>
-  </g>
-
-  <!-- Crown outlines -->
-  <g stroke="#1C1208" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="62,62 66,48 78,24 90,48 100,8 110,48 122,24 134,48 138,62"/>
-    <line x1="90" y1="48" x2="100" y2="66"/>
-    <line x1="100" y1="66" x2="110" y2="48"/>
-    <line x1="62" y1="62" x2="90"  y2="62"/>
-    <line x1="110" y1="62" x2="138" y2="62"/>
-  </g>
-
-  <!-- Orbit band -->
-  <g clip-path="url(#cc)">
-    <ellipse cx="100" cy="134" rx="76" ry="16" transform="rotate(-18 100 134)" fill="none" stroke="#1C1208" stroke-width="18"/>
-    <ellipse cx="100" cy="134" rx="76" ry="16" transform="rotate(-18 100 134)" fill="none" stroke="#B08014" stroke-width="11"/>
-  </g>
-
-  <!-- Eye outer -->
-  <path d="M34,128 Q64,84 100,84 Q136,84 166,128 Q136,172 100,172 Q64,172 34,128Z" fill="#1C1208"/>
-  <!-- Eye inner -->
-  <path d="M46,128 Q72,97 100,97 Q128,97 154,128 Q128,159 100,159 Q72,159 46,128Z" fill="#C09818"/>
   <!-- Iris -->
-  <circle cx="100" cy="128" r="26" fill="#8B6308"/>
-  <circle cx="100" cy="128" r="26" fill="none" stroke="#D8AE24" stroke-width="2.5"/>
-  <!-- Triangle pupil -->
-  <polygon points="83,117 117,117 100,146" fill="#1C1208"/>
+  <circle cx="60" cy="56" r="17" fill="#8B6008"/>
+  <circle cx="60" cy="56" r="17" fill="none" stroke="#D8AE24" stroke-width="2"/>
 
-  <!-- Outer stroke -->
-  <path d="M62,62 L66,48 L78,24 L90,48 L100,8 L110,48 L122,24 L134,48 L138,62 A70,70,0,1,1,62,62Z"
-    fill="none" stroke="#1C1208" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- Pupil triangle -->
+  <polygon points="46,48 74,48 60,70" fill="#1a1005"/>
 </svg>
