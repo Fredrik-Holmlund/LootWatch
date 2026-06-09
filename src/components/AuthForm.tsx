@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { CrossedSwordsLogo } from './ui/CrossedSwordsLogo';
+import { LootWatchLogo } from './ui/LootWatchLogo';
 import { Spinner } from './ui/Spinner';
 
 interface AuthFormProps {
@@ -65,7 +65,7 @@ export function AuthForm({ onSignIn, onSignUp }: AuthFormProps) {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] mb-5 shadow-xl">
-            <CrossedSwordsLogo className="w-7 h-7 text-[var(--color-lw-gold-400)]" />
+            <LootWatchLogo className="w-10 h-10" />
           </div>
           <h1
             className="text-2xl font-semibold text-[var(--color-lw-text)] tracking-wide"
