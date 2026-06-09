@@ -42,7 +42,6 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
   const visibleTabs = tabs.filter((tab) => {
     if (tab.requireAdmin && role !== 'admin') return false;
     if (tab.requireCouncil && !canEdit(role)) return false;
-    if (!isPrivileged && tab.id === 'dashboard' && !settings.show_dashboard) return false;
     if (!isPrivileged && tab.id === 'history' && !settings.show_history) return false;
     if (!isPrivileged && !isPlanner && tab.id === 'assignments' && !settings.show_assignments) return false;
     return true;

@@ -174,7 +174,6 @@ export function AdminView({ profile }: AdminViewProps) {
             {settingsLoading ? <PageSpinner /> : (
               <div className="divide-y divide-[var(--color-lw-border-sub)]">
                 {([
-                  { key: 'show_dashboard'       as const, label: 'Dashboard',        desc: 'Overview stats and weekly activity' },
                   { key: 'show_history'          as const, label: 'History',           desc: 'Loot table and player summaries' },
                   { key: 'show_wishes_publicly'  as const, label: 'Public Wishlist',   desc: "Raiders see each other's wishes and counts" },
                   { key: 'show_stars_publicly'   as const, label: 'Public Stars',      desc: "Raiders see each other's star priorities" },

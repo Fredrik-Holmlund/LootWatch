@@ -17,7 +17,7 @@ import { canEdit, canEditAssignments } from './types';
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut, isRecovery, updatePassword } = useAuth();
   const { settings } = useAppSettings();
-  const [activeTab, setActiveTab] = useState<NavTab>('wishlist');
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
   if (loading) {
     return (
@@ -40,17 +40,17 @@ function App() {
   const raiderCanSee = (tab: NavTab) => {
     if (canEdit(role) || role === 'admin') return true;
     if (tab === 'assignments') return isPlanner || settings.show_assignments;
-    if (tab === 'dashboard')   return settings.show_dashboard;
     if (tab === 'history')     return settings.show_history;
+    if (tab === 'dashboard')   return true;
     if (tab === 'wishlist')    return true;
     if (tab === 'absence')     return true;
     return false;
   };
 
   const effectiveTab: NavTab =
-    activeTab === 'admin'   && role !== 'admin'  ? 'wishlist'
-    : activeTab === 'council' && !canEdit(role)  ? 'wishlist'
-    : !raiderCanSee(activeTab)                   ? 'wishlist'
+    activeTab === 'admin'   && role !== 'admin'  ? 'dashboard'
+    : activeTab === 'council' && !canEdit(role)  ? 'dashboard'
+    : !raiderCanSee(activeTab)                   ? 'dashboard'
     : activeTab;
 
   function handleTabChange(tab: NavTab) {
