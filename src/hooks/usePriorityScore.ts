@@ -16,28 +16,25 @@ export interface PlayerPriority {
   currentStreak: number;
   bestStreak: number;
   droughtDays: number;
-  recentBisCount: number;
+  recentWeightedLoot: number; // weighted sum of recent items (replaces recentBisCount)
 }
 
 export interface PriorityWeights {
-  attendance: number; // default 20
-  streak: number;     // default 10
-  drought: number;    // default 50
-  loot: number;       // default 20
+  attendance: number;
+  streak: number;
+  drought: number;
+  loot: number;
 }
 
-const MAIN_SPEC_RESPONSES = ['bis', 'upgrade', 'best in slot'];
-const RECENT_WINDOW_DAYS = 42;
+// Items with weight below this don't count as "breaking drought"
+const DROUGHT_THRESHOLD = 0.3;
+const RECENT_WINDOW_DAYS = 42; // 6 weeks
 const DROUGHT_CAP_DAYS = 30;
-const LOOT_PENALTY_PER_ITEM = 25;
+const LOOT_PENALTY_PER_UNIT = 25; // penalty points per 1.0 weighted unit
 const DEFAULT_ATT_WINDOW = 6;
 
 function stripRealm(name: string): string {
   return name.split('-')[0];
-}
-
-function isMainSpec(response: string): boolean {
-  return MAIN_SPEC_RESPONSES.includes(response.toLowerCase().trim());
 }
 
 export function usePriorityScore() {
@@ -49,29 +46,44 @@ export function usePriorityScore() {
   const compute = useCallback(async (w: PriorityWeights, window: number) => {
     setLoading(true);
 
-    const [lootRes, sessionRes, attRes] = await Promise.all([
+    const [lootRes, sessionRes, attRes, settingsRes] = await Promise.all([
       supabase.from('loot_entries').select('player_name, response, timestamp'),
       supabase.from('raid_sessions').select('id, session_date'),
       supabase.from('raid_attendance').select('session_id, player_name, status'),
+      supabase.from('app_settings').select('key, value').eq('key', 'response_weights').maybeSingle(),
     ]);
+
+    // Load response weights (JSON stored in app_settings)
+    const responseWeights: Record<string, number> = {};
+    try {
+      const raw = settingsRes.data?.value;
+      if (raw) Object.assign(responseWeights, JSON.parse(String(raw)));
+    } catch { /* ignore */ }
+
+    function getWeight(response: string): number {
+      const key = (response ?? '').trim().toLowerCase();
+      for (const [k, v] of Object.entries(responseWeights)) {
+        if (k.trim().toLowerCase() === key) return v;
+      }
+      return 0;
+    }
 
     const lootEntries = lootRes.data ?? [];
     const sessions = (sessionRes.data ?? []) as { id: string; session_date: string }[];
     const attRows = attRes.data ?? [];
 
-    // Sort sessions oldest → newest for streak calc
     const sessionsSortedAsc = [...sessions].sort(
       (a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime()
     );
-    const rollingIds = new Set(sessionsSortedAsc.slice(-window).map((s) => s.id));
+    const rollingIds = new Set(sessionsSortedAsc.slice(-window).map(s => s.id));
     const rollingTotal = Math.min(window, sessions.length);
     const allTimeTotal = sessions.length;
 
     const now = Date.now();
     const recentCutoff = now - RECENT_WINDOW_DAYS * 86400000;
 
-    // Build attendance structures
-    const attMap: Record<string, Record<string, string>> = {};  // sessionId → playerName → status
+    // Attendance structures
+    const attMap: Record<string, Record<string, string>> = {};
     const allTimeCount: Record<string, number> = {};
     const rollingCount: Record<string, number> = {};
 
@@ -79,16 +91,14 @@ export function usePriorityScore() {
       if (!attMap[row.session_id]) attMap[row.session_id] = {};
       const name = stripRealm(row.player_name);
       attMap[row.session_id][name] = row.status;
-
       if (row.status === 'attended' || row.status === 'bench') {
         allTimeCount[name] = (allTimeCount[name] ?? 0) + 1;
         if (rollingIds.has(row.session_id)) rollingCount[name] = (rollingCount[name] ?? 0) + 1;
       }
     }
 
-    // Streak calculation — starts from player's first appearance (pre-join sessions don't penalise)
     function calcStreaks(name: string): { current: number; best: number } {
-      const firstIdx = sessionsSortedAsc.findIndex((s) => {
+      const firstIdx = sessionsSortedAsc.findIndex(s => {
         const st = attMap[s.id]?.[name];
         return st === 'attended' || st === 'bench';
       });
@@ -107,22 +117,34 @@ export function usePriorityScore() {
       return { current, best };
     }
 
-    // Loot maps
-    const lastBisDate: Record<string, number> = {};
-    const recentBis: Record<string, number> = {};
+    // Loot maps — weighted
+    const lastSignificantDate: Record<string, number> = {};
+    const recentWeightedLoot: Record<string, number> = {};
+
     for (const entry of lootEntries) {
-      if (!isMainSpec(entry.response)) continue;
+      const weight = getWeight(entry.response);
+      if (weight <= 0) continue;
       const name = stripRealm(entry.player_name);
       const ts = new Date(entry.timestamp).getTime();
       if (isNaN(ts)) continue;
-      if (lastBisDate[name] === undefined || ts > lastBisDate[name]) lastBisDate[name] = ts;
-      if (ts >= recentCutoff) recentBis[name] = (recentBis[name] ?? 0) + 1;
+
+      // Drought: track last item that breaks drought threshold
+      if (weight >= DROUGHT_THRESHOLD) {
+        if (lastSignificantDate[name] === undefined || ts > lastSignificantDate[name]) {
+          lastSignificantDate[name] = ts;
+        }
+      }
+
+      // Loot score: weighted sum in recent window
+      if (ts >= recentCutoff) {
+        recentWeightedLoot[name] = (recentWeightedLoot[name] ?? 0) + weight;
+      }
     }
 
     const allNames = new Set([
       ...Object.keys(allTimeCount),
-      ...Object.keys(lastBisDate),
-      ...Object.keys(recentBis),
+      ...Object.keys(lastSignificantDate),
+      ...Object.keys(recentWeightedLoot),
     ]);
 
     const result: PlayerPriority[] = [];
@@ -132,14 +154,16 @@ export function usePriorityScore() {
       const attendanceScore = rollingPct;
 
       const { current: currentStreak, best: bestStreak } = calcStreaks(name);
-      const streakScore = allTimeTotal > 0 ? Math.round(Math.min(bestStreak, allTimeTotal) / allTimeTotal * 100) : 0;
+      const streakScore = allTimeTotal > 0
+        ? Math.round(Math.min(bestStreak, allTimeTotal) / allTimeTotal * 100)
+        : 0;
 
-      const lastTs = lastBisDate[name];
+      const lastTs = lastSignificantDate[name];
       const droughtDays = lastTs !== undefined ? Math.round((now - lastTs) / 86400000) : 999;
       const droughtScore = Math.min(droughtDays, DROUGHT_CAP_DAYS) / DROUGHT_CAP_DAYS * 100;
 
-      const recentBisCount = recentBis[name] ?? 0;
-      const lootScore = Math.max(0, 100 - recentBisCount * LOOT_PENALTY_PER_ITEM);
+      const weightedLoot = recentWeightedLoot[name] ?? 0;
+      const lootScore = Math.max(0, 100 - weightedLoot * LOOT_PENALTY_PER_UNIT);
 
       const score =
         (attendanceScore * w.attendance / 100) +
@@ -149,11 +173,14 @@ export function usePriorityScore() {
 
       result.push({
         name, score: Math.round(score),
-        attendanceScore: Math.round(attendanceScore), streakScore: Math.round(streakScore),
-        droughtScore: Math.round(droughtScore), lootScore: Math.round(lootScore),
+        attendanceScore: Math.round(attendanceScore),
+        streakScore: Math.round(streakScore),
+        droughtScore: Math.round(droughtScore),
+        lootScore: Math.round(lootScore),
         rollingPct, rollingAttended, rollingTotal,
         allTimeAttended: allTimeCount[name] ?? 0, allTimeTotal,
-        currentStreak, bestStreak, droughtDays, recentBisCount,
+        currentStreak, bestStreak, droughtDays,
+        recentWeightedLoot: Math.round(weightedLoot * 10) / 10,
       });
     }
 

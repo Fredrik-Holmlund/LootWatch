@@ -129,7 +129,7 @@ export function PriorityPanel() {
             <div className="space-y-0.5">
               <ScoreBar value={p.lootScore} color="#fbbf24" />
               <p className="text-xs text-[var(--color-lw-text-muted)]">
-                {p.recentBisCount === 0 ? 'No recent items' : `${p.recentBisCount} item${p.recentBisCount > 1 ? 's' : ''} (6 wks)`}
+                {p.recentWeightedLoot === 0 ? 'No recent items' : `${p.recentWeightedLoot} pts (6 wks)`}
               </p>
             </div>
           </div>

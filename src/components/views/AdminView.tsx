@@ -3,6 +3,7 @@ import { UserManagement } from '../admin/UserManagement';
 import { RaidLootManager } from '../admin/RaidLootManager';
 import { useAppSettings } from '../../hooks/useAppSettings';
 import { useGuildNotice } from '../../hooks/useGuildNotice';
+import { useResponseWeights } from '../../hooks/useResponseWeights';
 import { supabase } from '../../utils/supabase';
 import type { Profile } from '../../types';
 import { PageHeader } from '../ui/PageHeader';
@@ -45,6 +46,17 @@ const ROLE_CARDS = [
 export function AdminView({ profile }: AdminViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('users');
   const { settings, loading: settingsLoading, toggleSetting } = useAppSettings();
+  const { responses: rspList, weights: rspWeights, loading: rspLoading, saveWeights: saveRspWeights } = useResponseWeights();
+  const [localRspWeights, setLocalRspWeights] = useState<Record<string, number>>({});
+  const [rspSaving, setRspSaving] = useState(false);
+  const [rspSaved,  setRspSaved]  = useState(false);
+  useEffect(() => { setLocalRspWeights(rspWeights); }, [rspWeights]);
+  async function handleSaveRspWeights() {
+    setRspSaving(true);
+    await saveRspWeights(localRspWeights);
+    setRspSaving(false); setRspSaved(true);
+    setTimeout(() => setRspSaved(false), 2000);
+  }
 
   const WCL_KEYS = ['wcl_guild_name', 'wcl_guild_realm', 'wcl_guild_region', 'wcl_game'] as const;
   type WclKey = typeof WCL_KEYS[number];
@@ -291,6 +303,72 @@ export function AdminView({ profile }: AdminViewProps) {
               <div className="pt-1">
                 {saveBtn(wclSaving, wclSaved, saveWclConfig)}
               </div>
+            </CardBody>
+          </Card>
+
+          {/* How priority score works — info box */}
+          <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-xl p-4 space-y-3 text-xs text-[var(--color-lw-text-muted)]">
+            <p className="text-sm font-semibold text-[var(--color-lw-text)]">How Priority Score Works</p>
+            <p>Each raider gets a score from <span className="text-[var(--color-lw-text-sub)]">0–100</span> based on four components. Each component is scored 0–100 and then multiplied by its weight (must sum to 100).</p>
+            <div className="space-y-2">
+              <div className="flex gap-2"><span className="text-[#60a5fa] font-semibold w-28 shrink-0">Rolling Att.</span><span>Attendance % over the last N raids (set below). 100% = full score.</span></div>
+              <div className="flex gap-2"><span className="text-[#4ade80] font-semibold w-28 shrink-0">Streak</span><span>Best consecutive attendance run, scored relative to total raids. Counts from first appearance; bench = present.</span></div>
+              <div className="flex gap-2"><span className="text-[#a78bfa] font-semibold w-28 shrink-0">Drought</span><span>Days since last significant item (weight ≥ 0.3). Caps at 30 days = 100 drought score. No item ever = max score.</span></div>
+              <div className="flex gap-2"><span className="text-[#fbbf24] font-semibold w-28 shrink-0">Recent Loot</span><span>Weighted loot received in the last 6 weeks. Each "1.0 unit" subtracts 25 points from 100. BIS (1.0) + Upgrade (0.7) = 1.7 units → 100−42 = 58 loot score. Offspec (0.2) barely counts.</span></div>
+            </div>
+            <p className="border-t border-[var(--color-lw-border-sub)] pt-2">
+              <span className="font-semibold text-[var(--color-lw-text-sub)]">Example: </span>
+              Weights 20/10/50/20 · Raider with 90% att, best streak, 20 days drought, 1 BIS this tier:<br />
+              <span className="font-mono">= 90×0.20 + 100×0.10 + 67×0.50 + 75×0.20 = 18+10+33+15 = 76 pts</span>
+            </p>
+          </div>
+
+          {/* Response Weights */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Response Weights</CardTitle>
+              <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
+                Assign a weight (0.0–1.0) to each loot response found in your history. Used for both <strong className="text-[var(--color-lw-text-sub)]">Drought</strong> (items ≥ 0.3 break drought) and <strong className="text-[var(--color-lw-text-sub)]">Recent Loot</strong> score.
+              </p>
+            </CardHeader>
+            <CardBody className="space-y-3">
+              {rspLoading ? <PageSpinner /> : rspList.length === 0 ? (
+                <p className="text-xs text-[var(--color-lw-text-muted)]">No loot history imported yet.</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-2 items-center">
+                    {/* Header */}
+                    <span className="text-[10px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold col-span-1">Response</span>
+                    <span className="text-[10px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Weight</span>
+                    <span className="text-[10px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold text-right">Value</span>
+                    {rspList.map(rsp => {
+                      const w = localRspWeights[rsp] ?? 0;
+                      const barColor = w >= 0.7 ? '#4ade80' : w >= 0.4 ? '#facc15' : w >= 0.1 ? '#fb923c' : 'rgba(255,255,255,0.12)';
+                      return (
+                        <>
+                          <span key={`lbl-${rsp}`} className="text-xs text-[var(--color-lw-text)] font-medium truncate max-w-[140px]" title={rsp}>{rsp}</span>
+                          <div key={`bar-${rsp}`} className="relative flex items-center gap-2">
+                            <div className="flex-1 relative h-2 bg-[var(--color-lw-border)] rounded-full overflow-hidden">
+                              <div className="absolute inset-y-0 left-0 rounded-full transition-all" style={{ width: `${w * 100}%`, backgroundColor: barColor }} />
+                            </div>
+                            <input
+                              type="range" min={0} max={1} step={0.05}
+                              value={w}
+                              onChange={e => setLocalRspWeights(prev => ({ ...prev, [rsp]: Number(e.target.value) }))}
+                              className="w-24 accent-[var(--color-lw-fel-400)]"
+                            />
+                          </div>
+                          <span key={`val-${rsp}`} className="text-xs font-mono text-right" style={{ color: barColor }}>{w.toFixed(2)}</span>
+                        </>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-[var(--color-lw-border-sub)]">
+                    <p className="text-xs text-[var(--color-lw-text-muted)]">0.0 = ignored · ≥0.3 = breaks drought · 1.0 = full penalty</p>
+                    {saveBtn(rspSaving, rspSaved, handleSaveRspWeights)}
+                  </div>
+                </>
+              )}
             </CardBody>
           </Card>
 
