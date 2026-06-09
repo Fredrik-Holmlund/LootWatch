@@ -3,55 +3,37 @@ interface LootWatchLogoProps {
 }
 
 export function LootWatchLogo({ className = 'w-8 h-8' }: LootWatchLogoProps) {
-  // viewBox 0 0 100 85
-  // Eye center: (50, 55). Upper eyelid control (50,22), lower (50,88).
-  // Crown: 5 peaks rising above upper eyelid, closing along eyelid curve.
-  // Iris: 12 radial spokes from center to ring, upward triangle ▲ covers center.
-  const G = '#C8A020'; // gold
-  const D = '#151008'; // near-black
-
+  const G = '#C8A020';
+  // viewBox 0 0 100 100
+  // Outer eye: tips at (5,60) and (95,60), top (50,33), bottom (50,87)
+  // Inner eye: same tips, top (50,44), bottom (50,76)
+  // Crown base connects at ~(37,41) and (63,41) on upper-left/right outer eye edges
   return (
-    <svg className={className} viewBox="0 0 100 85" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
 
-      {/* ── Eye dark interior ── */}
-      <path d="M3,55 Q50,22 97,55 Q50,88 3,55Z" fill={D}/>
-
-      {/* ── Crown (gold filled, closes along upper eyelid) ── */}
+      {/* ── Crown (3 peaks, line art) ── */}
       <path
-        d="M13,49 L18,34 L25,42 L33,22 L41,38 L50,8 L59,38 L67,22 L75,42 L82,34 L87,49 Q50,30 13,49Z"
-        fill={G} strokeLinejoin="round"
+        d="M37,41 L32,18 L41,26 L50,8 L59,26 L68,18 L63,41"
+        stroke={G} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"
       />
 
-      {/* ── Eye outline ── */}
-      <path d="M3,55 Q50,22 97,55 Q50,88 3,55Z"
-        stroke={G} strokeWidth="3.5" strokeLinejoin="round"/>
+      {/* ── Outer eye (angular diamond) ── */}
+      <path d="M5,60 L50,33 L95,60 L50,87 Z"
+        stroke={G} strokeWidth="3" strokeLinejoin="round"/>
 
-      {/* ── Crown outline (on top of eye stroke) ── */}
-      <path
-        d="M13,49 L18,34 L25,42 L33,22 L41,38 L50,8 L59,38 L67,22 L75,42 L82,34 L87,49"
-        stroke={G} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+      {/* ── Inner eye (smaller concentric diamond, same tips) ── */}
+      <path d="M5,60 L50,44 L95,60 L50,76 Z"
+        stroke={G} strokeWidth="2.5" strokeLinejoin="round"/>
 
       {/* ── Iris ring ── */}
-      <circle cx="50" cy="55" r="13" fill={D} stroke={G} strokeWidth="2.5"/>
+      <circle cx="50" cy="60" r="13" stroke={G} strokeWidth="2.5"/>
 
-      {/* ── 12 radial spokes (from center to iris ring) ── */}
-      <g stroke={G} strokeWidth="1.2" strokeLinecap="butt">
-        <line x1="50" y1="55" x2="63"   y2="55"/>
-        <line x1="50" y1="55" x2="61.3" y2="61.5"/>
-        <line x1="50" y1="55" x2="56.5" y2="66.3"/>
-        <line x1="50" y1="55" x2="50"   y2="68"/>
-        <line x1="50" y1="55" x2="43.5" y2="66.3"/>
-        <line x1="50" y1="55" x2="38.7" y2="61.5"/>
-        <line x1="50" y1="55" x2="37"   y2="55"/>
-        <line x1="50" y1="55" x2="38.7" y2="48.5"/>
-        <line x1="50" y1="55" x2="43.5" y2="43.7"/>
-        <line x1="50" y1="55" x2="50"   y2="42"/>
-        <line x1="50" y1="55" x2="56.5" y2="43.7"/>
-        <line x1="50" y1="55" x2="61.3" y2="48.5"/>
-      </g>
+      {/* ── Upward triangle ▲ ── */}
+      <polygon points="50,51 43,67 57,67" fill={G}/>
 
-      {/* ── Triangle pupil ▲ (covers spoke centres) ── */}
-      <polygon points="50,47 44,62 56,62" fill={G}/>
+      {/* ── Bottom accent (small downward V below lower tip) ── */}
+      <path d="M44,88 L50,95 L56,88"
+        stroke={G} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
 
     </svg>
   );
