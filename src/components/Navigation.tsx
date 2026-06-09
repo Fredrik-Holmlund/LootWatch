@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { canEdit, canEditAssignments } from '../types';
 import type { UserRole } from '../types';
 import type { AppSettings } from '../hooks/useAppSettings';
-import { CrossedSwordsLogo } from './ui/CrossedSwordsLogo';
+import { LootWatchLogo } from './ui/LootWatchLogo';
 
 export type NavTab = 'dashboard' | 'history' | 'wishlist' | 'assignments' | 'council' | 'admin' | 'absence';
 
@@ -63,7 +63,7 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
 
           {/* Logo */}
           <div className="flex items-center gap-2 shrink-0">
-            <CrossedSwordsLogo className="w-7 h-7 text-[var(--color-lw-purple-400)]" />
+            <LootWatchLogo className="w-7 h-7" />
             <span
               className="text-sm font-semibold tracking-wide text-[var(--color-lw-text)]"
               style={{ fontFamily: 'var(--font-display)' }}
