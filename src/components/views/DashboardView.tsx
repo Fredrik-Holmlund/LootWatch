@@ -140,7 +140,10 @@ export function DashboardView({ username }: DashboardViewProps) {
   }, [stats, username]);
 
   const myStats = myName ? stats[myName] : null;
-  const myRank  = myName ? sortedByRolling.findIndex(([n]) => n === myName) + 1 : null;
+  // Shared rank: count how many players have a strictly higher rollingPct
+  const myRank = myName && myStats != null
+    ? sortedByRolling.filter(([, s]) => s.rollingPct > myStats.rollingPct).length + 1
+    : null;
 
   // Personal loot count (all time)
   const myLootCount = useMemo(() => {
@@ -305,7 +308,7 @@ export function DashboardView({ username }: DashboardViewProps) {
             {hasAttendance ? pinnedFirst(sortedByRolling, myName).slice(0, 10).map(([name, s]) => (
               <AttRow
                 key={name}
-                rank={sortedByRolling.findIndex(([n]) => n === name) + 1}
+                rank={sortedByRolling.filter(([, r]) => r.rollingPct > s.rollingPct).length + 1}
                 name={stripRealm(name)}
                 rollingPct={s.rollingPct}
                 totalPct={s.pct}
@@ -327,7 +330,7 @@ export function DashboardView({ username }: DashboardViewProps) {
             {hasAttendance ? pinnedFirst(sortedByAll, myName).slice(0, 10).map(([name, s]) => (
               <AttRow
                 key={name}
-                rank={sortedByAll.findIndex(([n]) => n === name) + 1}
+                rank={sortedByAll.filter(([, r]) => r.pct > s.pct).length + 1}
                 name={stripRealm(name)}
                 rollingPct={s.pct}
                 totalPct={s.pct}
