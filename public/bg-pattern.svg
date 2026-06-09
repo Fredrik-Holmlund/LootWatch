@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" fill="none">
+
+  <!-- Scan lines -->
+  <g stroke="#44cf6c" stroke-width="0.5" opacity="0.07">
+    <line x1="0" y1="180" x2="1920" y2="180"/>
+    <line x1="0" y1="420" x2="1920" y2="420"/>
+    <line x1="0" y1="660" x2="1920" y2="660"/>
+    <line x1="0" y1="900" x2="1920" y2="900"/>
+  </g>
+
+  <!-- Particles — denser at top, fading toward bottom -->
+  <g fill="#44cf6c">
+    <circle cx="87"  cy="145" r="1.5" opacity="0.50"/>
+    <circle cx="234" cy="67"  r="1.0" opacity="0.30"/>
+    <circle cx="456" cy="178" r="2.0" opacity="0.35"/>
+    <circle cx="623" cy="45"  r="1.5" opacity="0.45"/>
+    <circle cx="789" cy="123" r="1.0" opacity="0.25"/>
+    <circle cx="934" cy="89"  r="1.5" opacity="0.40"/>
+    <circle cx="1123" cy="156" r="1.0" opacity="0.30"/>
+    <circle cx="1345" cy="78"  r="2.0" opacity="0.35"/>
+    <circle cx="1567" cy="134" r="1.5" opacity="0.40"/>
+    <circle cx="1789" cy="56"  r="1.0" opacity="0.30"/>
+    <circle cx="156"  cy="267" r="1.0" opacity="0.22"/>
+    <circle cx="378"  cy="234" r="1.5" opacity="0.28"/>
+    <circle cx="712"  cy="289" r="1.0" opacity="0.22"/>
+    <circle cx="989"  cy="312" r="2.0" opacity="0.20"/>
+    <circle cx="1234" cy="245" r="1.0" opacity="0.25"/>
+    <circle cx="1478" cy="278" r="1.5" opacity="0.28"/>
+    <circle cx="1678" cy="301" r="1.0" opacity="0.20"/>
+    <circle cx="67"   cy="389" r="1.5" opacity="0.18"/>
+    <circle cx="512"  cy="356" r="1.0" opacity="0.15"/>
+    <circle cx="1056" cy="378" r="1.5" opacity="0.18"/>
+    <circle cx="1812" cy="367" r="1.0" opacity="0.15"/>
+    <circle cx="234"  cy="456" r="1.0" opacity="0.14"/>
+    <circle cx="567"  cy="512" r="1.5" opacity="0.16"/>
+    <circle cx="878"  cy="489" r="1.0" opacity="0.12"/>
+    <circle cx="1123" cy="534" r="1.0" opacity="0.14"/>
+    <circle cx="1456" cy="467" r="1.5" opacity="0.16"/>
+    <circle cx="1734" cy="523" r="1.0" opacity="0.12"/>
+    <circle cx="345"  cy="678" r="1.0" opacity="0.09"/>
+    <circle cx="789"  cy="712" r="1.5" opacity="0.11"/>
+    <circle cx="1234" cy="689" r="1.0" opacity="0.09"/>
+    <circle cx="1678" cy="734" r="1.0" opacity="0.10"/>
+    <circle cx="456"  cy="878" r="1.0" opacity="0.07"/>
+    <circle cx="1023" cy="912" r="1.5" opacity="0.08"/>
+    <circle cx="1567" cy="889" r="1.0" opacity="0.07"/>
+  </g>
+
+  <!-- Glitch streaks — short horizontal bars suggesting data noise -->
+  <g stroke="#44cf6c" stroke-width="1">
+    <line x1="156"  y1="234" x2="223"  y2="234" opacity="0.18"/>
+    <line x1="678"  y1="178" x2="724"  y2="178" opacity="0.16"/>
+    <line x1="1234" y1="312" x2="1289" y2="312" opacity="0.14"/>
+    <line x1="89"   y1="456" x2="145"  y2="456" opacity="0.11"/>
+    <line x1="1567" y1="245" x2="1634" y2="245" opacity="0.18"/>
+    <line x1="456"  y1="589" x2="501"  y2="589" opacity="0.09"/>
+    <line x1="1023" cy="134" x2="1089" y2="134" opacity="0.20"/>
+    <line x1="823"  y1="467" x2="867"  y2="467" opacity="0.10"/>
+    <line x1="312"  y1="156" x2="356"  y2="156" opacity="0.16"/>
+    <line x1="1456" y1="389" x2="1512" y2="389" opacity="0.13"/>
+  </g>
+
+  <!-- Angular micro-fragments -->
+  <g stroke="#44cf6c" stroke-width="0.7" opacity="0.13">
+    <polygon points="234,89  256,78  251,104"/>
+    <polygon points="1456,178 1478,165 1472,192"/>
+    <polygon points="789,345  812,334 806,361"/>
+    <polygon points="1123,89  1145,76 1139,103"/>
+    <polygon points="534,234  552,226 548,248"/>
+  </g>
+
+  <!-- Connector lines — network / constellation feel -->
+  <g stroke="#44cf6c" stroke-width="0.5" opacity="0.07">
+    <line x1="87"   y1="145" x2="156"  y2="267"/>
+    <line x1="456"  y1="178" x2="378"  y2="234"/>
+    <line x1="934"  y1="89"  x2="989"  y2="312"/>
+    <line x1="1567" y1="134" x2="1678" y2="301"/>
+    <line x1="1345" y1="78"  x2="1478" y2="278"/>
+    <line x1="623"  y1="45"  x2="712"  y2="289"/>
+    <line x1="1123" y1="156" x2="1234" y2="245"/>
+  </g>
+
+</svg>

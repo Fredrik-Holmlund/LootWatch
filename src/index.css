@@ -41,9 +41,13 @@
     background-color: var(--color-lw-base);
     /* Fel energy atmosphere — stronger green corona at top, faint bloom at bottom */
     background-image:
+      url('/bg-pattern.svg'),
       radial-gradient(ellipse at 60% 0%,   rgba(68,207,108,0.13) 0%, transparent 50%),
       radial-gradient(ellipse at 10% 90%,  rgba(68,207,108,0.07) 0%, transparent 45%),
       radial-gradient(ellipse at 50% 50%,  rgba(8,10,24,0.7)     0%, transparent 80%);
+    background-size: cover, auto, auto, auto;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--color-lw-text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
