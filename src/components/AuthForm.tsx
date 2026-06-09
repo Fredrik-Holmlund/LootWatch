@@ -68,10 +68,10 @@ export function AuthForm({ onSignIn, onSignUp }: AuthFormProps) {
             <LootWatchLogo className="w-10 h-10" />
           </div>
           <h1
-            className="text-2xl font-semibold text-[var(--color-lw-text)] tracking-wide"
+            className="text-3xl text-[var(--color-lw-text)] tracking-widest uppercase"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            LootWatch
+            <span className="font-bold">Loot</span><span className="font-normal">Watch</span>
           </h1>
           <p className="text-sm text-[var(--color-lw-text-muted)] mt-1">WoW TBC Guild Loot Tracker</p>
         </div>

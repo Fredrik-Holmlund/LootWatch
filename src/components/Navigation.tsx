@@ -65,10 +65,10 @@ export function Navigation({ activeTab, onTabChange, role, settings, username, o
           <div className="flex items-center gap-2 shrink-0">
             <LootWatchLogo className="w-7 h-7" />
             <span
-              className="text-sm font-semibold tracking-wide text-[var(--color-lw-text)]"
+              className="text-sm tracking-widest uppercase text-[var(--color-lw-text)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              LootWatch
+              <span className="font-bold">Loot</span><span className="font-normal">Watch</span>
             </span>
           </div>
 
