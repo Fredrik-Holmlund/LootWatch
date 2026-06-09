@@ -3,29 +3,55 @@ interface LootWatchLogoProps {
 }
 
 export function LootWatchLogo({ className = 'w-8 h-8' }: LootWatchLogoProps) {
+  // viewBox 0 0 100 85
+  // Eye center: (50, 55). Upper eyelid control (50,22), lower (50,88).
+  // Crown: 5 peaks rising above upper eyelid, closing along eyelid curve.
+  // Iris: 12 radial spokes from center to ring, upward triangle ▲ covers center.
+  const G = '#C8A020'; // gold
+  const D = '#151008'; // near-black
+
   return (
-    <svg className={className} viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg className={className} viewBox="0 0 100 85" xmlns="http://www.w3.org/2000/svg" fill="none">
 
-      {/* ── Crown (sits on upper eyelid) ── */}
+      {/* ── Eye dark interior ── */}
+      <path d="M3,55 Q50,22 97,55 Q50,88 3,55Z" fill={D}/>
+
+      {/* ── Crown (gold filled, closes along upper eyelid) ── */}
       <path
-        d="M24,52 L24,37 L38,18 L50,30 L60,6 L70,30 L82,18 L96,37 L96,52 Q78,41 60,40 Q42,41 24,52Z"
-        fill="#C8A020" stroke="#1a1005" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"
+        d="M13,49 L18,34 L25,42 L33,22 L41,38 L50,8 L59,38 L67,22 L75,42 L82,34 L87,49 Q50,30 13,49Z"
+        fill={G} strokeLinejoin="round"
       />
-      {/* Crown center peak highlight */}
-      <polygon points="50,30 60,6 70,30" fill="#F0D040" opacity="0.6"/>
 
-      {/* ── Eye outer (dark eyelid) ── */}
-      <path d="M4,56 Q60,20 116,56 Q60,92 4,56Z" fill="#1a1005"/>
+      {/* ── Eye outline ── */}
+      <path d="M3,55 Q50,22 97,55 Q50,88 3,55Z"
+        stroke={G} strokeWidth="3.5" strokeLinejoin="round"/>
 
-      {/* ── Eye inner (gold sclera) ── */}
-      <path d="M14,56 Q60,28 106,56 Q60,84 14,56Z" fill="#C8A020"/>
+      {/* ── Crown outline (on top of eye stroke) ── */}
+      <path
+        d="M13,49 L18,34 L25,42 L33,22 L41,38 L50,8 L59,38 L67,22 L75,42 L82,34 L87,49"
+        stroke={G} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
 
-      {/* ── Iris ── */}
-      <circle cx="60" cy="56" r="17" fill="#8B6008"/>
-      <circle cx="60" cy="56" r="17" fill="none" stroke="#D8AE24" strokeWidth="2"/>
+      {/* ── Iris ring ── */}
+      <circle cx="50" cy="55" r="13" fill={D} stroke={G} strokeWidth="2.5"/>
 
-      {/* ── Pupil — downward triangle ▽ ── */}
-      <polygon points="46,48 74,48 60,70" fill="#1a1005"/>
+      {/* ── 12 radial spokes (from center to iris ring) ── */}
+      <g stroke={G} strokeWidth="1.2" strokeLinecap="butt">
+        <line x1="50" y1="55" x2="63"   y2="55"/>
+        <line x1="50" y1="55" x2="61.3" y2="61.5"/>
+        <line x1="50" y1="55" x2="56.5" y2="66.3"/>
+        <line x1="50" y1="55" x2="50"   y2="68"/>
+        <line x1="50" y1="55" x2="43.5" y2="66.3"/>
+        <line x1="50" y1="55" x2="38.7" y2="61.5"/>
+        <line x1="50" y1="55" x2="37"   y2="55"/>
+        <line x1="50" y1="55" x2="38.7" y2="48.5"/>
+        <line x1="50" y1="55" x2="43.5" y2="43.7"/>
+        <line x1="50" y1="55" x2="50"   y2="42"/>
+        <line x1="50" y1="55" x2="56.5" y2="43.7"/>
+        <line x1="50" y1="55" x2="61.3" y2="48.5"/>
+      </g>
+
+      {/* ── Triangle pupil ▲ (covers spoke centres) ── */}
+      <polygon points="50,47 44,62 56,62" fill={G}/>
 
     </svg>
   );
