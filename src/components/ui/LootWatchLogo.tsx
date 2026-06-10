@@ -4,7 +4,6 @@ interface LootWatchLogoProps {
 
 export function LootWatchLogo({ className = 'w-8 h-8' }: LootWatchLogoProps) {
   const G = '#C8A020';
-  const GD = '#7a5008';   // dark gold
   const F = '#44cf6c';
 
   return (
