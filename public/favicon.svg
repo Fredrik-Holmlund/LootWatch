@@ -1,34 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Front face -->
-  <polygon points="18,55 82,55 82,85 18,85" fill="#1c1000" stroke="#C8A020" stroke-width="2.5" stroke-linejoin="round"/>
-  <!-- Top face -->
-  <polygon points="18,55 82,55 95,40 31,40" fill="#2a1800" stroke="#C8A020" stroke-width="2.5" stroke-linejoin="round"/>
-  <!-- Right side face -->
-  <polygon points="82,55 95,40 95,70 82,85" fill="#110b00" stroke="#C8A020" stroke-width="2.5" stroke-linejoin="round"/>
-  <!-- Lid front face -->
-  <polygon points="18,42 82,42 82,55 18,55" fill="#241400" stroke="#C8A020" stroke-width="2" stroke-linejoin="round"/>
-  <!-- Lid top face -->
-  <polygon points="18,42 82,42 95,28 31,28" fill="#301c00" stroke="#C8A020" stroke-width="2" stroke-linejoin="round"/>
-  <!-- Lid right face -->
-  <polygon points="82,42 95,28 95,40 82,55" fill="#1a0e00" stroke="#C8A020" stroke-width="2" stroke-linejoin="round"/>
-  <!-- Hinge lines -->
-  <line x1="18" y1="55" x2="82" y2="55" stroke="#C8A020" stroke-width="3" opacity="0.9"/>
-  <line x1="82" y1="55" x2="95" y2="40" stroke="#C8A020" stroke-width="3" opacity="0.9"/>
-  <!-- Lock -->
-  <rect x="42" y="58" width="18" height="14" rx="2" fill="#C8A020"/>
-  <rect x="45" y="61" width="12" height="8" rx="1.5" fill="#1c1000"/>
-  <circle cx="51" cy="64" r="2.2" fill="#C8A020"/>
-  <path d="M49.5,66.2 L52.5,66.2 L52,70 L50,70 Z" fill="#C8A020"/>
-  <!-- Corner rivets -->
-  <circle cx="23" cy="60" r="1.8" fill="#C8A020" opacity="0.75"/>
-  <circle cx="77" cy="60" r="1.8" fill="#C8A020" opacity="0.75"/>
-  <circle cx="23" cy="80" r="1.8" fill="#C8A020" opacity="0.75"/>
-  <circle cx="77" cy="80" r="1.8" fill="#C8A020" opacity="0.75"/>
-  <!-- Top face diagonal trim -->
-  <line x1="31" y1="28" x2="18" y2="42" stroke="#C8A020" stroke-width="1.5" opacity="0.5"/>
-  <!-- Fel glow from lid crack -->
-  <line x1="18" y1="55" x2="82" y2="55" stroke="#44cf6c" stroke-width="1.5" opacity="0.5"/>
-  <line x1="82" y1="55" x2="95" y2="40" stroke="#44cf6c" stroke-width="1.5" opacity="0.5"/>
-  <!-- Glow under chest -->
-  <ellipse cx="55" cy="87" rx="36" ry="4" fill="#44cf6c" opacity="0.12"/>
+  <!-- LID facets -->
+  <polygon points="12,38 50,28 50,46" fill="#e8b830"/>
+  <polygon points="88,38 50,28 50,46" fill="#c49a18"/>
+  <polygon points="12,38 50,46 12,52" fill="#d4a820"/>
+  <polygon points="88,38 50,46 88,52" fill="#a07e10"/>
+
+  <!-- BODY facets -->
+  <polygon points="12,52 50,52 30,68" fill="#c49a18"/>
+  <polygon points="88,52 50,52 70,68" fill="#8a6c0a"/>
+  <polygon points="50,52 70,68 30,68" fill="#b08a14"/>
+  <polygon points="12,52 30,68 12,84" fill="#d4a820"/>
+  <polygon points="88,52 70,68 88,84" fill="#7a5c08"/>
+  <polygon points="30,68 12,84 50,84" fill="#b89016"/>
+  <polygon points="70,68 88,84 50,84" fill="#9a7810"/>
+  <polygon points="30,68 70,68 50,84" fill="#c8a020"/>
+
+  <!-- LOCK -->
+  <polygon points="43,55 50,53 50,63 43,65" fill="#f0d060"/>
+  <polygon points="57,55 50,53 50,63 57,65" fill="#c8a020"/>
+  <circle cx="50" cy="59" r="3.5" fill="#1a0e00"/>
+  <polygon points="48,61 52,61 51.5,66 48.5,66" fill="#1a0e00"/>
+
+  <!-- Seam -->
+  <line x1="12" y1="52" x2="88" y2="52" stroke="#1a0e00" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Outlines -->
+  <polyline points="12,52 12,38 50,28 88,38 88,52" fill="none" stroke="#1a0e00" stroke-width="1.2" stroke-linejoin="round" opacity="0.5"/>
+  <polyline points="12,52 12,84 88,84 88,52" fill="none" stroke="#1a0e00" stroke-width="1.2" stroke-linejoin="round" opacity="0.5"/>
+
+  <!-- Fel glow seam -->
+  <line x1="16" y1="52" x2="84" y2="52" stroke="#44cf6c" stroke-width="1" opacity="0.45"/>
 </svg>
