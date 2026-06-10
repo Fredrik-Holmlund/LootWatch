@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { DndContext, DragOverlay, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -164,7 +164,11 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   onAssign: (name: string, cls: string | null) => void;
   onClear: () => void; canWrite: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: `slot:${row.id}`,
+    disabled: !canWrite || !row.player_name,
+  });
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const color = resolveColor(row.player_class);
 
@@ -174,19 +178,29 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
 
   return (
     <div
-      ref={setNodeRef}
-      className={`min-h-[28px] flex items-center gap-1 px-2 transition-colors w-full ${isOver ? 'ring-inset ring-1 ring-[var(--color-lw-fel-400)]/50' : ''}`}
+      ref={setDropRef}
+      className={`min-h-[28px] flex items-center gap-1 px-2 transition-colors w-full ${isOver ? 'ring-inset ring-1 ring-[var(--color-lw-fel-400)]/50 bg-[var(--color-lw-fel-500)]/10' : ''}`}
     >
       {row.player_name ? (
-        <div className="flex items-center gap-1 w-full">
+        <div
+          ref={setDragRef}
+          {...(canWrite ? listeners : {})}
+          {...(canWrite ? attributes : {})}
+          className={`flex items-center gap-1 w-full ${canWrite ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-30' : ''}`}
+        >
           <span
             onClick={canWrite ? openPicker : undefined}
             style={{ color }}
-            className={`text-xs font-semibold flex-1 truncate ${canWrite ? 'cursor-pointer hover:brightness-125' : ''}`}
+            className={`text-xs font-semibold flex-1 truncate ${canWrite ? 'hover:brightness-125' : ''}`}
           >
             {row.player_name}
           </span>
-          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-[10px] flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">✕</button>}
+          {canWrite && (
+            <button
+              onClick={e => { e.stopPropagation(); onClear(); }}
+              className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-[10px] flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+            >✕</button>
+          )}
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
@@ -516,7 +530,25 @@ export function AssignmentSheetView({ role, username }: Props) {
     if (!over || active.id === over.id) return;
     const activeStr = String(active.id);
     const overStr   = String(over.id);
-    if (activeStr.startsWith('p:')) {
+    if (activeStr.startsWith('slot:')) {
+      // Drag assigned player from one slot to another
+      if (overStr.startsWith('r:')) {
+        const sourceRowId = Number(activeStr.slice(5));
+        const targetRowId = Number(overStr.slice(2));
+        if (sourceRowId === targetRowId) return;
+        const sourceRow = rows.find(r => r.id === sourceRowId);
+        if (!sourceRow?.player_name) return;
+        const targetRow = rows.find(r => r.id === targetRowId);
+        if (targetRow?.player_name) {
+          // Swap the two players
+          assignPlayer(targetRowId, sourceRow.player_name, sourceRow.player_class);
+          assignPlayer(sourceRowId, targetRow.player_name, targetRow.player_class);
+        } else {
+          assignPlayer(targetRowId, sourceRow.player_name, sourceRow.player_class);
+          clearPlayer(sourceRowId);
+        }
+      }
+    } else if (activeStr.startsWith('p:')) {
       if (overStr.startsWith('p:')) {
         // Reorder within player pool
         const activeName = activeStr.slice(2);
@@ -741,6 +773,17 @@ export function AssignmentSheetView({ role, username }: Props) {
       <DragOverlay>
         {activeId ? (() => {
           const id = String(activeId);
+          if (id.startsWith('slot:')) {
+            const row = rows.find(r => r.id === Number(id.slice(5)));
+            if (!row?.player_name) return null;
+            const color = resolveColor(row.player_class);
+            return (
+              <div style={{ backgroundColor: color + '33', color, borderColor: color + '66' }}
+                className="inline-flex items-center px-3 py-1 rounded-lg border text-xs font-semibold whitespace-nowrap shadow-2xl rotate-1">
+                {row.player_name}
+              </div>
+            );
+          }
           if (id.startsWith('p:')) {
             const player = compPool.find(p => p.name === id.slice(2));
             if (!player) return null;
