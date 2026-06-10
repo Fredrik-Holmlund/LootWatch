@@ -1,33 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- LID facets -->
-  <polygon points="12,38 50,28 50,46" fill="#e8b830"/>
-  <polygon points="88,38 50,28 50,46" fill="#c49a18"/>
-  <polygon points="12,38 50,46 12,52" fill="#d4a820"/>
-  <polygon points="88,38 50,46 88,52" fill="#a07e10"/>
-
-  <!-- BODY facets -->
-  <polygon points="12,52 50,52 30,68" fill="#c49a18"/>
-  <polygon points="88,52 50,52 70,68" fill="#8a6c0a"/>
-  <polygon points="50,52 70,68 30,68" fill="#b08a14"/>
-  <polygon points="12,52 30,68 12,84" fill="#d4a820"/>
-  <polygon points="88,52 70,68 88,84" fill="#7a5c08"/>
-  <polygon points="30,68 12,84 50,84" fill="#b89016"/>
-  <polygon points="70,68 88,84 50,84" fill="#9a7810"/>
-  <polygon points="30,68 70,68 50,84" fill="#c8a020"/>
-
-  <!-- LOCK -->
-  <polygon points="43,55 50,53 50,63 43,65" fill="#f0d060"/>
-  <polygon points="57,55 50,53 50,63 57,65" fill="#c8a020"/>
-  <circle cx="50" cy="59" r="3.5" fill="#1a0e00"/>
-  <polygon points="48,61 52,61 51.5,66 48.5,66" fill="#1a0e00"/>
-
-  <!-- Seam -->
-  <line x1="12" y1="52" x2="88" y2="52" stroke="#1a0e00" stroke-width="1.5" opacity="0.6"/>
-
-  <!-- Outlines -->
-  <polyline points="12,52 12,38 50,28 88,38 88,52" fill="none" stroke="#1a0e00" stroke-width="1.2" stroke-linejoin="round" opacity="0.5"/>
-  <polyline points="12,52 12,84 88,84 88,52" fill="none" stroke="#1a0e00" stroke-width="1.2" stroke-linejoin="round" opacity="0.5"/>
-
-  <!-- Fel glow seam -->
-  <line x1="16" y1="52" x2="84" y2="52" stroke="#44cf6c" stroke-width="1" opacity="0.45"/>
+  <polygon points="10,72 10,44 28,58" fill="#d4a820"/>
+  <polygon points="10,44 24,24 28,58" fill="#f0c840"/>
+  <polygon points="24,24 38,58 28,58" fill="#e8b830"/>
+  <polygon points="28,58 38,58 50,18" fill="#f0c840"/>
+  <polygon points="38,58 62,58 50,18" fill="#e0b028"/>
+  <polygon points="50,18 62,58 72,58" fill="#f0c840"/>
+  <polygon points="72,58 76,24 62,58" fill="#e8b830"/>
+  <polygon points="76,24 90,44 72,58" fill="#f0c840"/>
+  <polygon points="90,44 90,72 72,58" fill="#d4a820"/>
+  <polygon points="10,72 28,58 38,58 30,72" fill="#c49a18"/>
+  <polygon points="10,72 30,72 18,84" fill="#b08a14"/>
+  <polygon points="30,72 38,58 62,58 70,72" fill="#e8b830"/>
+  <polygon points="30,72 70,72 50,84" fill="#c8a020"/>
+  <polygon points="70,72 72,58 90,72" fill="#c49a18"/>
+  <polygon points="70,72 90,72 82,84" fill="#b08a14"/>
+  <polygon points="18,84 50,84 30,72" fill="#a07e10"/>
+  <polygon points="50,84 82,84 70,72" fill="#a07e10"/>
+  <circle cx="24" cy="24" r="4" fill="#44cf6c"/>
+  <polygon points="24,20 28,24 24,28 20,24" fill="#28a74e"/>
+  <circle cx="24" cy="24" r="2" fill="#44cf6c"/>
+  <circle cx="50" cy="18" r="5" fill="#44cf6c"/>
+  <polygon points="50,13 55,18 50,23 45,18" fill="#28a74e"/>
+  <circle cx="50" cy="18" r="2.5" fill="#44cf6c"/>
+  <circle cx="76" cy="24" r="4" fill="#44cf6c"/>
+  <polygon points="76,20 80,24 76,28 72,24" fill="#28a74e"/>
+  <circle cx="76" cy="24" r="2" fill="#44cf6c"/>
 </svg>
