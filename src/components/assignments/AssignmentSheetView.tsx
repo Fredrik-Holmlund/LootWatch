@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useAssignmentSheet, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
@@ -71,14 +71,14 @@ function sectionAccent(section: string, idx: number): string {
 // ─── Draggable player pill ────────────────────────────────────────────────────
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `p:${player.name}` });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `p:${player.name}` });
   const color = player.color || getClassColor(player.className) || '#9ca3af';
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: transform ? `translate3d(${transform.x}px,${transform.y}px,0)` : undefined, backgroundColor: color + '22', color, borderColor: color + '55', zIndex: isDragging ? 50 : undefined, position: isDragging ? 'relative' : undefined }}
+      style={{ transform: CSS.Transform.toString(transform), transition, backgroundColor: color + '22', color, borderColor: color + '55', opacity: isDragging ? 0.3 : 1 }}
       {...listeners} {...attributes}
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-40' : 'hover:brightness-125'}`}
+      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap hover:brightness-125 touch-none"
     >
       <span className="opacity-50 text-[10px]">{player.specName}</span>
       {player.name}
@@ -406,9 +406,9 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
   const [labelDraft, setLabelDraft] = useState(row.label);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
-    <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row`}>
+    <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row transition-colors`}>
       {showRole && (
-        <td className={`sticky left-0 z-10 ${rowBg} px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)]`}>
+        <td className={`sticky left-0 z-10 ${rowBg} group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06] px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] transition-colors`}>
           <div className="flex items-center gap-1">
             {canWrite && (
               <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none shrink-0" title="Drag to reorder">⠿</span>
@@ -434,13 +434,13 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
         </td>
       )}
       <td
-        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)]`}
+        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)] transition-colors`}
         style={{ backgroundColor: row.player_name ? resolveColor(row.player_class) + '22' : undefined }}
       >
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
-        <td key={col.id} className={`border-r border-[var(--color-lw-border-sub)] relative ${colIdx % 2 !== 0 ? 'bg-black/[0.10]' : ''}`}>
+        <td key={col.id} className={`border-r border-[var(--color-lw-border-sub)] relative transition-colors group-hover/row:bg-[var(--color-lw-fel-500)]/[0.05] ${colIdx % 2 !== 0 ? 'bg-black/[0.10]' : ''}`}>
           <AssignmentCell cell={cellMap.get(`${row.id}-${col.id}`)} rows={allRows} canWrite={canWrite} onSave={val => onSave(col.id, val)} />
         </td>
       ))}
@@ -515,12 +515,28 @@ export function AssignmentSheetView({ role, username }: Props) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeStr = String(active.id);
+    const overStr   = String(over.id);
     if (activeStr.startsWith('p:')) {
-      const name = activeStr.replace(/^p:/, '');
-      const rowId = Number(String(over.id).replace(/^r:/, ''));
-      const player = compPool.find(p => p.name === name);
-      if (!player || !rowId) return;
-      assignPlayer(rowId, player.name, player.color || player.className);
+      if (overStr.startsWith('p:')) {
+        // Reorder within player pool
+        const activeName = activeStr.slice(2);
+        const overName   = overStr.slice(2);
+        setCompPool(prev => {
+          const ai = prev.findIndex(p => p.name === activeName);
+          const oi = prev.findIndex(p => p.name === overName);
+          if (ai === -1 || oi === -1) return prev;
+          const next = arrayMove(prev, ai, oi);
+          try { localStorage.setItem('lootwatch_comp_pool', JSON.stringify(next)); } catch { /* full */ }
+          return next;
+        });
+      } else if (overStr.startsWith('r:')) {
+        // Assign player to slot
+        const name  = activeStr.slice(2);
+        const rowId = Number(overStr.slice(2));
+        const player = compPool.find(p => p.name === name);
+        if (!player || !rowId) return;
+        assignPlayer(rowId, player.name, player.color || player.className);
+      }
     } else {
       const overId = Number(over.id);
       if (!overId) return;
@@ -587,15 +603,17 @@ export function AssignmentSheetView({ role, username }: Props) {
         {/* Player pool */}
         {pool.length > 0 && (
           <div className="lw-card p-3 space-y-2">
-            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players — drag to a role slot</p>
-            <div className="space-y-1.5">
-              {groupedPool.map(([group, players]) => (
-                <div key={group} className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] text-[var(--color-lw-text-muted)] w-12 flex-shrink-0">Group {group}</span>
-                  {players.map(p => <DraggablePlayerPill key={p.name} player={p} />)}
-                </div>
-              ))}
-            </div>
+            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players — drag to reorder or drop on a role slot</p>
+            <SortableContext items={pool.map(p => `p:${p.name}`)} strategy={rectSortingStrategy}>
+              <div className="space-y-1.5">
+                {groupedPool.map(([group, players]) => (
+                  <div key={group} className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-[var(--color-lw-text-muted)] w-12 flex-shrink-0">Group {group}</span>
+                    {players.map(p => <DraggablePlayerPill key={p.name} player={p} />)}
+                  </div>
+                ))}
+              </div>
+            </SortableContext>
           </div>
         )}
 
@@ -719,9 +737,22 @@ export function AssignmentSheetView({ role, username }: Props) {
         </div>
       </div>
 
-      {/* Drag overlay for row reordering */}
+      {/* Drag overlay */}
       <DragOverlay>
-        {activeId && !String(activeId).startsWith('p:') ? (() => {
+        {activeId ? (() => {
+          const id = String(activeId);
+          if (id.startsWith('p:')) {
+            const player = compPool.find(p => p.name === id.slice(2));
+            if (!player) return null;
+            const color = player.color || getClassColor(player.className) || '#9ca3af';
+            return (
+              <div style={{ backgroundColor: color + '33', color, borderColor: color + '66' }}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium whitespace-nowrap shadow-2xl rotate-2">
+                <span className="opacity-50 text-[10px]">{player.specName}</span>
+                {player.name}
+              </div>
+            );
+          }
           const row = rows.find(r => r.id === Number(activeId));
           if (!row) return null;
           return (
