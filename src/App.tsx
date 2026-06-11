@@ -11,7 +11,6 @@ import { AssignmentSheetView } from './components/assignments/AssignmentSheetVie
 import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 import { AbsenceView } from './components/views/AbsenceView';
-import { CrossedSwordsLogo } from './components/ui/CrossedSwordsLogo';
 import { LootWatchLogo } from './components/ui/LootWatchLogo';
 import { canEdit, canEditAssignments } from './types';
 
