@@ -337,29 +337,67 @@ function ItemRow({
         )}
 
         {/* Wish count badge */}
-        {wishers.length > 0 && (
-          <span className="relative group/wishers">
-            <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default font-medium">
-              ❤ {wishers.length}
-            </span>
-            <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
-              <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 space-y-1">
-                {[...wishers].sort((a, b) => (b.star ?? 0) - (a.star ?? 0)).map((w, i) => (
-                  <div key={i} className="text-xs flex items-center justify-between gap-3">
-                    <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
-                      {stripRealm(w.player_name)}
-                    </span>
-                    {w.star && (
-                      <span className={`font-bold ${w.star === 3 ? 'text-[var(--color-lw-gold-300)]' : w.star === 2 ? 'text-[var(--color-lw-gold-400)]' : 'text-[var(--color-lw-text-muted)]'}`}>
-                        {'★'.repeat(w.star)}
+        {(() => {
+          // Wishers who haven't already received this item
+          const activeWishers = wishers.filter(
+            (w) => !awardedEntries.some(
+              (e) => stripRealm(e.player_name).toLowerCase() === stripRealm(w.player_name).toLowerCase()
+            )
+          );
+          if (activeWishers.length === 0) return null;
+
+          // Wishers not yet in the candidate list
+          const existingNames = new Set(candidates.map((c) => c.player_name.toLowerCase()));
+          const addableWishers = activeWishers.filter(
+            (w) => !existingNames.has(stripRealm(w.player_name).toLowerCase()) &&
+              players.some((p) => stripRealm(p.name).toLowerCase() === stripRealm(w.player_name).toLowerCase())
+          );
+
+          async function addAllWishers() {
+            for (const w of addableWishers) {
+              const rosterName = stripRealm(
+                players.find((p) => stripRealm(p.name).toLowerCase() === stripRealm(w.player_name).toLowerCase())!.name
+              );
+              await addCandidate(rosterName);
+            }
+          }
+
+          return (
+            <span className="relative group/wishers flex items-center gap-1">
+              <span className="text-xs text-[var(--color-lw-purple-400)] bg-[var(--color-lw-purple-500)]/10 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 whitespace-nowrap cursor-default font-medium">
+                ❤ {activeWishers.length}
+              </span>
+              {/* Tooltip */}
+              <div className="absolute left-0 bottom-full mb-1.5 z-30 hidden group-hover/wishers:block min-w-[160px]">
+                <div className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-xl p-2 space-y-1">
+                  {[...activeWishers].sort((a, b) => (b.star ?? 0) - (a.star ?? 0)).map((w, i) => (
+                    <div key={i} className="text-xs flex items-center justify-between gap-3">
+                      <span style={{ color: getClassColor(w.player_class) }} className="font-medium">
+                        {stripRealm(w.player_name)}
                       </span>
-                    )}
-                  </div>
-                ))}
+                      {w.star && (
+                        <span className={`font-bold ${w.star === 3 ? 'text-[var(--color-lw-gold-300)]' : w.star === 2 ? 'text-[var(--color-lw-gold-400)]' : 'text-[var(--color-lw-text-muted)]'}`}>
+                          {'★'.repeat(w.star)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </span>
-        )}
+              {/* Add all button */}
+              {addableWishers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={addAllWishers}
+                  title={`Add all ${addableWishers.length} wisher(s) as candidates`}
+                  className="text-xs text-[var(--color-lw-purple-400)] hover:text-white bg-[var(--color-lw-purple-500)]/10 hover:bg-[var(--color-lw-purple-500)]/30 border border-[var(--color-lw-purple-500)]/20 rounded px-1.5 py-0.5 transition-colors whitespace-nowrap"
+                >
+                  + add all
+                </button>
+              )}
+            </span>
+          );
+        })()}
 
         {/* Candidates */}
         <div className="flex flex-wrap items-center gap-1.5 flex-1">
