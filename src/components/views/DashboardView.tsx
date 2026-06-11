@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { useLootHistory } from '../../hooks/useLootHistory';
 import { useAttendance } from '../../hooks/useAttendance';
 import { useWishlist } from '../../hooks/useWishlist';
@@ -181,7 +182,7 @@ export function DashboardView({ username }: DashboardViewProps) {
           </svg>
           <div className="text-sm text-[var(--color-lw-text)] leading-relaxed prose-notice">
             <ReactMarkdown
-              remarkPlugins={[[remarkGfm, { breaks: true }]]}
+              remarkPlugins={[remarkGfm, remarkBreaks]}
               components={{
                 p:      ({children}) => <p className="mb-1 last:mb-0">{children}</p>,
                 strong: ({children}) => <strong className="font-semibold text-[var(--color-lw-gold-300)]">{children}</strong>,

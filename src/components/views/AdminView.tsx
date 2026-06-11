@@ -13,6 +13,7 @@ import { PageSpinner } from '../ui/Spinner';
 import { MarkdownEditor } from '../ui/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 interface AdminViewProps { profile: Profile | null; }
 type SubTab = 'users' | 'raidloot' | 'settings';
@@ -281,7 +282,7 @@ export function AdminView({ profile }: AdminViewProps) {
                       </svg>
                       <div className="text-sm text-[var(--color-lw-text)] leading-relaxed">
                         <ReactMarkdown
-                          remarkPlugins={[[remarkGfm, { breaks: true }]]}
+                          remarkPlugins={[remarkGfm, remarkBreaks]}
                           components={{
                             p:      ({children}) => <p className="mb-1 last:mb-0">{children}</p>,
                             strong: ({children}) => <strong className="font-semibold text-[var(--color-lw-gold-300)]">{children}</strong>,
