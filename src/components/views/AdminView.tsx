@@ -298,6 +298,7 @@ export function AdminView({ profile }: AdminViewProps) {
                           remarkPlugins={[remarkGfm, remarkBreaks]}
                           components={{
                             p:      ({children}) => <p className="mb-1 last:mb-0">{children}</p>,
+                            br:     () => <br />,
                             strong: ({children}) => <strong className="font-semibold text-[var(--color-lw-gold-300)]">{children}</strong>,
                             em:     ({children}) => <em className="italic text-[var(--color-lw-text-sub)]">{children}</em>,
                             ul:     ({children}) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
