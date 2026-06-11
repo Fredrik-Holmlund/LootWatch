@@ -1,3 +1,5 @@
+import logoUrl from '/public/logo.png';
+
 interface LootWatchLogoProps {
   className?: string;
 }
@@ -5,7 +7,7 @@ interface LootWatchLogoProps {
 export function LootWatchLogo({ className = 'w-8 h-8' }: LootWatchLogoProps) {
   return (
     <img
-      src="/logo.png"
+      src={logoUrl}
       width={256}
       height={256}
       className={className}
