@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -598,7 +599,7 @@ export function AssignmentSheetView({ role, username }: Props) {
   if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>;
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} autoScroll={{ enabled: true, layoutShiftCompensation: false }}>
       <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-4">
 
         {/* Header */}
@@ -770,7 +771,7 @@ export function AssignmentSheetView({ role, username }: Props) {
       </div>
 
       {/* Drag overlay */}
-      <DragOverlay>
+      <DragOverlay modifiers={[restrictToWindowEdges]}>
         {activeId ? (() => {
           const id = String(activeId);
           if (id.startsWith('slot:')) {
