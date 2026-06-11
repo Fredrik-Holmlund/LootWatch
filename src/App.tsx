@@ -12,6 +12,7 @@ import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 import { AbsenceView } from './components/views/AbsenceView';
 import { CrossedSwordsLogo } from './components/ui/CrossedSwordsLogo';
+import { LootWatchLogo } from './components/ui/LootWatchLogo';
 import { canEdit, canEditAssignments } from './types';
 
 function App() {
@@ -87,14 +88,17 @@ function App() {
         </div>
       </main>
       <footer className="mt-4 border-t border-white/[0.05] bg-[var(--color-lw-surface)]">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <CrossedSwordsLogo className="w-5 h-5 text-[var(--color-lw-fel-400)]" />
-            <span className="text-sm font-semibold text-[var(--color-lw-text)]" style={{ fontFamily: 'var(--font-display)' }}>
-              LootWatch
-            </span>
+        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <LootWatchLogo className="w-8 h-8" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold tracking-widest uppercase text-[var(--color-lw-text)]" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="font-bold">LOOT</span><span className="font-normal">WATCH</span>
+              </span>
+              <span className="text-[10px] text-[var(--color-lw-text-muted)] tracking-wide">WoW TBC Guild Loot Tracker</span>
+            </div>
           </div>
-          <p className="text-xs text-[var(--color-lw-text-muted)] max-w-xl leading-relaxed">
+          <p className="text-xs text-[var(--color-lw-text-muted)] max-w-xl leading-relaxed text-center sm:text-left">
             LootWatch is an independently developed guild tool for TBC Anniversary. With the ability to import data from
             RC Loot Council, Raid Helper and Warcraft Logs — LootWatch gives your guild management full visibility into
             loot history, attendance, priorities and raid assignments.
