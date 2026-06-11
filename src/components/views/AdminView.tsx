@@ -10,6 +10,7 @@ import { PageHeader } from '../ui/PageHeader';
 import { SubTabs } from '../ui/SubTabs';
 import { Card, CardHeader, CardTitle, CardBody } from '../ui/Card';
 import { PageSpinner } from '../ui/Spinner';
+import { MarkdownEditor } from '../ui/MarkdownEditor';
 
 interface AdminViewProps { profile: Profile | null; }
 type SubTab = 'users' | 'raidloot' | 'settings';
@@ -262,12 +263,11 @@ export function AdminView({ profile }: AdminViewProps) {
                 </p>
               </CardHeader>
               <CardBody className="space-y-3">
-                <textarea
-                  rows={3}
+                <MarkdownEditor
+                  rows={5}
                   value={noticeMsg}
-                  onChange={e => setNoticeMsg(e.target.value)}
+                  onChange={setNoticeMsg}
                   placeholder="e.g. Progression week — SSC Thursday 20:00. Bring flasks and consumables!"
-                  className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-lw-text)] placeholder:text-[var(--color-lw-text-muted)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/60 transition-colors resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer select-none">

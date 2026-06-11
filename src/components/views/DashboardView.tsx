@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useLootHistory } from '../../hooks/useLootHistory';
 import { useAttendance } from '../../hooks/useAttendance';
 import { useWishlist } from '../../hooks/useWishlist';
@@ -177,7 +178,22 @@ export function DashboardView({ username }: DashboardViewProps) {
           <svg className="w-4 h-4 text-[var(--color-lw-fel-400)] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
           </svg>
-          <p className="text-sm text-[var(--color-lw-text)] leading-relaxed whitespace-pre-wrap">{notice.message}</p>
+          <div className="text-sm text-[var(--color-lw-text)] leading-relaxed prose-notice">
+            <ReactMarkdown
+              components={{
+                p:      ({children}) => <p className="mb-1 last:mb-0">{children}</p>,
+                strong: ({children}) => <strong className="font-semibold text-[var(--color-lw-gold-300)]">{children}</strong>,
+                em:     ({children}) => <em className="italic text-[var(--color-lw-text-sub)]">{children}</em>,
+                ul:     ({children}) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
+                ol:     ({children}) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
+                h2:     ({children}) => <h2 className="font-bold text-[var(--color-lw-text)] text-base mb-1 mt-2 first:mt-0">{children}</h2>,
+                code:   ({children}) => <code className="font-mono text-[var(--color-lw-fel-400)] bg-[var(--color-lw-base)] px-1 rounded text-xs">{children}</code>,
+                del:    ({children}) => <del className="opacity-50">{children}</del>,
+              }}
+            >
+              {notice.message}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
 
