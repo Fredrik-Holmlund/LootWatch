@@ -23,11 +23,14 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-lw-base)]">
-        <div className="text-center space-y-4">
-          <CrossedSwordsLogo className="w-10 h-10 mx-auto text-[var(--color-lw-purple-400)] animate-pulse" />
-          <p className="text-[var(--color-lw-text-muted)] text-sm tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
-            Loading LootWatch…
-          </p>
+        <div className="text-center space-y-3">
+          <LootWatchLogo className="w-20 h-20 mx-auto animate-pulse" />
+          <div style={{ fontFamily: 'var(--font-display)' }}>
+            <p className="text-base font-bold tracking-widest uppercase text-[var(--color-lw-text)]">
+              <span className="font-bold">LOOT</span><span className="font-normal">WATCH</span>
+            </p>
+            <p className="text-xs text-[var(--color-lw-text-muted)] tracking-wide mt-0.5">Loading…</p>
+          </div>
         </div>
       </div>
     );
