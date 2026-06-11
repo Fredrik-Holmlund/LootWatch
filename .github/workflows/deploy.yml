@@ -34,6 +34,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://kbnimllegzmipfocmezs.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_wpNMRAILF7RNNUOVvamSdg_yJOWIbjv
+          GITHUB_PAGES_BASE: /LootWatch-Dev/
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
