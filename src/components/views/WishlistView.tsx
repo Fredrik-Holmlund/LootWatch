@@ -16,6 +16,7 @@ import { SectionHeading } from '../ui/SectionHeading';
 interface WishlistViewProps {
   profile: Profile | null;
   role: UserRole | null;
+  helpContent?: string;
 }
 
 type SubTab = 'browse' | 'all';
@@ -27,7 +28,7 @@ function StarBadge({ star }: { star: 1 | 2 | 3 }) {
   return <span className={`text-xs font-bold ${colors[star]}`}>{STAR_LABELS[star]}</span>;
 }
 
-export function WishlistView({ profile, role }: WishlistViewProps) {
+export function WishlistView({ profile, role, helpContent }: WishlistViewProps) {
   const { loot, loading: lootLoading } = useRaidLoot();
   const { wishes, loading: wishLoading, myWishedIds, myWishes, usedStarTiers, toggleWish, setItemStar, deleteWish } = useWishlist(profile);
   const { settings } = useAppSettings();
@@ -98,6 +99,7 @@ export function WishlistView({ profile, role }: WishlistViewProps) {
         subtitle={profile
           ? `Click any item to add it to your wishlist — ${myWishedIds.size} wished`
           : 'Browse item wishes across the guild'}
+        helpContent={helpContent}
         actions={isLocked ? (
           <div className="flex items-center gap-1.5 text-xs text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10 border border-[var(--color-lw-fel-500)]/30 rounded-lg px-3 py-1.5">
             🔒 Stars locked by council

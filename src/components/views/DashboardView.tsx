@@ -18,6 +18,7 @@ import type { Profile } from '../../types';
 interface DashboardViewProps {
   profile?: Profile | null;
   username: string;
+  helpContent?: string;
 }
 
 // Next N upcoming raid dates (Wed=3, Sun=0)
@@ -93,7 +94,7 @@ function pinnedFirst<T extends [string, { rollingPct: number; pct: number }]>(li
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 
-export function DashboardView({ username }: DashboardViewProps) {
+export function DashboardView({ username, helpContent }: DashboardViewProps) {
   const { entries, loading: lootLoading } = useLootHistory();
   const { sessions, loading: attLoading, attendanceStats } = useAttendance();
   const { wishes } = useWishlist(null);
@@ -172,7 +173,7 @@ export function DashboardView({ username }: DashboardViewProps) {
   return (
     <div className="max-w-7xl mx-auto px-6 pt-5 pb-8 space-y-6">
 
-      <PageHeader title="Dashboard" subtitle="Guild activity and your personal stats" />
+      <PageHeader title="Dashboard" subtitle="Guild activity and your personal stats" helpContent={helpContent} />
 
       {/* Guild notice */}
       {notice?.is_active && notice.message && (

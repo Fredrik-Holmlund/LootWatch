@@ -12,11 +12,13 @@ import { CouncilView } from './components/views/CouncilView';
 import { AdminView } from './components/views/AdminView';
 import { AbsenceView } from './components/views/AbsenceView';
 import { LootWatchLogo } from './components/ui/LootWatchLogo';
+import { usePageHelp } from './hooks/usePageHelp';
 import { canEdit, canEditAssignments } from './types';
 
 function App() {
   const { user, profile, role, loading, signIn, signUp, signOut, isRecovery, updatePassword } = useAuth();
   const { settings } = useAppSettings();
+  const { texts: helpTexts } = usePageHelp();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
   if (loading) {
@@ -80,11 +82,11 @@ function App() {
           'shadow-[0_2px_24px_rgba(0,0,0,0.6)]',
           effectiveTab === 'assignments' ? 'max-w-[1600px]' : 'max-w-7xl',
         ].join(' ')}>
-          {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
-          {effectiveTab === 'dashboard'   && <DashboardView profile={profile} username={profile?.username ?? user.email?.split('@')[0] ?? ''} />}
+          {effectiveTab === 'assignments' && <AssignmentSheetView role={role} username={profile?.username ?? user.email?.split('@')[0] ?? ''} helpContent={helpTexts.assignments} />}
+          {effectiveTab === 'dashboard'   && <DashboardView profile={profile} username={profile?.username ?? user.email?.split('@')[0] ?? ''} helpContent={helpTexts.dashboard} />}
           {effectiveTab === 'history'     && <HistoryView role={role} />}
-          {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} />}
-          {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} />}
+          {effectiveTab === 'wishlist'    && <WishlistView profile={profile} role={role} helpContent={helpTexts.wishlist} />}
+          {effectiveTab === 'absence'     && <AbsenceView profile={profile} role={role} userId={user.id} helpContent={helpTexts.absence} />}
           {effectiveTab === 'council'     && canEdit(role) && <CouncilView />}
           {effectiveTab === 'admin'       && role === 'admin' && <AdminView profile={profile} />}
         </div>

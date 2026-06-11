@@ -465,9 +465,11 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 
-interface Props { role: UserRole | null; username: string; }
+import { HelpModal } from '../ui/HelpModal';
 
-export function AssignmentSheetView({ role, username }: Props) {
+interface Props { role: UserRole | null; username: string; helpContent?: string; }
+
+export function AssignmentSheetView({ role, username, helpContent }: Props) {
   const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
@@ -480,6 +482,7 @@ export function AssignmentSheetView({ role, username }: Props) {
   });
   const [importErr, setImportErr] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [addingRowSection, setAddingRowSection] = useState<string | null>(null);
   const [newRowLabel, setNewRowLabel] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -605,7 +608,16 @@ export function AssignmentSheetView({ role, username }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl font-bold text-[var(--color-lw-text)]">Raid Assignments</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[var(--color-lw-text)]">Raid Assignments</h2>
+              {helpContent && (
+                <button
+                  onClick={() => setShowHelp(true)}
+                  className="w-5 h-5 rounded-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] hover:border-[var(--color-lw-fel-400)]/50 hover:text-[var(--color-lw-fel-400)] text-[var(--color-lw-text-muted)] text-xs font-bold flex items-center justify-center transition-colors shrink-0"
+                >?</button>
+              )}
+            </div>
+            {showHelp && helpContent && <HelpModal title="Raid Assignments" content={helpContent} onClose={() => setShowHelp(false)} />}
             {presentUsers.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-lw-purple-400)] animate-pulse" />

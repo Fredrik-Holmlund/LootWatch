@@ -11,6 +11,7 @@ interface AbsenceViewProps {
   profile: Profile | null;
   role: UserRole | null;
   userId: string;
+  helpContent?: string;
 }
 
 const RAID_DAYS = [0, 3]; // Sunday = 0, Wednesday = 3
@@ -108,7 +109,7 @@ const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
+export function AbsenceView({ profile, role, userId, helpContent }: AbsenceViewProps) {
   const { absences, loading, error, addAbsence, deleteAbsence } = useAbsence();
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -481,6 +482,7 @@ export function AbsenceView({ profile, role, userId }: AbsenceViewProps) {
       <PageHeader
         title="Absence"
         subtitle="Report upcoming absences so the council can plan ahead."
+        helpContent={helpContent}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-6 items-start">

@@ -14,6 +14,7 @@ import { MarkdownEditor } from '../ui/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import { usePageHelp, type HelpPage } from '../../hooks/usePageHelp';
 
 interface AdminViewProps { profile: Profile | null; }
 type SubTab = 'users' | 'raidloot' | 'settings';
@@ -75,6 +76,10 @@ export function AdminView({ profile }: AdminViewProps) {
   const pSum = Object.values(pWeights).reduce((a, b) => a + b, 0);
 
   const { notice, saveNotice } = useGuildNotice();
+  const { texts: helpTexts, saveHelp } = usePageHelp();
+  const [helpDraft, setHelpDraft] = useState<Partial<Record<HelpPage, string>>>({});
+  const [helpSaving, setHelpSaving] = useState<HelpPage | null>(null);
+  const [helpSaved, setHelpSaved] = useState<HelpPage | null>(null);
   const [noticeMsg, setNoticeMsg] = useState('');
   const [noticeActive, setNoticeActive] = useState(false);
   const [noticeSaving, setNoticeSaving] = useState(false);
@@ -82,6 +87,14 @@ export function AdminView({ profile }: AdminViewProps) {
   useEffect(() => {
     if (notice) { setNoticeMsg(notice.message); setNoticeActive(notice.is_active); }
   }, [notice]);
+  useEffect(() => { setHelpDraft(helpTexts); }, [helpTexts]);
+
+  async function handleSaveHelp(page: HelpPage) {
+    setHelpSaving(page);
+    await saveHelp(page, helpDraft[page] ?? '');
+    setHelpSaving(null); setHelpSaved(page);
+    setTimeout(() => setHelpSaved(null), 2000);
+  }
   async function handleSaveNotice() {
     setNoticeSaving(true);
     await saveNotice(noticeMsg, noticeActive);
@@ -315,6 +328,32 @@ export function AdminView({ profile }: AdminViewProps) {
                   </label>
                   {saveBtn(noticeSaving, noticeSaved, handleSaveNotice)}
                 </div>
+              </CardBody>
+            </Card>
+
+            {/* Page Help */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Page Help</CardTitle>
+                <p className="text-xs text-[var(--color-lw-text-muted)] mt-0.5">
+                  Per-page instructions shown when users click the <strong className="text-[var(--color-lw-text-sub)]">?</strong> button. Leave empty to hide the button.
+                </p>
+              </CardHeader>
+              <CardBody className="space-y-5">
+                {(['dashboard', 'assignments', 'absence', 'wishlist'] as HelpPage[]).map((page) => (
+                  <div key={page} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-[var(--color-lw-text-sub)] capitalize">{page}</p>
+                      {saveBtn(helpSaving === page, helpSaved === page, () => handleSaveHelp(page))}
+                    </div>
+                    <MarkdownEditor
+                      rows={3}
+                      value={helpDraft[page] ?? ''}
+                      onChange={(v) => setHelpDraft((prev) => ({ ...prev, [page]: v }))}
+                      placeholder={`Instructions for the ${page} page…`}
+                    />
+                  </div>
+                ))}
               </CardBody>
             </Card>
 
