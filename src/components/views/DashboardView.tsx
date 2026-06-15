@@ -319,10 +319,10 @@ export function DashboardView({ username, helpContent }: DashboardViewProps) {
           </div>
         </Card>
 
-        {/* Attendance — Last 6 weeks */}
+        {/* Attendance: Last 6 weeks */}
         <Card>
           <CardHeader>
-            <CardTitle>Attendance — Last 6 weeks</CardTitle>
+            <CardTitle>Attendance: Last 6 weeks</CardTitle>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
             {hasAttendance ? pinnedFirst(sortedByRolling, myName).slice(0, 10).map(([name, s]) => (
@@ -341,10 +341,10 @@ export function DashboardView({ username, helpContent }: DashboardViewProps) {
           </CardBody>
         </Card>
 
-        {/* Attendance — All time */}
+        {/* Attendance: All time */}
         <Card>
           <CardHeader>
-            <CardTitle>Attendance — <span style={{ color: 'var(--color-lw-gold-300)' }}>All time</span></CardTitle>
+            <CardTitle>Attendance: <span style={{ color: 'var(--color-lw-gold-300)' }}>All time</span></CardTitle>
           </CardHeader>
           <CardBody className="space-y-0.5 px-2 pb-3">
             {hasAttendance ? pinnedFirst(sortedByAll, myName).slice(0, 10).map(([name, s]) => (
