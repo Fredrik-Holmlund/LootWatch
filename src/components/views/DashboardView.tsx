@@ -214,8 +214,8 @@ export function DashboardView({ username, helpContent }: DashboardViewProps) {
             { label: 'Unique Recipients',  value: new Set(entries.map(e => stripRealm(e.player_name).toLowerCase())).size, color: '#c9a227' },
             { label: 'Unique Items',       value: new Set(entries.map(e => e.item_name.toLowerCase())).size,              color: '#c9a227' },
             { label: 'Sessions Tracked',   value: sessions.length,                                         color: 'var(--color-lw-fel-400)' },
-            { label: 'Avg Attendance',     value: hasAttendance
-                ? `${Math.round(Object.values(statsAll).reduce((s, r) => s + r.pct, 0) / Math.max(Object.values(statsAll).length, 1))}%`
+            { label: 'Avg Attendance (6w)', value: hasAttendance
+                ? `${Math.round(Object.values(stats6).reduce((s, r) => s + r.rollingPct, 0) / Math.max(Object.values(stats6).length, 1))}%`
                 : '—',                                                                                      color: 'var(--color-lw-fel-400)' },
           ].map(({ label, value, color }) => (
             <div key={label} className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--color-lw-elevated)] px-4 py-4">
