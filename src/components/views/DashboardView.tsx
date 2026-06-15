@@ -216,7 +216,7 @@ export function DashboardView({ username, helpContent }: DashboardViewProps) {
             { label: 'Sessions Tracked',   value: sessions.length,                                         color: 'var(--color-lw-fel-400)' },
             { label: 'Avg Attendance (6w)', value: hasAttendance
                 ? `${Math.round(Object.values(stats6).reduce((s, r) => s + r.rollingPct, 0) / Math.max(Object.values(stats6).length, 1))}%`
-                : '—',                                                                                      color: 'var(--color-lw-fel-400)' },
+                : '-',                                                                                      color: 'var(--color-lw-fel-400)' },
           ].map(({ label, value, color }) => (
             <div key={label} className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--color-lw-elevated)] px-4 py-4">
               {/* Subtle glow blob */}
@@ -249,7 +249,7 @@ export function DashboardView({ username, helpContent }: DashboardViewProps) {
               },
               {
                 label: 'Attendance rank',
-                value: myRank ? `#${myRank}` : '—',
+                value: myRank ? `#${myRank}` : '-',
                 sub: `of ${sortedByRolling.length} raiders`,
                 accent: myRank && myRank <= 3 ? '#facc15' : 'var(--color-lw-text-sub)',
               },
@@ -456,7 +456,7 @@ function ResponsePill({ response }: { response: string }) {
   const conf = RESPONSE_CONFIG.find(c => c.key === cat) ?? RESPONSE_CONFIG[RESPONSE_CONFIG.length - 1];
   return (
     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ color: conf.color, backgroundColor: `${conf.color}18` }}>
-      {response || '—'}
+      {response || '-'}
     </span>
   );
 }
