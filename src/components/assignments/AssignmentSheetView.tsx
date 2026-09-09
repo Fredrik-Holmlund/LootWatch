@@ -121,7 +121,7 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Escape' && onClose()}
-            placeholder="Search player\u2026"
+            placeholder="Search player…"
             className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
           />
         </div>
@@ -179,13 +179,13 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
           >
             {row.player_name}
           </span>
-          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] text-[10px] flex-shrink-0">\u2715</button>}
+          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] text-[10px] flex-shrink-0">✕</button>}
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
-          <span className="text-[11px] text-[var(--color-lw-text-muted)]/40 italic flex-1">{canWrite ? 'drag or pick' : '\u2014'}</span>
+          <span className="text-[11px] text-[var(--color-lw-text-muted)]/40 italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
           {canWrite && (
-            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">\u2304</button>
+            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⌄</button>
           )}
         </div>
       )}
@@ -260,7 +260,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
                     return (
                       <span key={id} className="flex items-center gap-1 text-[11px] bg-[var(--color-lw-elevated)] text-[var(--color-lw-text-sub)] rounded-full px-2 py-0.5">
                         {r?.label ?? id}
-                        <button onClick={() => removeRef(id)} className="text-[var(--color-lw-text-muted)] hover:text-red-400 leading-none">\u2715</button>
+                        <button onClick={() => removeRef(id)} className="text-[var(--color-lw-text-muted)] hover:text-red-400 leading-none">✕</button>
                       </span>
                     );
                   })}
@@ -271,8 +271,8 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
                 onChange={e => { if (e.target.value) addRef(Number(e.target.value)); }}
                 className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
               >
-                <option value="">{refs.length === 0 ? '\u2014 none \u2014' : '+ add role\u2026'}</option>
-                {unselected.map(r => <option key={r.id} value={r.id}>{r.label}{r.player_name ? ` \u00b7 ${r.player_name}` : ''}</option>)}
+                <option value="">{refs.length === 0 ? '— none —' : '+ add role…'}</option>
+                {unselected.map(r => <option key={r.id} value={r.id}>{r.label}{r.player_name ? ` · ${r.player_name}` : ''}</option>)}
               </select>
             </div>
             <div>
@@ -281,7 +281,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
                 autoFocus value={text} onChange={e => setText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
                 className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
-                placeholder="e.g. Boss, MT healer\u2026"
+                placeholder="e.g. Boss, MT healer…"
               />
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
                 {RAID_MARKERS.map(m => (
@@ -294,7 +294,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
             <div className="flex gap-1.5">
               <button onClick={save} className="flex-1 bg-[var(--color-lw-gold-400)] hover:bg-[var(--color-lw-gold-300)] text-[var(--color-lw-base)] rounded px-2 py-1 text-xs font-semibold">Save</button>
               <button onClick={() => { onSave(null); setEditing(false); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-red-400 px-2">Clear</button>
-              <button onClick={() => setEditing(false)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-2">\u2715</button>
+              <button onClick={() => setEditing(false)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-2">✕</button>
             </div>
           </div>
         </div>
@@ -304,7 +304,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
 
   return (
     <div onClick={open} className={`min-h-[30px] w-full px-2 py-1 flex items-center justify-center group-hover/row:bg-[var(--color-lw-fel-500)]/[0.05] ${canWrite ? 'cursor-pointer hover:bg-[var(--color-lw-elevated)]/30' : ''}`}>
-      {display ?? (canWrite ? <span className="text-[10px] text-[var(--color-lw-border)]">+</span> : <span className="text-xs text-[var(--color-lw-border)]">\u2014</span>)}
+      {display ?? (canWrite ? <span className="text-[10px] text-[var(--color-lw-border)]">+</span> : <span className="text-xs text-[var(--color-lw-border)]">—</span>)}
     </div>
   );
 }
@@ -344,8 +344,8 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
                   </>
                 ) : (
                   <>
-                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-black/70 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-black/90">\u2191</button>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-black/70 text-red-400 rounded px-1.5 py-0.5 hover:bg-black/90">\u2715</button>
+                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-black/70 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-black/90">↑</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-black/70 text-red-400 rounded px-1.5 py-0.5 hover:bg-black/90">✕</button>
                   </>
                 )}
               </div>
@@ -354,7 +354,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
         ) : canWrite ? (
           <button onClick={() => inputRef.current?.click()} disabled={uploading}
             className="w-full h-8 border border-dashed border-[var(--color-lw-border)] hover:border-[var(--color-lw-gold-500)]/30 rounded-md text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] transition-colors disabled:opacity-50">
-            {uploading ? '\u23f3' : '+ image'}
+            {uploading ? '⏳' : '+ image'}
           </button>
         ) : (
           <div className="h-8 border border-transparent" />
@@ -381,10 +381,10 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
       <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border)] whitespace-nowrap group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06]`}>
         <div className="flex items-center gap-1.5">
           {canWrite && (
-            <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">\u283f</span>
+            <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
           )}
           <span>{row.label}</span>
-          {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-border)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">\u2715</button>}
+          {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-border)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
         </div>
       </td>
       <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-[var(--color-lw-border)] group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06]`}>
@@ -498,7 +498,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
     setNewRowLabel(''); setAddingRowSection(null);
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm"><span className="animate-spin mr-2">\u23f3</span> Loading\u2026</div>;
+  if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm"><span className="animate-spin mr-2">⏳</span> Loading…</div>;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} autoScroll={{ enabled: true, layoutShiftCompensation: false }}>
@@ -525,7 +525,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
           </div>
           {canWrite && (
             <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-lw-elevated)] hover:bg-[var(--color-lw-surface)] text-[var(--color-lw-text-sub)] border border-[var(--color-lw-border)]">
-              {showImport ? 'Hide import' : '\u2b06 Import comp JSON'}
+              {showImport ? 'Hide import' : '⬆ Import comp JSON'}
             </button>
           )}
         </div>
@@ -541,7 +541,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
 
         {pool.length > 0 && (
           <div className="bg-[var(--color-lw-card)] border border-[var(--color-lw-border)] rounded-xl p-3 space-y-2">
-            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players \u2014 drag to a role slot</p>
+            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players — drag to a role slot</p>
             <div className="space-y-1.5">
               {groupedPool.map(([group, players]) => (
                 <div key={group} className="flex items-center gap-2 flex-wrap">
@@ -610,9 +610,9 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
                                 <input autoFocus value={newRowLabel} onChange={e => setNewRowLabel(e.target.value)}
                                   onKeyDown={e => { if (e.key === 'Enter') handleAddRow(); if (e.key === 'Escape') { setAddingRowSection(null); setNewRowLabel(''); } }}
                                   onBlur={() => { if (!newRowLabel.trim()) setAddingRowSection(null); }}
-                                  className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50 w-32" placeholder="Role name\u2026" />
+                                  className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50 w-32" placeholder="Role name…" />
                                 <button onClick={handleAddRow} className="text-[10px] text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-200)]">Add</button>
-                                <button onClick={() => { setAddingRowSection(null); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-text-muted)]">\u2715</button>
+                                <button onClick={() => { setAddingRowSection(null); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-text-muted)]">✕</button>
                               </div>
                             ) : (
                               <button onClick={() => { setAddingRowSection(section); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]">+ Add row</button>
@@ -660,7 +660,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
           if (!row) return null;
           return (
             <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-gold-500)]/50 rounded px-3 py-1.5 shadow-2xl text-xs text-[var(--color-lw-text-sub)] opacity-90 whitespace-nowrap">
-              {row.label}{row.player_name ? ` \u00b7 ${row.player_name}` : ''}
+              {row.label}{row.player_name ? ` · ${row.player_name}` : ''}
             </div>
           );
         })() : null}
@@ -670,7 +670,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
           <div className="relative max-w-5xl max-h-full" onClick={e => e.stopPropagation()}>
             <img src={lightboxImage} alt="" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" />
-            <button onClick={() => setLightboxImage(null)} className="absolute top-2 right-2 text-white bg-black/60 hover:bg-black rounded-full w-8 h-8 flex items-center justify-center text-sm">\u2715</button>
+            <button onClick={() => setLightboxImage(null)} className="absolute top-2 right-2 text-white bg-black/60 hover:bg-black rounded-full w-8 h-8 flex items-center justify-center text-sm">✕</button>
           </div>
         </div>
       )}
