@@ -430,7 +430,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 
-interface Props { role: UserRole | null; username: string; }
+interface Props { role: UserRole | null; username: string; helpContent?: string; }
 
 export function AssignmentSheetView({ role, username }: Props) {
   const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
