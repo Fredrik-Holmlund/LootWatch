@@ -71,14 +71,14 @@ function sectionAccent(section: string, idx: number): string {
 // ─── Draggable player pill ────────────────────────────────────────────────────
 
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `p:${player.name}` });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `p:${player.name}` });
   const color = player.color || getClassColor(player.className) || '#9ca3af';
   return (
     <div
       ref={setNodeRef}
-      style={{ backgroundColor: color + '22', color, borderColor: color + '55' }}
+      style={{ transform: transform ? `translate3d(${transform.x}px,${transform.y}px,0)` : undefined, backgroundColor: color + '22', color, borderColor: color + '55', zIndex: isDragging ? 50 : undefined, position: isDragging ? 'relative' : undefined }}
       {...listeners} {...attributes}
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-20' : 'hover:brightness-125'}`}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-40' : 'hover:brightness-125'}`}
     >
       <span className="opacity-50 text-[10px]">{player.specName}</span>
       {player.name}
@@ -430,7 +430,7 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 
-interface Props { role: UserRole | null; username: string; }
+interface Props { role: UserRole | null; username: string; helpContent?: string; }
 
 export function AssignmentSheetView({ role, username }: Props) {
   const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
@@ -679,24 +679,9 @@ export function AssignmentSheetView({ role, username }: Props) {
         </div>
       </div>
 
-      {/* Drag overlay — handles both player pills and row reordering */}
+      {/* Drag overlay for row reordering */}
       <DragOverlay>
-        {activeId ? (() => {
-          if (String(activeId).startsWith('p:')) {
-            const name = String(activeId).replace(/^p:/, '');
-            const player = compPool.find(p => p.name === name);
-            if (!player) return null;
-            const color = player.color || getClassColor(player.className) || '#9ca3af';
-            return (
-              <div
-                style={{ backgroundColor: color + '22', color, borderColor: color + '55' }}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium whitespace-nowrap shadow-2xl cursor-grabbing"
-              >
-                <span className="opacity-50 text-[10px]">{player.specName}</span>
-                {player.name}
-              </div>
-            );
-          }
+        {activeId && !String(activeId).startsWith('p:') ? (() => {
           const row = rows.find(r => r.id === Number(activeId));
           if (!row) return null;
           return (
