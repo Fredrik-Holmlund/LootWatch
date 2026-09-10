@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, pointerWithin, closestCenter } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -77,7 +77,7 @@ function DraggablePlayerPill({ player }: { player: CompPlayer }) {
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition, backgroundColor: color + '22', color, borderColor: color + '55', opacity: isDragging ? 0.3 : 1 }}
+      style={{ transform: CSS.Transform.toString(transform), transition, backgroundColor: color + '22', color, borderColor: color + '55', opacity: isDragging ? 0 : 1 }}
       {...listeners} {...attributes}
       className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap hover:brightness-125 touch-none"
     >
@@ -602,7 +602,17 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
   if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>;
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} autoScroll={{ enabled: true, layoutShiftCompensation: false }}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      autoScroll={{ enabled: true, layoutShiftCompensation: false }}
+      collisionDetection={(args) => {
+        const hits = pointerWithin(args);
+        if (hits.length > 0) return hits;
+        return closestCenter(args);
+      }}
+    >
       <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-4">
 
         {/* Header */}
@@ -684,7 +694,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
         </div>
 
         {/* Grid */}
-        <div className="lw-card w-full overflow-hidden">
+        <div className="lw-card w-full overflow-x-auto">
           <table className="border-collapse text-sm w-full table-fixed">
             <colgroup>
               {showRole && <col style={{ width: '130px' }} />}
