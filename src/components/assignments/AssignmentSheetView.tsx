@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useAssignmentSheet, type SheetRow, type SheetCell, type SheetColumn, type CompPlayer } from '../../hooks/useAssignmentSheet';
 import { getClassColor } from '../../utils/classColors';
 import { canEditAssignments } from '../../types';
 import type { UserRole } from '../../types';
 import { supabase } from '../../utils/supabase';
-import { HelpModal } from '../ui/HelpModal';
+
+// ─── Raid markers ─────────────────────────────────────────────────────────────────────────────────
 
 const RAID_MARKERS = [
   { key: 'star',     label: 'Star'     },
@@ -34,7 +35,7 @@ function RaidMarkerIcon({ markerKey, size = 18 }: { markerKey: string; size?: nu
     case 'square':   return <svg width={s} height={s} viewBox="0 0 20 20"><rect x="1.5" y="1.5" width="17" height="17" rx="2" fill="#4169E1" stroke="#2244AA" strokeWidth="0.5"/><rect x="5" y="5" width="10" height="10" rx="1" fill="none" stroke="#88AAFF" strokeWidth="1" opacity="0.4"/></svg>;
     case 'cross':    return <svg width={s} height={s} viewBox="0 0 20 20"><line x1="3" y1="3" x2="17" y2="17" stroke="#DD2222" strokeWidth="4.5" strokeLinecap="round"/><line x1="17" y1="3" x2="3" y2="17" stroke="#DD2222" strokeWidth="4.5" strokeLinecap="round"/></svg>;
     case 'skull':    return (<svg width={s} height={s} viewBox="0 0 20 20"><ellipse cx="10" cy="8.5" rx="7.5" ry="7" fill="#E0E0E0" stroke="#999" strokeWidth="0.5"/><rect x="5.5" y="14" width="9" height="5" rx="1.5" fill="#E0E0E0" stroke="#999" strokeWidth="0.5"/><circle cx="7.5" cy="8.5" r="2" fill="#555"/><circle cx="12.5" cy="8.5" r="2" fill="#555"/><line x1="10" y1="14.5" x2="10" y2="19" stroke="#aaa" strokeWidth="1.5"/><line x1="7.5" y1="14.5" x2="7.5" y2="19" stroke="#aaa" strokeWidth="1" opacity="0.5"/><line x1="12.5" y1="14.5" x2="12.5" y2="19" stroke="#aaa" strokeWidth="1" opacity="0.5"/></svg>);
-    default:         return <span className="text-xs">{markerKey}</span>;
+    default:         return <span className="text-xs text-[var(--color-lw-text-muted)]">{markerKey}</span>;
   }
 }
 
@@ -43,6 +44,8 @@ function renderMarkerText(text: string): React.ReactNode {
   if (parts.length === 1) return text;
   return <>{parts.map((p, i) => { const m = p.match(/^\{([a-z]+)\}$/); return m ? <RaidMarkerIcon key={i} markerKey={m[1]} size={14} /> : p ? <span key={i}>{p}</span> : null; })}</>;
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────────────────────
 
 function resolveColor(playerClass: string | null): string {
   if (!playerClass) return '#9ca3af';
@@ -66,21 +69,25 @@ function sectionAccent(section: string, idx: number): string {
   return SECTION_ACCENT[section] ?? ACCENT_PALETTE[idx % ACCENT_PALETTE.length];
 }
 
+// ─── Draggable player pill ────────────────────────────────────────────────────────────────────────────
+
 function DraggablePlayerPill({ player }: { player: CompPlayer }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `p:${player.name}` });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `p:${player.name}` });
   const color = player.color || getClassColor(player.className) || '#9ca3af';
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: transform ? `translate3d(${transform.x}px,${transform.y}px,0)` : undefined, backgroundColor: color + '22', color, borderColor: color + '55', zIndex: isDragging ? 50 : undefined, position: isDragging ? 'relative' : undefined }}
+      style={{ transform: CSS.Transform.toString(transform), transition, backgroundColor: color + '22', color, borderColor: color + '55', opacity: isDragging ? 0.3 : 1 }}
       {...listeners} {...attributes}
-      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap ${isDragging ? 'opacity-40' : 'hover:brightness-125'}`}
+      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium cursor-grab select-none whitespace-nowrap hover:brightness-125 touch-none"
     >
       <span className="opacity-50 text-[10px]">{player.specName}</span>
       {player.name}
     </div>
   );
 }
+
+// ─── Player picker dropdown ───────────────────────────────────────────────────────────────────────
 
 function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
   anchor: DOMRect; compPool: CompPlayer[]; profiles: string[];
@@ -114,7 +121,7 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
   return ReactDOM.createPortal(
     <>
       <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={onClose} />
-      <div style={style} className="bg-[var(--color-lw-card)] border border-[var(--color-lw-border)] rounded-lg shadow-2xl max-h-[240px] flex flex-col overflow-hidden">
+      <div style={style} className="bg-[var(--color-lw-surface)] border border-[var(--color-lw-border)] rounded-lg shadow-2xl max-h-[240px] flex flex-col overflow-hidden">
         <div className="p-1.5 border-b border-[var(--color-lw-border-sub)]">
           <input
             ref={inputRef}
@@ -122,7 +129,7 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Escape' && onClose()}
             placeholder="Search player…"
-            className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
+            className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60"
           />
         </div>
         <div className="overflow-y-auto">
@@ -132,9 +139,12 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
               <button
                 key={o.name}
                 onClick={() => { onSelect(o.name, o.cls); onClose(); }}
-                className="w-full text-left px-2 py-1 hover:bg-[var(--color-lw-elevated)]/60 transition-colors"
+                className="w-full text-left px-2 py-1 hover:bg-[var(--color-lw-elevated)] transition-colors"
               >
-                <span style={{ backgroundColor: color + '28', borderColor: color + '55', color }} className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full border">
+                <span
+                  style={{ backgroundColor: color + '28', borderColor: color + '55', color }}
+                  className="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full border"
+                >
                   {o.name}
                 </span>
               </button>
@@ -148,13 +158,15 @@ function PlayerPicker({ anchor, compPool, profiles, onSelect, onClose }: {
   );
 }
 
+// ─── Droppable role slot ────────────────────────────────────────────────────────────────────────────
+
 function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }: {
   row: SheetRow; compPool: CompPlayer[]; profiles: string[];
   onAssign: (name: string, cls: string | null) => void;
   onClear: () => void; canWrite: boolean;
 }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `r:${row.id}`, disabled: !canWrite });
-  const { setNodeRef: setDragRef, listeners, attributes, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
     id: `slot:${row.id}`,
     disabled: !canWrite || !row.player_name,
   });
@@ -166,26 +178,36 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   };
 
   return (
-    <div ref={setDropRef} className={`min-h-[24px] rounded px-1.5 py-0.5 flex items-center gap-1 transition-colors ${isOver ? 'ring-1 ring-[var(--color-lw-gold-400)]/60 bg-[var(--color-lw-gold-400)]/10' : ''}`}>
+    <div
+      ref={setDropRef}
+      className={`min-h-[28px] flex items-center gap-1 px-2 transition-colors w-full ${isOver ? 'ring-inset ring-1 ring-[var(--color-lw-fel-400)]/50 bg-[var(--color-lw-fel-500)]/10' : ''}`}
+    >
       {row.player_name ? (
-        <div className="flex items-center gap-1 w-full">
+        <div
+          ref={setDragRef}
+          {...(canWrite ? listeners : {})}
+          {...(canWrite ? attributes : {})}
+          className={`flex items-center gap-1 w-full ${canWrite ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-30' : ''}`}
+        >
           <span
-            ref={setDragRef}
-            {...listeners}
-            {...attributes}
             onClick={canWrite ? openPicker : undefined}
-            style={{ backgroundColor: color + '28', borderColor: color + '55', color, opacity: isDragging ? 0.4 : 1 }}
-            className={`text-xs font-medium px-2.5 py-0.5 rounded-full border flex-1 truncate ${canWrite ? 'cursor-grab hover:brightness-125' : ''}`}
+            style={{ color }}
+            className={`text-xs font-semibold flex-1 truncate ${canWrite ? 'hover:brightness-125' : ''}`}
           >
             {row.player_name}
           </span>
-          {canWrite && <button onClick={onClear} className="text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] text-[10px] flex-shrink-0">✕</button>}
+          {canWrite && (
+            <button
+              onClick={e => { e.stopPropagation(); onClear(); }}
+              className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] text-[10px] flex-shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity"
+            >✕</button>
+          )}
         </div>
       ) : (
         <div className="flex items-center gap-1 w-full">
-          <span className="text-[11px] text-[var(--color-lw-text-muted)]/40 italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
+          <span className="text-[11px] text-[var(--color-lw-text-muted)] italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
           {canWrite && (
-            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⌄</button>
+            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⌄</button>
           )}
         </div>
       )}
@@ -200,8 +222,12 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
   );
 }
 
+// ─── Assignment cell ────────────────────────────────────────────────────────────────────────────
+
 function AssignmentCell({ cell, rows, canWrite, onSave }: {
-  cell: SheetCell | undefined; rows: SheetRow[]; canWrite: boolean;
+  cell: SheetCell | undefined;
+  rows: SheetRow[];
+  canWrite: boolean;
   onSave: (value: { ref_row_ids?: number[] | null; text_value?: string | null } | null) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -249,7 +275,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
     const unselected = rows.filter(r => !refs.includes(r.id));
     return (
       <div className="relative z-30">
-        <div className="absolute top-0 left-0 bg-[var(--color-lw-card)] border border-[var(--color-lw-border)] rounded-lg shadow-2xl p-3 min-w-[220px]">
+        <div className="absolute top-0 left-0 bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg shadow-2xl p-3 min-w-[220px]">
           <div className="space-y-2">
             <div>
               <p className="text-[10px] text-[var(--color-lw-text-muted)] uppercase tracking-wider mb-1">Link to roles</p>
@@ -269,7 +295,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
               <select
                 value=""
                 onChange={e => { if (e.target.value) addRef(Number(e.target.value)); }}
-                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60"
               >
                 <option value="">{refs.length === 0 ? '— none —' : '+ add role…'}</option>
                 {unselected.map(r => <option key={r.id} value={r.id}>{r.label}{r.player_name ? ` · ${r.player_name}` : ''}</option>)}
@@ -278,9 +304,11 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
             <div>
               <p className="text-[10px] text-[var(--color-lw-text-muted)] uppercase tracking-wider mb-1">Custom text</p>
               <input
-                autoFocus value={text} onChange={e => setText(e.target.value)}
+                autoFocus
+                value={text}
+                onChange={e => setText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
-                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50"
+                className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-1 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60"
                 placeholder="e.g. Boss, MT healer…"
               />
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
@@ -292,7 +320,7 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
               </div>
             </div>
             <div className="flex gap-1.5">
-              <button onClick={save} className="flex-1 bg-[var(--color-lw-gold-400)] hover:bg-[var(--color-lw-gold-300)] text-[var(--color-lw-base)] rounded px-2 py-1 text-xs font-semibold">Save</button>
+              <button onClick={save} className="flex-1 bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white rounded px-2 py-1 text-xs font-semibold">Save</button>
               <button onClick={() => { onSave(null); setEditing(false); }} className="text-xs text-[var(--color-lw-text-muted)] hover:text-red-400 px-2">Clear</button>
               <button onClick={() => setEditing(false)} className="text-xs text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] px-2">✕</button>
             </div>
@@ -303,11 +331,13 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
   }
 
   return (
-    <div onClick={open} className={`min-h-[30px] w-full px-2 py-1 flex items-center justify-center group-hover/row:bg-[var(--color-lw-fel-500)]/[0.05] ${canWrite ? 'cursor-pointer hover:bg-[var(--color-lw-elevated)]/30' : ''}`}>
-      {display ?? (canWrite ? <span className="text-[10px] text-[var(--color-lw-border)]">+</span> : <span className="text-xs text-[var(--color-lw-border)]">—</span>)}
+    <div onClick={open} className={`min-h-[28px] w-full px-2 py-1 flex items-center justify-center flex-wrap gap-0.5 ${canWrite ? 'cursor-pointer hover:bg-[var(--color-lw-surface)]/50' : ''}`}>
+      {display ?? (canWrite ? <span className="text-[10px] text-[var(--color-lw-border)]">+</span> : <span className="text-xs text-[var(--color-lw-text-muted)]">—</span>)}
     </div>
   );
 }
+
+// ─── Boss column header (with thumbnail) ────────────────────────────────────────────────────────────────
 
 function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   col: SheetColumn; canWrite: boolean;
@@ -319,7 +349,8 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleFile = async (f: File) => {
-    setUploading(true); setUploadErr(null);
+    setUploading(true);
+    setUploadErr(null);
     const err = await onUpload(f);
     setUploading(false);
     if (err) setUploadErr(err);
@@ -327,33 +358,41 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
 
   return (
     <div className="flex flex-col items-center gap-1.5 w-full">
-      <span className="text-sm font-bold text-[var(--color-lw-gold-300)] text-center leading-tight px-1">{col.label}</span>
+      <span className="text-sm font-bold text-[var(--color-lw-text)] text-center leading-tight px-1">{col.label}</span>
       <div className="w-full">
         {col.image_path ? (
           <div className="relative group/th">
-            <img src={col.image_path} alt={col.label} onClick={() => onEnlarge(col.image_path!)}
-              className="h-12 w-full object-cover rounded-md border border-[var(--color-lw-border)] cursor-pointer hover:opacity-80 hover:border-[var(--color-lw-border-sub)] transition-all" />
+            <img
+              src={col.image_path} alt={col.label}
+              onClick={() => onEnlarge(col.image_path!)}
+              className="h-9 w-full object-cover rounded-md border border-[var(--color-lw-border)] cursor-pointer hover:opacity-80 transition-all"
+            />
             {canWrite && (
-              <div className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md cursor-pointer"
-                onClick={() => { if (!confirmDelete) onEnlarge(col.image_path!); }}>
+              <div
+                className="absolute inset-0 hidden group-hover/th:flex items-center justify-center gap-1 bg-black/50 rounded-md cursor-pointer"
+                onClick={() => { if (!confirmDelete) onEnlarge(col.image_path!); }}
+              >
                 {confirmDelete ? (
                   <>
                     <span className="text-[9px] text-white font-semibold">Delete?</span>
                     <button onClick={e => { e.stopPropagation(); onRemove(); setConfirmDelete(false); }} className="text-[9px] bg-red-600 hover:bg-red-500 text-white rounded px-1.5 py-0.5">Yes</button>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(false); }} className="text-[9px] bg-[var(--color-lw-elevated)] text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5">No</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(false); }} className="text-[9px] bg-[var(--color-lw-elevated)] hover:bg-[var(--color-lw-card)] text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5">No</button>
                   </>
                 ) : (
                   <>
-                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-black/70 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-black/90">↑</button>
-                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-black/70 text-red-400 rounded px-1.5 py-0.5 hover:bg-black/90">✕</button>
+                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-[var(--color-lw-base)]/90 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-[var(--color-lw-elevated)]">↑</button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-[var(--color-lw-base)]/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-[var(--color-lw-elevated)]">✕</button>
                   </>
                 )}
               </div>
             )}
           </div>
         ) : canWrite ? (
-          <button onClick={() => inputRef.current?.click()} disabled={uploading}
-            className="w-full h-8 border border-dashed border-[var(--color-lw-border)] hover:border-[var(--color-lw-gold-500)]/30 rounded-md text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] transition-colors disabled:opacity-50">
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-6 border border-dashed border-[var(--color-lw-border)] hover:border-[var(--color-lw-fel-500)]/40 rounded-md text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] transition-colors disabled:opacity-50"
+          >
             {uploading ? '⏳' : '+ image'}
           </button>
         ) : (
@@ -366,32 +405,57 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   );
 }
 
-function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, onAssign, onClear, onDelete, onSave }: {
+// ─── Sortable table row ────────────────────────────────────────────────────────────────────────────
+
+function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, profiles, canWrite, showRole, onAssign, onClear, onDelete, onSave, onRename }: {
   row: SheetRow; rowBg: string; columns: SheetColumn[];
   cellMap: Map<string, SheetCell>; allRows: SheetRow[];
   compPool: CompPlayer[]; profiles: string[];
-  canWrite: boolean; onAssign: (name: string, cls: string | null) => void;
+  canWrite: boolean; showRole: boolean; onAssign: (name: string, cls: string | null) => void;
   onClear: () => void; onDelete: () => void;
+  onRename: (label: string) => void;
   onSave: (colId: number, val: { ref_row_ids?: number[] | null; text_value?: string | null } | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id, disabled: !canWrite });
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState(row.label);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.25 : 1 };
   return (
     <tr ref={setNodeRef} style={style} className={`${rowBg} border-b border-[var(--color-lw-border-sub)] group/row transition-colors`}>
-      <td className={`sticky left-0 z-10 ${rowBg} px-3 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border)] whitespace-nowrap group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06]`}>
-        <div className="flex items-center gap-1.5">
-          {canWrite && (
-            <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none" title="Drag to reorder">⠿</span>
-          )}
-          <span>{row.label}</span>
-          {canWrite && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-border)] hover:text-red-500 transition-opacity ml-auto" title="Delete row">✕</button>}
-        </div>
-      </td>
-      <td className={`sticky left-[90px] z-10 ${rowBg} px-2 py-1 border-r border-[var(--color-lw-border)] group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06]`}>
+      {showRole && (
+        <td className={`sticky left-0 z-10 ${rowBg} group-hover/row:bg-[var(--color-lw-fel-500)]/[0.06] px-2 py-1 text-xs text-[var(--color-lw-text-sub)] font-medium border-r border-[var(--color-lw-border-sub)] transition-colors`}>
+          <div className="flex items-center gap-1">
+            {canWrite && (
+              <span {...attributes} {...listeners} className="cursor-grab text-[var(--color-lw-text-muted)] opacity-0 group-hover/row:opacity-100 transition-opacity select-none touch-none shrink-0" title="Drag to reorder">⠇</span>
+            )}
+            {editingLabel ? (
+              <input
+                autoFocus
+                value={labelDraft}
+                onChange={e => setLabelDraft(e.target.value)}
+                onBlur={() => { onRename(labelDraft); setEditingLabel(false); }}
+                onKeyDown={e => { if (e.key === 'Enter') { onRename(labelDraft); setEditingLabel(false); } if (e.key === 'Escape') { setLabelDraft(row.label); setEditingLabel(false); } }}
+                className="flex-1 min-w-0 bg-[var(--color-lw-base)] border border-[var(--color-lw-fel-500)]/50 rounded px-1.5 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none w-full"
+              />
+            ) : (
+              <span
+                className={`flex-1 truncate ${canWrite ? 'cursor-text' : ''}`}
+                onDoubleClick={() => canWrite && setEditingLabel(true)}
+                title={canWrite ? 'Double-click to rename' : row.label}
+              >{row.label}</span>
+            )}
+            {canWrite && !editingLabel && <button onClick={onDelete} className="opacity-0 group-hover/row:opacity-100 text-[10px] text-[var(--color-lw-text-muted)] hover:text-red-500 transition-opacity shrink-0 ml-auto" title="Delete row">✕</button>}
+          </div>
+        </td>
+      )}
+      <td
+        className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 border-r border-[var(--color-lw-border-sub)] transition-colors`}
+        style={{ backgroundColor: row.player_name ? resolveColor(row.player_class) + '22' : undefined }}
+      >
         <DroppableSlot row={row} compPool={compPool} profiles={profiles} onAssign={onAssign} onClear={onClear} canWrite={canWrite} />
       </td>
       {columns.map((col, colIdx) => (
-        <td key={col.id} className={`border-r border-[var(--color-lw-border-sub)]/40 relative ${colIdx % 2 !== 0 ? 'bg-black/[0.06]' : ''}`}>
+        <td key={col.id} className={`border-r border-[var(--color-lw-border-sub)] relative transition-colors group-hover/row:bg-[var(--color-lw-fel-500)]/[0.05] ${colIdx % 2 !== 0 ? 'bg-black/[0.10]' : ''}`}>
           <AssignmentCell cell={cellMap.get(`${row.id}-${col.id}`)} rows={allRows} canWrite={canWrite} onSave={val => onSave(col.id, val)} />
         </td>
       ))}
@@ -399,12 +463,17 @@ function SortableTableRow({ row, rowBg, columns, cellMap, allRows, compPool, pro
   );
 }
 
+// ─── Main view ─────────────────────────────────────────────────────────────────────────────────
+
+import { HelpModal } from '../ui/HelpModal';
+
 interface Props { role: UserRole | null; username: string; helpContent?: string; }
 
 export function AssignmentSheetView({ role, username, helpContent }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
+  const showRole = role !== 'raider';
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const [compJson, setCompJson] = useState('');
@@ -413,13 +482,14 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
   });
   const [importErr, setImportErr] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [addingRowSection, setAddingRowSection] = useState<string | null>(null);
   const [newRowLabel, setNewRowLabel] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [presentUsers, setPresentUsers] = useState<string[]>([]);
-  const [showHelp, setShowHelp] = useState(false);
 
+  // Presence: track who else is on this sheet
   useEffect(() => {
     if (!selectedSheetId || !username) return;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -429,12 +499,23 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
         .on('presence', { event: 'sync' }, () => {
           if (!channel) return;
           const state = channel.presenceState<{ username: string }>();
-          const others = [...new Set(Object.values(state).flat().map(p => p.username).filter(u => u !== username))];
+          const others = [...new Set(
+            Object.values(state).flat().map(p => p.username).filter(u => u !== username)
+          )];
           setPresentUsers(others);
         })
-        .subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel!.track({ username }); });
-    } catch (err) { console.error('[AssignmentSheet] presence failed:', err); }
-    return () => { if (channel) supabase.removeChannel(channel); setPresentUsers([]); };
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel!.track({ username });
+          }
+        });
+    } catch (err) {
+      console.error('[AssignmentSheet] presence failed:', err);
+    }
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+      setPresentUsers([]);
+    };
   }, [selectedSheetId, username]);
 
   const cellMap = useMemo(() => { const m = new Map<string, SheetCell>(); for (const c of cells) m.set(`${c.row_id}-${c.column_id}`, c); return m; }, [cells]);
@@ -443,22 +524,18 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
   const groupedPool = useMemo(() => { const g = new Map<number, CompPlayer[]>(); for (const p of pool) { if (!g.has(p.groupNumber)) g.set(p.groupNumber, []); g.get(p.groupNumber)!.push(p); } return [...g.entries()].sort((a, b) => a[0] - b[0]); }, [pool]);
   const rowsBySection = useMemo(() => { const m: Record<string, SheetRow[]> = {}; for (const s of sections) m[s] = rows.filter(r => r.section === s); return m; }, [rows, sections]);
 
-  function handleDragStart(event: DragStartEvent) { setActiveId(event.active.id); }
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id);
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeStr = String(active.id);
-    const overStr = String(over.id);
-
-    if (activeStr.startsWith('p:')) {
-      const name = activeStr.replace(/^p:/, '');
-      const rowId = Number(overStr.replace(/^r:/, ''));
-      const player = compPool.find(p => p.name === name);
-      if (!player || !rowId) return;
-      assignPlayer(rowId, player.name, player.color || player.className);
-    } else if (activeStr.startsWith('slot:')) {
+    const overStr   = String(over.id);
+    if (activeStr.startsWith('slot:')) {
+      // Drag assigned player from one slot to another
       if (overStr.startsWith('r:')) {
         const sourceRowId = Number(activeStr.slice(5));
         const targetRowId = Number(overStr.slice(2));
@@ -467,12 +544,34 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
         if (!sourceRow?.player_name) return;
         const targetRow = rows.find(r => r.id === targetRowId);
         if (targetRow?.player_name) {
+          // Swap the two players
           assignPlayer(targetRowId, sourceRow.player_name, sourceRow.player_class);
           assignPlayer(sourceRowId, targetRow.player_name, targetRow.player_class);
         } else {
           assignPlayer(targetRowId, sourceRow.player_name, sourceRow.player_class);
           clearPlayer(sourceRowId);
         }
+      }
+    } else if (activeStr.startsWith('p:')) {
+      if (overStr.startsWith('p:')) {
+        // Reorder within player pool
+        const activeName = activeStr.slice(2);
+        const overName   = overStr.slice(2);
+        setCompPool(prev => {
+          const ai = prev.findIndex(p => p.name === activeName);
+          const oi = prev.findIndex(p => p.name === overName);
+          if (ai === -1 || oi === -1) return prev;
+          const next = arrayMove(prev, ai, oi);
+          try { localStorage.setItem('lootwatch_comp_pool', JSON.stringify(next)); } catch { /* full */ }
+          return next;
+        });
+      } else if (overStr.startsWith('r:')) {
+        // Assign player to slot
+        const name  = activeStr.slice(2);
+        const rowId = Number(overStr.slice(2));
+        const player = compPool.find(p => p.name === name);
+        if (!player || !rowId) return;
+        assignPlayer(rowId, player.name, player.color || player.className);
       }
     } else {
       const overId = Number(over.id);
@@ -489,92 +588,128 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
     if (typeof result === 'string') { setImportErr(result); return; }
     setCompPool(result);
     try { localStorage.setItem('lootwatch_comp_pool', JSON.stringify(result)); } catch { /* storage full */ }
-    setShowImport(false); setCompJson('');
+    setShowImport(false);
+    setCompJson('');
   }
 
   async function handleAddRow() {
     if (!addingRowSection || !newRowLabel.trim()) return;
     await addRow(addingRowSection, newRowLabel.trim());
-    setNewRowLabel(''); setAddingRowSection(null);
+    setNewRowLabel('');
+    setAddingRowSection(null);
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm"><span className="animate-spin mr-2">⏳</span> Loading…</div>;
+  if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} autoScroll={{ enabled: true, layoutShiftCompensation: false }}>
       <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-4">
 
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl font-bold text-[var(--color-lw-text)]">Raid Assignments</h2>
-            {helpContent && (
-              <button onClick={() => setShowHelp(true)}
-                className="w-5 h-5 rounded-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] hover:border-[var(--color-lw-fel-400)]/50 hover:text-[var(--color-lw-fel-400)] text-[var(--color-lw-text-muted)] text-xs font-bold flex items-center justify-center transition-colors shrink-0">
-                ?
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[var(--color-lw-text)]">Raid Assignments</h2>
+              {helpContent && (
+                <button
+                  onClick={() => setShowHelp(true)}
+                  className="w-5 h-5 rounded-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] hover:border-[var(--color-lw-fel-400)]/50 hover:text-[var(--color-lw-fel-400)] text-[var(--color-lw-text-muted)] text-xs font-bold flex items-center justify-center transition-colors shrink-0"
+                >?</button>
+              )}
+            </div>
+            {showHelp && helpContent && <HelpModal title="Raid Assignments" content={helpContent} onClose={() => setShowHelp(false)} />}
             {presentUsers.length > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-lw-purple-400)] animate-pulse" />
                 <span className="text-xs text-[var(--color-lw-text-muted)]">Also here:</span>
                 {presentUsers.map(u => (
-                  <span key={u} className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">{u}</span>
+                  <span key={u} className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-lw-purple-500)]/10 text-[var(--color-lw-purple-400)] border border-[var(--color-lw-purple-500)]/20">{u}</span>
                 ))}
               </div>
             )}
           </div>
           {canWrite && (
-            <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-lw-elevated)] hover:bg-[var(--color-lw-surface)] text-[var(--color-lw-text-sub)] border border-[var(--color-lw-border)]">
+            <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg lw-card text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] border border-[var(--color-lw-border)]">
               {showImport ? 'Hide import' : '⬆ Import comp JSON'}
             </button>
           )}
         </div>
 
+        {/* Import panel */}
         {showImport && canWrite && (
-          <div className="bg-[var(--color-lw-card)] border border-[var(--color-lw-border)] rounded-xl p-4 space-y-3">
+          <div className="lw-card p-4 space-y-3">
             <p className="text-xs text-[var(--color-lw-text-muted)]">Paste the raid comp JSON. Existing assignments are kept if the player is still in the comp; missing players are cleared.</p>
-            <textarea value={compJson} onChange={e => setCompJson(e.target.value)} rows={4} className="w-full bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-xs text-[var(--color-lw-text)] font-mono focus:outline-none focus:border-[var(--color-lw-fel-400)]/50" placeholder='{"slots":[...]}' />
+            <textarea value={compJson} onChange={e => setCompJson(e.target.value)} rows={4} className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-xs text-[var(--color-lw-text-sub)] font-mono focus:outline-none focus:border-[var(--color-lw-purple-400)]/60" placeholder='{"slots":[...]}' />
             {importErr && <p className="text-xs text-red-400">{importErr}</p>}
-            <button onClick={handleImport} className="bg-[var(--color-lw-gold-400)] hover:bg-[var(--color-lw-gold-300)] text-[var(--color-lw-base)] font-semibold text-xs px-4 py-1.5 rounded-lg">Import</button>
+            <button onClick={handleImport} className="bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold text-xs px-4 py-1.5 rounded-lg">Import</button>
           </div>
         )}
 
+        {/* Player pool */}
         {pool.length > 0 && (
-          <div className="bg-[var(--color-lw-card)] border border-[var(--color-lw-border)] rounded-xl p-3 space-y-2">
-            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players — drag to a role slot</p>
-            <div className="space-y-1.5">
-              {groupedPool.map(([group, players]) => (
-                <div key={group} className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] text-[var(--color-lw-text-muted)] w-12 flex-shrink-0">Group {group}</span>
-                  {players.map(p => <DraggablePlayerPill key={p.name} player={p} />)}
-                </div>
-              ))}
-            </div>
+          <div className="lw-card p-3 space-y-2">
+            <p className="text-[11px] text-[var(--color-lw-text-muted)] uppercase tracking-wider font-semibold">Unassigned players — drag to reorder or drop on a role slot</p>
+            <SortableContext items={pool.map(p => `p:${p.name}`)} strategy={rectSortingStrategy}>
+              <div className="space-y-1.5">
+                {groupedPool.map(([group, players]) => (
+                  <div key={group} className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-[var(--color-lw-text-muted)] w-12 flex-shrink-0">Group {group}</span>
+                    {players.map(p => <DraggablePlayerPill key={p.name} player={p} />)}
+                  </div>
+                ))}
+              </div>
+            </SortableContext>
           </div>
         )}
 
-        <div className="flex gap-1">
-          {sheets.map(sheet => (
-            <button key={sheet.id} onClick={() => setSelectedSheetId(sheet.id)}
-              className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${selectedSheetId === sheet.id ? 'bg-[var(--color-lw-gold-400)] text-[var(--color-lw-base)]' : 'bg-[var(--color-lw-elevated)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)] hover:bg-[var(--color-lw-surface)]'}`}>
-              {sheet.title}
-            </button>
-          ))}
+        {/* Sheet tabs — gold style matching Wishlist phase tabs */}
+        <div className="flex gap-1.5 flex-wrap">
+          {sheets.map(sheet => {
+            const active = selectedSheetId === sheet.id;
+            return (
+              <button
+                key={sheet.id}
+                onClick={() => setSelectedSheetId(sheet.id)}
+                className={[
+                  'px-4 py-2 text-sm font-medium rounded-lg transition-colors border',
+                  active
+                    ? 'border-[var(--color-lw-fel-500)]/50 text-[var(--color-lw-fel-400)] bg-[var(--color-lw-fel-500)]/10'
+                    : 'border-[var(--color-lw-border)] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] hover:bg-[var(--color-lw-elevated)]',
+                ].join(' ')}
+              >
+                {sheet.title}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-[var(--color-lw-border)]">
-          <table className="border-collapse text-sm w-full">
+        {/* Grid */}
+        <div className="lw-card w-full overflow-hidden">
+          <table className="border-collapse text-sm w-full table-fixed">
+            <colgroup>
+              {showRole && <col style={{ width: '130px' }} />}
+              <col style={{ width: '140px' }} />
+              {columns.map(col => (
+                <col key={col.id} style={{ width: `calc((100% - ${showRole ? 270 : 140}px) / ${columns.length})` }} />
+              ))}
+            </colgroup>
             <thead>
-              <tr className="bg-[var(--color-lw-elevated)]">
-                <th className="sticky left-0 z-10 bg-[var(--color-lw-elevated)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[90px] min-w-[90px] border-b border-r border-[var(--color-lw-border)]">Role</th>
-                <th className="sticky left-[90px] z-10 bg-[var(--color-lw-elevated)] text-left px-3 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider w-[140px] min-w-[140px] border-b border-r border-[var(--color-lw-border)]">Player</th>
+              <tr className="bg-[var(--color-lw-surface)]">
+                {showRole && <th className="sticky left-0 z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider border-b border-r border-[var(--color-lw-border)]">Role</th>}
+                <th className={`sticky ${showRole ? 'left-[130px]' : 'left-0'} z-10 bg-[var(--color-lw-surface)] text-left px-2 py-2 text-xs font-semibold text-[var(--color-lw-text-muted)] uppercase tracking-wider border-b border-r border-[var(--color-lw-border)]`}>Player</th>
                 {columns.map((col, colIdx) => (
-                  <th key={col.id} className={`text-center px-2 py-2 border-b border-r border-[var(--color-lw-border)] min-w-[80px] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-elevated)]' : 'bg-[var(--color-lw-surface)]'}`}>
-                    <BossColumnHeader col={col} canWrite={canWrite} onUpload={f => uploadImage(col.id, f)} onRemove={() => removeImage(col.id)} onEnlarge={setLightboxImage} />
+                  <th key={col.id} className={`text-center px-1.5 py-1.5 border-b border-r border-[var(--color-lw-border)] ${colIdx % 2 === 0 ? 'bg-[var(--color-lw-surface)]' : 'bg-[var(--color-lw-base)]'}`}>
+                    <BossColumnHeader
+                      col={col} canWrite={canWrite}
+                      onUpload={f => uploadImage(col.id, f)}
+                      onRemove={() => removeImage(col.id)}
+                      onEnlarge={setLightboxImage}
+                    />
                   </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
               {(() => {
                 let rowIdx = 0;
@@ -584,41 +719,58 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
                   return (
                     <React.Fragment key={section}>
                       <tr>
-                        <td colSpan={2 + columns.length} style={{ borderLeftColor: accent }}
-                          className="px-4 py-1.5 bg-[var(--color-lw-surface)]/70 border-y border-[var(--color-lw-border)]/80 border-l-2">
-                          <span style={{ color: accent }} className="text-[10px] font-bold uppercase tracking-widest opacity-90">{section}</span>
+                        <td
+                          colSpan={(showRole ? 2 : 1) + columns.length}
+                          style={{ borderLeftColor: accent, backgroundImage: `linear-gradient(to right, ${accent}12, transparent 40%)` }}
+                          className="px-4 py-2.5 border-y border-[var(--color-lw-border-sub)] border-l-[3px]"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span style={{ color: accent }} className="text-xs font-bold uppercase tracking-widest">{section}</span>
+                            <span className="text-[10px] text-[var(--color-lw-text-muted)] tabular-nums">{sectionRows.length} {sectionRows.length === 1 ? 'role' : 'roles'}</span>
+                          </div>
                         </td>
                       </tr>
+
                       <SortableContext items={sectionRows.map(r => r.id)} strategy={verticalListSortingStrategy}>
                         {sectionRows.map(row => {
                           const even = rowIdx++ % 2 === 0;
-                          const rowBg = even ? 'bg-[var(--color-lw-base)]' : 'bg-[var(--color-lw-elevated)]/20';
+                          const rowBg = even ? 'bg-[var(--color-lw-surface)]/25' : 'bg-transparent';
                           return (
-                            <SortableTableRow key={row.id} row={row} rowBg={rowBg} columns={columns} cellMap={cellMap} allRows={rows}
-                              compPool={compPool} profiles={profiles} canWrite={canWrite}
+                            <SortableTableRow
+                              key={row.id}
+                              row={row}
+                              rowBg={rowBg}
+                              columns={columns}
+                              cellMap={cellMap}
+                              allRows={rows}
+                              compPool={compPool}
+                              profiles={profiles}
+                              canWrite={canWrite}
+                              showRole={showRole}
                               onAssign={(name, cls) => assignPlayer(row.id, name, cls)}
-                              onClear={() => clearPlayer(row.id)} onDelete={() => deleteRow(row.id)}
-                              onSave={(colId, val) => setCell(row.id, colId, val)} />
+                              onClear={() => clearPlayer(row.id)}
+                              onDelete={() => deleteRow(row.id)}
+                              onRename={(label) => renameRow(row.id, label)}
+                              onSave={(colId, val) => setCell(row.id, colId, val)}
+                            />
                           );
                         })}
                       </SortableContext>
+
                       {canWrite && (
-                        <tr key={`add-${section}`} className="border-b border-[var(--color-lw-border-sub)]/30">
-                          <td className="sticky left-0 z-10 bg-[var(--color-lw-base)] px-3 py-1 border-r border-[var(--color-lw-border)]" colSpan={2}>
+                        <tr key={`add-${section}`} className="border-b border-[var(--color-lw-border-sub)]">
+                          <td className={`sticky left-0 z-10 bg-[var(--color-lw-base)] px-3 py-1 border-r border-[var(--color-lw-border-sub)]`} colSpan={showRole ? 2 : 1}>
                             {addingRowSection === section ? (
                               <div className="flex items-center gap-1.5">
-                                <input autoFocus value={newRowLabel} onChange={e => setNewRowLabel(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') handleAddRow(); if (e.key === 'Escape') { setAddingRowSection(null); setNewRowLabel(''); } }}
-                                  onBlur={() => { if (!newRowLabel.trim()) setAddingRowSection(null); }}
-                                  className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-fel-400)]/50 w-32" placeholder="Role name…" />
-                                <button onClick={handleAddRow} className="text-[10px] text-[var(--color-lw-gold-300)] hover:text-[var(--color-lw-gold-200)]">Add</button>
+                                <input autoFocus value={newRowLabel} onChange={e => setNewRowLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAddRow(); if (e.key === 'Escape') { setAddingRowSection(null); setNewRowLabel(''); } }} onBlur={() => { if (!newRowLabel.trim()) setAddingRowSection(null); }} className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-border)] rounded px-2 py-0.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-32" placeholder="Role name…" />
+                                <button onClick={handleAddRow} className="text-[10px] text-[var(--color-lw-fel-400)] hover:text-[var(--color-lw-fel-400)]/80">Add</button>
                                 <button onClick={() => { setAddingRowSection(null); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-text-muted)]">✕</button>
                               </div>
                             ) : (
-                              <button onClick={() => { setAddingRowSection(section); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-border)] hover:text-[var(--color-lw-text-muted)]">+ Add row</button>
+                              <button onClick={() => { setAddingRowSection(section); setNewRowLabel(''); }} className="text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text-sub)]">+ Add row</button>
                             )}
                           </td>
-                          {columns.map(col => <td key={col.id} className="border-r border-[var(--color-lw-border-sub)]/30" />)}
+                          {columns.map(col => <td key={col.id} className="border-r border-[var(--color-lw-border-sub)]" />)}
                         </tr>
                       )}
                     </React.Fragment>
@@ -630,21 +782,10 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
         </div>
       </div>
 
+      {/* Drag overlay */}
       <DragOverlay modifiers={[restrictToWindowEdges]}>
-        {activeId != null ? (() => {
+        {activeId ? (() => {
           const id = String(activeId);
-          if (id.startsWith('p:')) {
-            const name = id.slice(2);
-            const player = compPool.find(p => p.name === name);
-            if (!player) return null;
-            const color = player.color || getClassColor(player.className) || '#9ca3af';
-            return (
-              <div style={{ backgroundColor: color + '33', color, borderColor: color + '66' }}
-                className="inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold whitespace-nowrap shadow-2xl">
-                {player.name}
-              </div>
-            );
-          }
           if (id.startsWith('slot:')) {
             const row = rows.find(r => r.id === Number(id.slice(5)));
             if (!row?.player_name) return null;
@@ -656,16 +797,29 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
               </div>
             );
           }
+          if (id.startsWith('p:')) {
+            const player = compPool.find(p => p.name === id.slice(2));
+            if (!player) return null;
+            const color = player.color || getClassColor(player.className) || '#9ca3af';
+            return (
+              <div style={{ backgroundColor: color + '33', color, borderColor: color + '66' }}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-medium whitespace-nowrap shadow-2xl rotate-2">
+                <span className="opacity-50 text-[10px]">{player.specName}</span>
+                {player.name}
+              </div>
+            );
+          }
           const row = rows.find(r => r.id === Number(activeId));
           if (!row) return null;
           return (
-            <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-gold-500)]/50 rounded px-3 py-1.5 shadow-2xl text-xs text-[var(--color-lw-text-sub)] opacity-90 whitespace-nowrap">
+            <div className="bg-[var(--color-lw-elevated)] border border-[var(--color-lw-fel-500)]/40 rounded px-3 py-1.5 shadow-2xl text-xs text-[var(--color-lw-text)] opacity-90 whitespace-nowrap">
               {row.label}{row.player_name ? ` · ${row.player_name}` : ''}
             </div>
           );
         })() : null}
       </DragOverlay>
 
+      {/* Lightbox */}
       {lightboxImage && (
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
           <div className="relative max-w-5xl max-h-full" onClick={e => e.stopPropagation()}>
@@ -673,10 +827,6 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
             <button onClick={() => setLightboxImage(null)} className="absolute top-2 right-2 text-white bg-black/60 hover:bg-black rounded-full w-8 h-8 flex items-center justify-center text-sm">✕</button>
           </div>
         </div>
-      )}
-
-      {showHelp && helpContent && (
-        <HelpModal title="Raid Assignments" content={helpContent} onClose={() => setShowHelp(false)} />
       )}
     </DndContext>
   );
