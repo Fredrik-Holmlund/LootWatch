@@ -201,11 +201,29 @@ export function useAssignmentSheet() {
     await supabase.from('sheet_rows').update({ label: label.trim() }).eq('id', rowId);
   }, []);
 
+  const addColumn = useCallback(async (label: string, position: 'start' | 'end' = 'end') => {
+    if (!selectedSheetId) return;
+    const sheetCols = allColumns.filter(c => c.sheet_id === selectedSheetId);
+    const sort_order = position === 'start'
+      ? (sheetCols.length > 0 ? Math.min(...sheetCols.map(c => c.sort_order)) - 1 : 0)
+      : (sheetCols.length > 0 ? Math.max(...sheetCols.map(c => c.sort_order)) + 1 : 1);
+    const { data } = await supabase.from('sheet_columns')
+      .insert({ sheet_id: selectedSheetId, label, sort_order })
+      .select().single();
+    if (data) setAllColumns(prev => [...prev, data as SheetColumn]);
+  }, [selectedSheetId, allColumns]);
+
+  const deleteColumn = useCallback(async (columnId: number) => {
+    setAllColumns(prev => prev.filter(c => c.id !== columnId));
+    await supabase.from('sheet_columns').delete().eq('id', columnId);
+  }, []);
+
   return {
     sheets, columns, rows, cells, loading, profiles, sections,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,
     addRow, deleteRow, reorderRows, renameRow,
+    addColumn, deleteColumn,
   };
 }

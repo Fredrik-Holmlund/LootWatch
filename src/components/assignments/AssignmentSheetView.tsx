@@ -207,7 +207,7 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
         <div className="flex items-center gap-1 w-full">
           <span className="text-[11px] text-[var(--color-lw-text-muted)] italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
           {canWrite && (
-            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⌄</button>
+            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⏄</button>
           )}
         </div>
       )}
@@ -339,9 +339,10 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
 
 // ─── Boss column header (with thumbnail) ────────────────────────────────────────────────────────────────
 
-function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
+function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onDeleteColumn }: {
   col: SheetColumn; canWrite: boolean;
   onUpload: (f: File) => Promise<string | null>; onRemove: () => void; onEnlarge: (url: string) => void;
+  onDeleteColumn: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -357,7 +358,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
   };
 
   return (
-    <div className="flex flex-col items-center gap-1.5 w-full">
+    <div className="flex flex-col items-center gap-1.5 w-full group/th">
       <span className="text-sm font-bold text-[var(--color-lw-text)] text-center leading-tight px-1">{col.label}</span>
       <div className="w-full">
         {col.image_path ? (
@@ -401,6 +402,12 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge }: {
       </div>
       {uploadErr && <p className="text-[10px] text-red-400 break-all text-center">{uploadErr}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+      {canWrite && (
+        <button
+          onClick={onDeleteColumn}
+          className="text-[9px] text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors opacity-0 group-hover/th:opacity-100"
+        >Delete column</button>
+      )}
     </div>
   );
 }
@@ -470,7 +477,7 @@ import { HelpModal } from '../ui/HelpModal';
 interface Props { role: UserRole | null; username: string; helpContent?: string; }
 
 export function AssignmentSheetView({ role, username, helpContent }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow, addColumn, deleteColumn } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
   const showRole = role !== 'raider';
@@ -488,6 +495,9 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [presentUsers, setPresentUsers] = useState<string[]>([]);
+  const [showAddCol, setShowAddCol] = useState(false);
+  const [newColLabel, setNewColLabel] = useState('');
+  const [newColPosition, setNewColPosition] = useState<'start' | 'end'>('end');
 
   // Presence: track who else is on this sheet
   useEffect(() => {
@@ -599,6 +609,13 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
     setAddingRowSection(null);
   }
 
+  async function handleAddCol() {
+    if (!newColLabel.trim()) return;
+    await addColumn(newColLabel.trim(), newColPosition);
+    setNewColLabel('');
+    setShowAddCol(false);
+  }
+
   if (loading) return <div className="flex items-center justify-center py-20 text-[var(--color-lw-text-muted)] text-sm">Loading…</div>;
 
   return (
@@ -638,11 +655,18 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
               </div>
             )}
           </div>
-          {canWrite && (
-            <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg lw-card text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] border border-[var(--color-lw-border)]">
-              {showImport ? 'Hide import' : '⬆ Import comp JSON'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canWrite && (
+              <button onClick={() => setShowImport(v => !v)} className="text-xs px-3 py-1.5 rounded-lg lw-card text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] border border-[var(--color-lw-border)]">
+                {showImport ? 'Hide import' : '⬆ Import comp JSON'}
+              </button>
+            )}
+            {canWrite && (
+              <button onClick={() => setShowAddCol(v => !v)} className="text-xs px-3 py-1.5 rounded-lg lw-card text-[var(--color-lw-text-sub)] hover:text-[var(--color-lw-text)] border border-[var(--color-lw-border)]">
+                {showAddCol ? 'Cancel' : '+ Add column'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Import panel */}
@@ -652,6 +676,38 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
             <textarea value={compJson} onChange={e => setCompJson(e.target.value)} rows={4} className="w-full bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-2 text-xs text-[var(--color-lw-text-sub)] font-mono focus:outline-none focus:border-[var(--color-lw-purple-400)]/60" placeholder='{"slots":[...]}' />
             {importErr && <p className="text-xs text-red-400">{importErr}</p>}
             <button onClick={handleImport} className="bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] text-white font-semibold text-xs px-4 py-1.5 rounded-lg">Import</button>
+          </div>
+        )}
+
+        {/* Add-column panel */}
+        {showAddCol && canWrite && (
+          <div className="lw-card p-4 space-y-3">
+            <p className="text-xs text-[var(--color-lw-text-muted)]">Add a boss or trash column to this sheet.</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <input
+                autoFocus
+                value={newColLabel}
+                onChange={e => setNewColLabel(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddCol(); if (e.key === 'Escape') setShowAddCol(false); }}
+                className="bg-[var(--color-lw-base)] border border-[var(--color-lw-border)] rounded-lg px-3 py-1.5 text-xs text-[var(--color-lw-text)] focus:outline-none focus:border-[var(--color-lw-purple-400)]/60 w-48"
+                placeholder="Column name…"
+              />
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1 text-xs text-[var(--color-lw-text-sub)] cursor-pointer">
+                  <input type="radio" checked={newColPosition === 'start'} onChange={() => setNewColPosition('start')} className="accent-[var(--color-lw-fel-400)]" />
+                  Before bosses
+                </label>
+                <label className="flex items-center gap-1 text-xs text-[var(--color-lw-text-sub)] cursor-pointer">
+                  <input type="radio" checked={newColPosition === 'end'} onChange={() => setNewColPosition('end')} className="accent-[var(--color-lw-fel-400)]" />
+                  After bosses
+                </label>
+              </div>
+              <button
+                onClick={handleAddCol}
+                disabled={!newColLabel.trim()}
+                className="bg-[var(--color-lw-purple-500)] hover:bg-[var(--color-lw-purple-400)] disabled:opacity-40 text-white font-semibold text-xs px-4 py-1.5 rounded-lg"
+              >Add</button>
+            </div>
           </div>
         )}
 
@@ -714,6 +770,7 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
                       onUpload={f => uploadImage(col.id, f)}
                       onRemove={() => removeImage(col.id)}
                       onEnlarge={setLightboxImage}
+                      onDeleteColumn={() => deleteColumn(col.id)}
                     />
                   </th>
                 ))}
