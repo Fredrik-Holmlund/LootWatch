@@ -207,7 +207,7 @@ function DroppableSlot({ row, compPool, profiles, onAssign, onClear, canWrite }:
         <div className="flex items-center gap-1 w-full">
           <span className="text-[11px] text-[var(--color-lw-text-muted)] italic flex-1">{canWrite ? 'drag or pick' : '—'}</span>
           {canWrite && (
-            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⏄</button>
+            <button onClick={openPicker} className="text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] flex-shrink-0 text-base leading-none px-0.5 transition-colors" title="Pick player">⎄</button>
           )}
         </div>
       )}
@@ -339,15 +339,20 @@ function AssignmentCell({ cell, rows, canWrite, onSave }: {
 
 // ─── Boss column header (with thumbnail) ────────────────────────────────────────────────────────────────
 
-function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onDeleteColumn }: {
+function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onMoveLeft, onMoveRight, isFirst, isLast, onDeleteColumn }: {
   col: SheetColumn; canWrite: boolean;
   onUpload: (f: File) => Promise<string | null>; onRemove: () => void; onEnlarge: (url: string) => void;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
+  isFirst: boolean;
+  isLast: boolean;
   onDeleteColumn: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDeleteCol, setConfirmDeleteCol] = useState(false);
 
   const handleFile = async (f: File) => {
     setUploading(true);
@@ -359,7 +364,21 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onDele
 
   return (
     <div className="flex flex-col items-center gap-1.5 w-full group/th">
-      <span className="text-sm font-bold text-[var(--color-lw-text)] text-center leading-tight px-1">{col.label}</span>
+      <div className="flex items-center justify-between w-full gap-1 px-1">
+        <button
+          onClick={onMoveLeft}
+          disabled={isFirst}
+          className="text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] disabled:opacity-20 disabled:cursor-not-allowed transition-colors leading-none"
+          title="Move column left"
+        >←</button>
+        <span className="text-sm font-bold text-[var(--color-lw-text)] text-center leading-tight flex-1">{col.label}</span>
+        <button
+          onClick={onMoveRight}
+          disabled={isLast}
+          className="text-[10px] text-[var(--color-lw-text-muted)] hover:text-[var(--color-lw-text)] disabled:opacity-20 disabled:cursor-not-allowed transition-colors leading-none"
+          title="Move column right"
+        >→</button>
+      </div>
       <div className="w-full">
         {col.image_path ? (
           <div className="relative group/th">
@@ -381,7 +400,7 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onDele
                   </>
                 ) : (
                   <>
-                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-[var(--color-lw-base)]/90 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-[var(--color-lw-elevated)]">↑</button>
+                    <button onClick={e => { e.stopPropagation(); inputRef.current?.click(); }} className="text-[9px] bg-[var(--color-lw-base)]/90 text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5 hover:bg-[var(--color-lw-elevated)]">&uarr;</button>
                     <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} className="text-[9px] bg-[var(--color-lw-base)]/90 text-red-400 rounded px-1.5 py-0.5 hover:bg-[var(--color-lw-elevated)]">✕</button>
                   </>
                 )}
@@ -403,10 +422,26 @@ function BossColumnHeader({ col, canWrite, onUpload, onRemove, onEnlarge, onDele
       {uploadErr && <p className="text-[10px] text-red-400 break-all text-center">{uploadErr}</p>}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
       {canWrite && (
-        <button
-          onClick={onDeleteColumn}
-          className="text-[9px] text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors opacity-0 group-hover/th:opacity-100"
-        >Delete column</button>
+        <div className="w-full flex justify-center">
+          {confirmDeleteCol ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] text-red-400">Delete column?</span>
+              <button
+                onClick={e => { e.stopPropagation(); onDeleteColumn(); setConfirmDeleteCol(false); }}
+                className="text-[9px] bg-red-600 hover:bg-red-500 text-white rounded px-1.5 py-0.5"
+              >Yes</button>
+              <button
+                onClick={e => { e.stopPropagation(); setConfirmDeleteCol(false); }}
+                className="text-[9px] bg-[var(--color-lw-elevated)] text-[var(--color-lw-text-sub)] rounded px-1.5 py-0.5"
+              >No</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDeleteCol(true)}
+              className="text-[9px] text-[var(--color-lw-text-muted)] hover:text-red-400 transition-colors opacity-0 group-hover/th:opacity-100"
+            >Delete column</button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -477,7 +512,7 @@ import { HelpModal } from '../ui/HelpModal';
 interface Props { role: UserRole | null; username: string; helpContent?: string; }
 
 export function AssignmentSheetView({ role, username, helpContent }: Props) {
-  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow, addColumn, deleteColumn } = useAssignmentSheet();
+  const { sheets, columns, rows, cells, loading, profiles, sections, selectedSheetId, setSelectedSheetId, assignPlayer, clearPlayer, setCell, importComp, uploadImage, removeImage, addRow, deleteRow, reorderRows, renameRow, addColumn, deleteColumn, moveColumn } = useAssignmentSheet();
 
   const canWrite = canEditAssignments(role);
   const showRole = role !== 'raider';
@@ -770,6 +805,10 @@ export function AssignmentSheetView({ role, username, helpContent }: Props) {
                       onUpload={f => uploadImage(col.id, f)}
                       onRemove={() => removeImage(col.id)}
                       onEnlarge={setLightboxImage}
+                      onMoveLeft={() => moveColumn(col.id, 'left')}
+                      onMoveRight={() => moveColumn(col.id, 'right')}
+                      isFirst={colIdx === 0}
+                      isLast={colIdx === columns.length - 1}
                       onDeleteColumn={() => deleteColumn(col.id)}
                     />
                   </th>

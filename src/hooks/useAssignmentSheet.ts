@@ -218,12 +218,33 @@ export function useAssignmentSheet() {
     await supabase.from('sheet_columns').delete().eq('id', columnId);
   }, []);
 
+  const moveColumn = useCallback(async (columnId: number, direction: 'left' | 'right') => {
+    const sheetCols = allColumns
+      .filter(c => c.sheet_id === selectedSheetId)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sheetCols.findIndex(c => c.id === columnId);
+    if (idx === -1) return;
+    const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sheetCols.length) return;
+    const a = sheetCols[idx];
+    const b = sheetCols[swapIdx];
+    setAllColumns(prev => prev.map(c =>
+      c.id === a.id ? { ...c, sort_order: b.sort_order } :
+      c.id === b.id ? { ...c, sort_order: a.sort_order } :
+      c
+    ));
+    await Promise.all([
+      supabase.from('sheet_columns').update({ sort_order: b.sort_order }).eq('id', a.id),
+      supabase.from('sheet_columns').update({ sort_order: a.sort_order }).eq('id', b.id),
+    ]);
+  }, [selectedSheetId, allColumns]);
+
   return {
     sheets, columns, rows, cells, loading, profiles, sections,
     selectedSheetId, setSelectedSheetId,
     assignPlayer, clearPlayer, setCell,
     importComp, uploadImage, removeImage,
     addRow, deleteRow, reorderRows, renameRow,
-    addColumn, deleteColumn,
+    addColumn, deleteColumn, moveColumn,
   };
 }
