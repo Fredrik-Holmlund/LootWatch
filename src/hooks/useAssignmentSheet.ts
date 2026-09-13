@@ -97,7 +97,12 @@ export function useAssignmentSheet() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
-  const columns = useMemo(() => allColumns.filter(c => c.sheet_id === selectedSheetId), [allColumns, selectedSheetId]);
+  const columns = useMemo(() =>
+    allColumns
+      .filter(c => c.sheet_id === selectedSheetId)
+      .sort((a, b) => a.sort_order - b.sort_order),
+    [allColumns, selectedSheetId]
+  );
   const rows = useMemo(() => allRows.filter(r => r.sheet_id === selectedSheetId).sort((a, b) => a.sort_order - b.sort_order), [allRows, selectedSheetId]);
   const cells = useMemo(() => {
     const ids = new Set(rows.map(r => r.id));
